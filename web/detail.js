@@ -104,7 +104,13 @@ async function loadDetail() {
         if (last) note = r.history[last];
       }
       const dt = formatDateTime(r.order_id);
-      const noteHtml = note.replace(/\n/g, '<br>');
+      let truncated = note;
+      let ellipsis = '';
+      if (note.length > 500) {
+        truncated = note.slice(0, 500);
+        ellipsis = '...';
+      }
+      const noteHtml = (truncated + ellipsis).replace(/\n/g, '<br>');
       const btnLabel = (r.status || '') === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す';
       tr.innerHTML = `
         <td><a href="detail.html?id=${r.order_id}">${dt}</a></td>
@@ -112,7 +118,7 @@ async function loadDetail() {
           ${r.status || ''}
           <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${r.order_id}', '${r.status || ''}')">${btnLabel}</button>
         </td>
-        <td style="width:30%; white-space: pre-wrap;">${noteHtml}</td>`;
+        <td style="width:50%; white-space: pre-wrap;">${noteHtml}</td>`;
       pastBody.appendChild(tr);
     });
   } catch (e) {
