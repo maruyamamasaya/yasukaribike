@@ -5,14 +5,13 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
 let sortDescending = true;
 
 function formatDateTime(id) {
-  if (!id || id.length < 14) return ''; // 正しく14桁チェック
+  if (!id || id.length < 12) return '';
   const y = id.slice(0, 4);
   const m = id.slice(4, 6);
   const d = id.slice(6, 8);
   const hh = id.slice(8, 10);
   const mm = id.slice(10, 12);
-  const ss = id.slice(12, 14);
-  return `${y}/${m}/${d} ${hh}:${mm}:${ss}`;
+  return `${y}/${m}/${d} ${hh}時${mm}分`;
 }
 
 function getKey(c) {
