@@ -1,0 +1,121 @@
+const express = require('express');
+const path = require('path');
+const {
+  DynamoDBClient
+} = require('@aws-sdk/client-dynamodb');
+const {
+  DynamoDBDocumentClient,
+  ScanCommand,
+  GetCommand,
+  PutCommand,
+  DeleteCommand
+} = require('@aws-sdk/lib-dynamodb');
+
+const TABLE = process.env.TABLE_NAME || 'kokyakukanri_TBL';
+
+const client = new DynamoDBClient({});
+const ddb = DynamoDBDocumentClient.from(client);
+
+const app = express();
+
+function genOrderId() {
+  const now = new Date();
+  const ymdhms = now
+    .toISOString()
+    .replace(/[-T:Z.]/g, '')
+    .slice(0, 14);
+  const rand = Math.random()
+    .toString(36)
+    .substring(2, 6);
+  return `${ymdhms}-${rand}`;
+}
+
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'web')));
+
+// 顧客一覧を返す
+app.get('/customers', async (req, res) => {
+  try {
+    const data = await ddb.send(new ScanCommand({ TableName: TABLE }));
+    res.json(data.Items || []);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch' });
+  }
+});
+
+// 顧客を新規追加
+app.post('/customers', async (req, res) => {
+  const item = {
+    order_id: genOrderId(),
+    status: req.body.status || '未済',
+    email: req.body.email || '',
+    name: req.body.name || '',
+    type: req.body.category || req.body.type || '',
+    details: req.body.details || '',
+    date:
+      req.body.date || new Date().toISOString().split('T')[0].replace(/-/g, '/'),
+    staff: req.body.staff || '',
+    phone: req.body.phoneNumber || req.body.phone || '',
+    note: req.body.note || ''
+  };
+  try {
+    await ddb.send(new PutCommand({ TableName: TABLE, Item: item }));
+    res.status(201).json(item);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create' });
+  }
+});
+
+// 特定顧客を取得
+app.get('/customers/:id', async (req, res) => {
+  try {
+    const data = await ddb.send(
+      new GetCommand({ TableName: TABLE, Key: { order_id: req.params.id } })
+    );
+    if (!data.Item) return res.sendStatus(404);
+    res.json(data.Item);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch' });
+  }
+});
+
+// 顧客を更新
+app.put('/customers/:id', async (req, res) => {
+  const item = {
+    order_id: req.params.id,
+    status: req.body.status || '未済',
+    email: req.body.email || '',
+    name: req.body.name || '',
+    type: req.body.category || req.body.type || '',
+    details: req.body.details || '',
+    date: req.body.date || '',
+    staff: req.body.staff || '',
+    phone: req.body.phoneNumber || req.body.phone || '',
+    note: req.body.note || ''
+  };
+  try {
+    await ddb.send(new PutCommand({ TableName: TABLE, Item: item }));
+    res.json(item);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update' });
+  }
+});
+
+// 顧客を削除
+app.delete('/customers/:id', async (req, res) => {
+  try {
+    await ddb.send(
+      new DeleteCommand({ TableName: TABLE, Key: { order_id: req.params.id } })
+    );
+    res.sendStatus(204);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete' });
+  }
+});
+
+module.exports = app;

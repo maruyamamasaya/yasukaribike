@@ -1,0 +1,35 @@
+service: yasukaribike-server
+frameworkVersion: '3'
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ap-northeast-1
+  environment:
+    TABLE_NAME: kokyakukanri_TBL
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+        - dynamodb:GetItem
+        - dynamodb:Scan
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: arn:aws:dynamodb:*:*:table/kokyakukanri_TBL
+functions:
+  app:
+    handler: lambda.handler
+    events:
+      - httpApi: '*'
+resources:
+  Resources:
+    CustomerTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: kokyakukanri_TBL
+        AttributeDefinitions:
+          - AttributeName: order_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: order_id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
