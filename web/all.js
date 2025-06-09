@@ -22,9 +22,17 @@ async function loadAll() {
       <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
       <td>${c.phoneNumber || c.phone || ''}</td>
       <td>${c.status || ''}</td>
+      <td><a href="edit.html?id=${c.order_id}" class="btn btn-sm btn-primary">編集</a></td>
+      <td><button class="btn btn-sm btn-danger" onclick="deleteCustomer('${c.order_id}')">削除</button></td>
       <td><a href="detail.html?id=${c.order_id}">詳細</a></td>`;
     tbody.appendChild(tr);
   });
+}
+
+async function deleteCustomer(id) {
+  if (!confirm('削除してよろしいですか？')) return;
+  await fetch(API + '/customers/' + id, { method: 'DELETE' });
+  loadAll();
 }
 
 window.addEventListener('DOMContentLoaded', loadAll);
