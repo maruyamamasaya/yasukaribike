@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -27,10 +28,12 @@ let customers = [
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'web')));
 
+// 顧客一覧を返す
 app.get('/customers', (req, res) => {
   res.json(customers);
 });
 
+// 顧客を新規追加
 app.post('/customers', (req, res) => {
   const item = req.body;
   item.id = Date.now().toString();
@@ -38,12 +41,14 @@ app.post('/customers', (req, res) => {
   res.status(201).json(item);
 });
 
+// 特定顧客を取得
 app.get('/customers/:id', (req, res) => {
   const item = customers.find(r => r.id === req.params.id);
   if (!item) return res.sendStatus(404);
   res.json(item);
 });
 
+// 顧客を更新
 app.put('/customers/:id', (req, res) => {
   const index = customers.findIndex(r => r.id === req.params.id);
   if (index === -1) return res.sendStatus(404);
@@ -51,6 +56,7 @@ app.put('/customers/:id', (req, res) => {
   res.json(customers[index]);
 });
 
+// 顧客を削除
 app.delete('/customers/:id', (req, res) => {
   const index = customers.findIndex(r => r.id === req.params.id);
   if (index === -1) return res.sendStatus(404);
