@@ -72,8 +72,23 @@ npm start
 ブラウザでサーバーのホスト (例: http://54.95.8.178/) にアクセスしてください。
 Access the server host in your browser, e.g. http://54.95.8.178/.
 
-データはサーバー内にハードコーディングされたサンプルを利用します。
-Customer data is currently hard-coded in memory.
+データは DynamoDB テーブル `kokyakukanri_TBL` に保存されます。
+Customer data is stored in the DynamoDB table `kokyakukanri_TBL`.
+
+### DynamoDB Table Schema
+
+| Field      | Description                                  | Example                           |
+|------------|----------------------------------------------|-----------------------------------|
+| `order_id` | Partition key, format `YYYYMMDDHHMMSS-XXXX`   | `20240101123000-abcd`             |
+| `status`   | Inquiry status ("済" or "未済" etc.)        | `未済`                            |
+| `email`    | Customer email address                        | `user@example.com`                |
+| `name`     | Customer name                                 | `Yamada Taro`                     |
+| `type`     | Inquiry source (バイク王, 電話, 訪問受付 など) | `電話`                            |
+| `details`  | Inquiry details                               | `故障の相談`                      |
+| `date`     | Handled date in `yyyy/mm/dd`                  | `2024/01/01`                      |
+| `staff`    | Person in charge                              | `佐藤`                             |
+| `phone`    | Phone number                                  | `090-1234-5678`                   |
+| `note`     | Additional notes                              | `特になし`                         |
 
 
 ---
