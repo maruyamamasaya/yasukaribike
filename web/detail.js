@@ -44,7 +44,12 @@ async function loadDetail() {
     if (item.email) params2.append('email', item.email);
     params2.append('id', item.order_id);
     const res2 = await fetch(API + '/customers/search?' + params2.toString());
-    const list = await res2.json();
+    let list = [];
+    if (res2.ok) {
+      list = await res2.json();
+    } else {
+      console.error('Failed to fetch past records:', res2.status, res2.statusText);
+    }
     const pastBody = document.querySelector('#past-table tbody');
     pastBody.innerHTML = '';
     list.forEach(r => {
