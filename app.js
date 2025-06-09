@@ -30,7 +30,7 @@ function getDateKey(item) {
 
 // 注文IDを生成する関数（日時＋ランダム文字列）
 function genOrderId() {
-  const now = new Date();
+  const now = new Date(Date.now() + 9 * 60 * 60 * 1000);
   const ymdhms = now.toISOString().replace(/[-T:Z.]/g, '').slice(0, 14);
   const rand = Math.random().toString(36).substring(2, 6);
   return `${ymdhms}-${rand}`;
@@ -111,9 +111,10 @@ app.post('/customers', async (req, res) => {
     status: req.body.status || '未済',
     email: req.body.email || '',
     name: req.body.name || '',
+    kana: req.body.kana || '',
     type: req.body.category || req.body.type || '',
     details: req.body.details || '',
-    date: req.body.date || new Date().toISOString().split('T')[0].replace(/-/g, '/'),
+    date: req.body.date || new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0].replace(/-/g, '/'),
     staff: req.body.staff || '',
     phone: req.body.phoneNumber || req.body.phone || '',
     history: req.body.history || {}
@@ -149,6 +150,7 @@ app.put('/customers/:id', async (req, res) => {
     status: req.body.status || '未済',
     email: req.body.email || '',
     name: req.body.name || '',
+    kana: req.body.kana || '',
     type: req.body.category || req.body.type || '',
     details: req.body.details || '',
     date: req.body.date || '',
