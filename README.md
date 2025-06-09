@@ -31,8 +31,10 @@ Set the API endpoint in the `API` constant in `web/app.js`.
 `search.js` や `detail.js` にも同様に記述が必要です。
 You also need to set the same endpoint in `search.js` and `detail.js`.
 
-サンプルでは 3 つのファイルすべてで `API = 'http://localhost:3000'` と指定済みです。
-In the sample code all three files already set `API = 'http://localhost:3000'`.
+以前は 3 つのファイルすべてで `API = 'http://localhost:3000'` と指定していましたが、
+現在は `window.location.origin` を利用して自動的にホストを判定するようになっています。
+The sample code previously set `API = 'http://localhost:3000'` in all three files,
+but now it uses `window.location.origin` so the host is detected automatically.
 
 ---
 
@@ -67,8 +69,8 @@ npm install
 npm start
 ```
 
-ブラウザで http://localhost:3000 にアクセスしてください。
-Access http://localhost:3000 in your browser.
+ブラウザでサーバーのホスト (例: http://54.95.8.178/) にアクセスしてください。
+Access the server host in your browser, e.g. http://54.95.8.178/.
 
 データは DynamoDB テーブル `kokyakukanri_TBL` に保存されます。
 Customer data is stored in the DynamoDB table `kokyakukanri_TBL`.

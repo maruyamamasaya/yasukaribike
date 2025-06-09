@@ -147,7 +147,11 @@ async function saveCustomer() {
   }
   const method = id ? 'PUT' : 'POST';
   const url = id ? API + '/customers/' + id : API + '/customers';
-  await fetch(url, { method, body: JSON.stringify(body) });
+  await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
   hideForm();
   loadCustomers();
 }

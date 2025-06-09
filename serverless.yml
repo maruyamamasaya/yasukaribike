@@ -1,5 +1,6 @@
 service: yasukaribike-server
 frameworkVersion: '3'
+
 provider:
   name: aws
   runtime: nodejs18.x
@@ -15,11 +16,13 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource: arn:aws:dynamodb:*:*:table/kokyakukanri_TBL
+
 functions:
   app:
     handler: lambda.handler
     events:
       - httpApi: '*'
+
 resources:
   Resources:
     CustomerTable:

@@ -9,9 +9,24 @@
   <div class="container">
     <h1 class="mb-3">顧客管理サンプル</h1>
 
-    <div class="row">
+    <!-- Search Area -->
+    <div class="row mb-3">
+      <div class="col d-flex gap-2">
+        <input
+          type="text"
+          id="search-box"
+          class="form-control"
+          placeholder="検索..."
+        />
+        <button class="btn btn-primary" onclick="loadCustomers()">更新</button>
+        <button class="btn btn-success" onclick="showAddForm()">新規追加</button>
+        <a class="btn btn-outline-secondary" href="search.html">詳細検索</a>
+      </div>
+    </div>
+
+    <div class="row mb-3">
       <!-- Dashboard Area -->
-      <div id="dashboard" class="col-md-8 mb-3" style="height:600px; overflow:auto;">
+      <div id="dashboard" class="col-md-7" style="height:600px; overflow:auto; flex:0 0 70%; max-width:70%;">
         <div id="dashboard-metrics" class="row mb-3">
           <div class="col">
             <a href="search.html" class="text-decoration-none">
@@ -45,60 +60,61 @@
           </div>
         </div>
 
-        <div class="mb-3 d-flex gap-2">
-          <input
-            type="text"
-            id="search-box"
-            class="form-control"
-            placeholder="検索..."
-          />
-          <button class="btn btn-primary" onclick="loadCustomers()">更新</button>
-          <button class="btn btn-success" onclick="showAddForm()">新規追加</button>
-          <a class="btn btn-outline-secondary" href="search.html">詳細検索</a>
-        </div>
 
-        <table id="customer-table" class="table table-striped">
-          <thead>
-            <tr>
-              <th>名前</th>
-              <th>電話番号</th>
-              <th>状態</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <button id="prev-btn" class="btn btn-outline-primary btn-sm" onclick="prevPage()">前へ</button>
-          <span id="page-info">1 / 1</span>
-          <button id="next-btn" class="btn btn-outline-primary btn-sm" onclick="nextPage()">次へ</button>
-        </div>
-
-        <div id="form-area" class="card p-3" style="display:none">
-          <input id="f-id" type="hidden" />
-          <div class="mb-2">名前: <input id="f-name" class="form-control" /></div>
-          <div class="mb-2">メール: <input id="f-email" class="form-control" /></div>
-          <div class="mb-2">種別: <input id="f-category" class="form-control" /></div>
-          <div class="mb-2">電話番号: <input id="f-phone" class="form-control" /></div>
-          <div class="mb-2">履歴: <textarea id="f-note" class="form-control"></textarea></div>
-          <div id="history-view" class="mb-2"></div>
-          <div>
-            <button class="btn btn-primary" onclick="saveCustomer()">保存</button>
-            <button class="btn btn-secondary" onclick="hideForm()">キャンセル</button>
-          </div>
-        </div>
       </div>
 
       <!-- Mail Area -->
-      <div id="mail" class="col-md-4" style="height:600px;">
+        <div id="mail" class="col-md-5" style="height:600px; flex:0 0 30%; max-width:30%;">
         <div class="border h-100 p-3">
           メールエリア
         </div>
       </div>
-    </div>
-  </div>
+      </div>
 
-  <script src="app.js"></script>
-</body>
+      <!-- Table Area -->
+      <div class="row mb-3">
+        <div class="col-12">
+          <table id="customer-table" class="table table-striped">
+            <thead>
+              <tr>
+                <th>名前</th>
+                <th>電話番号</th>
+                <th>状態</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+          <button id="prev-btn" class="btn btn-outline-primary btn-sm" onclick="prevPage()">前へ</button>
+          <span id="page-info">1 / 1</span>
+          <button id="next-btn" class="btn btn-outline-primary btn-sm" onclick="nextPage()">次へ</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-12">
+          <div id="form-area" class="card p-3" style="display:none">
+            <input id="f-id" type="hidden" />
+            <div class="mb-2">名前: <input id="f-name" class="form-control" /></div>
+            <div class="mb-2">メール: <input id="f-email" class="form-control" /></div>
+            <div class="mb-2">種別: <input id="f-category" class="form-control" /></div>
+            <div class="mb-2">電話番号: <input id="f-phone" class="form-control" /></div>
+            <div class="mb-2">履歴: <textarea id="f-note" class="form-control"></textarea></div>
+            <div id="history-view" class="mb-2"></div>
+            <div>
+              <button class="btn btn-primary" onclick="saveCustomer()">保存</button>
+              <button class="btn btn-secondary" onclick="hideForm()">キャンセル</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
 </html>
