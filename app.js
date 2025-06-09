@@ -8,6 +8,7 @@ const {
   ScanCommand,
   GetCommand,
   PutCommand,
+  UpdateCommand,
   DeleteCommand
 } = require('@aws-sdk/lib-dynamodb');
 
@@ -147,22 +148,46 @@ app.get('/customers/:id', async (req, res) => {
 
 // 顧客を更新
 app.put('/customers/:id', async (req, res) => {
-  const item = {
-    order_id: req.params.id,
-    status: req.body.status || '未済',
-    email: req.body.email || '',
-    name: req.body.name || '',
-    kana: req.body.kana || '',
-    type: req.body.category || req.body.type || '',
-    details: req.body.details || '',
-    date: req.body.date || '',
-    staff: req.body.staff || '',
-    phone: req.body.phoneNumber || req.body.phone || '',
-    history: req.body.history || {}
+  const fields = {
+    status: req.body.status,
+    email: req.body.email,
+    name: req.body.name,
+    kana: req.body.kana,
+    type: req.body.category || req.body.type,
+    details: req.body.details,
+    date: req.body.date,
+    staff: req.body.staff,
+    phone: req.body.phoneNumber || req.body.phone,
+    history: req.body.history
   };
+
+  const sets = [];
+  const values = {};
+  const names = {};
+  for (const [key, value] of Object.entries(fields)) {
+    if (value !== undefined) {
+      names[`#${key}`] = key;
+      values[`:${key}`] = value;
+      sets.push(`#${key} = :${key}`);
+    }
+  }
+
+  if (!sets.length) {
+    return res.status(400).json({ error: 'No fields to update' });
+  }
+
+  const params = {
+    TableName: TABLE,
+    Key: { order_id: req.params.id },
+    UpdateExpression: 'SET ' + sets.join(', '),
+    ExpressionAttributeNames: names,
+    ExpressionAttributeValues: values,
+    ReturnValues: 'ALL_NEW'
+  };
+
   try {
-    await ddb.send(new PutCommand({ TableName: TABLE, Item: item }));
-    res.json(item);
+    const result = await ddb.send(new UpdateCommand(params));
+    res.json(result.Attributes);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update' });
