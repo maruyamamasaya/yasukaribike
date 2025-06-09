@@ -16,12 +16,25 @@ async function loadDetail() {
 
     const tbody = document.querySelector('#detail-table tbody');
     tbody.innerHTML = '';
-    for (const [key, val] of Object.entries(item)) {
-      if (key === 'history') continue;
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<th>${key}</th><td>${val ?? ''}</td>`;
-      tbody.appendChild(tr);
-    }
+    const fields = [
+      ['order_id', '注文ID'],
+      ['date', '日付'],
+      ['name', '名前（顧客名）'],
+      ['status', 'ステータス'],
+      ['phone', '電話番号'],
+      ['email', 'メールアドレス'],
+      ['type', 'お問い合わせ種別'],
+      ['details', 'お問い合わせいただいてるバイク名']
+    ];
+    fields.forEach(([key, label]) => {
+      let val = item[key];
+      if (key === 'phone') val = item.phoneNumber || item.phone;
+      if (val) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<th>${label}</th><td>${val}</td>`;
+        tbody.appendChild(tr);
+      }
+    });
 
     // Display note history
     const hist = document.getElementById('history');
