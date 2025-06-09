@@ -52,7 +52,7 @@ async function loadCustomers(page = 1) {
   customers.slice(start, start + PAGE_SIZE).forEach(c => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${c.name}</td>
+      <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
       <td>${c.phoneNumber || c.phone || ''}</td>
       <td>
         ${c.status || ''}

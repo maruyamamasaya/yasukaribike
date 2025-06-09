@@ -51,10 +51,11 @@ async function searchCustomers() {
   customers.forEach(c => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${c.name}</td>
+      <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
       <td>${c.email || ''}</td>
       <td>${c.category || ''}</td>
-      <td>${c.status || ''}</td>`;
+      <td>${c.status || ''}</td>
+      <td><a href="detail.html?id=${c.order_id}">詳細</a></td>`;
     tbody.appendChild(tr);
   });
 }
