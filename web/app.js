@@ -52,10 +52,10 @@ async function loadCustomers(page = 1) {
       <td>${c.phoneNumber || c.phone || ''}</td>
       <td>${c.status || ''}</td>
       <td>
-        <button onclick="editCustomer('${c.id}')">編集</button>
-        <button onclick="deleteCustomer('${c.id}')">削除</button>
+        <button onclick="editCustomer('${c.order_id}')">編集</button>
+        <button onclick="deleteCustomer('${c.order_id}')">削除</button>
       </td>
-      <td><a href="detail.html?id=${c.id}">詳細</a></td>`;
+      <td><a href="detail.html?id=${c.order_id}">詳細</a></td>`;
     tbody.appendChild(tr);
   });
 
@@ -75,7 +75,7 @@ async function deleteCustomer(id) {
 
 function showAddForm() {
   currentItem = null;
-  document.getElementById('f-id').value = '';
+  document.getElementById('f-order_id').value = '';
   document.getElementById('f-name').value = '';
   document.getElementById('f-email').value = '';
   document.getElementById('f-category').value = '';
@@ -90,7 +90,7 @@ async function editCustomer(id) {
   const data = await res.json();
   const item = data.Item || data;
   currentItem = item;
-  document.getElementById('f-id').value = item.id;
+  document.getElementById('f-order_id').value = item.order_id;
   document.getElementById('f-name').value = item.name;
   document.getElementById('f-email').value = item.email;
   document.getElementById('f-category').value = item.category;
@@ -109,7 +109,7 @@ async function editCustomer(id) {
 }
 
 async function saveCustomer() {
-  const id = document.getElementById('f-id').value;
+  const id = document.getElementById('f-order_id').value;
   const note = document.getElementById('f-note').value.trim();
   const today = new Date().toISOString().split('T')[0];
   let history = {};
@@ -122,7 +122,7 @@ async function saveCustomer() {
 
   let status;
   if (id) {
-    if (currentItem && currentItem.id === id) {
+    if (currentItem && currentItem.order_id === id) {
       status = currentItem.status;
     } else {
       try {
