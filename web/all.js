@@ -3,7 +3,7 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   window.location.origin;
 
 function formatDateTime(id) {
-  if (!id || id.length < 14) return '';
+  if (!id || id.length < 14) return ''; // 正しく14桁チェック
   const y = id.slice(0, 4);
   const m = id.slice(4, 6);
   const d = id.slice(6, 8);
@@ -23,7 +23,7 @@ async function loadAll() {
   const res = await fetch(API + '/customers');
   const data = await res.json();
   let customers = data.Items || data;
-  customers.sort((a, b) => getKey(b) - getKey(a));
+  customers.sort((a, b) => getKey(a) - getKey(b));
 
   const tbody = document.querySelector('#all-table tbody');
   tbody.innerHTML = '';
@@ -48,7 +48,7 @@ async function loadAll() {
         </button>
       </td>
       <td>${formatDateTime(c.order_id)}</td>
-      <td style="white-space: pre-wrap;">${noteSnippet}</td>
+      <td style="width:20%; white-space: pre-wrap;">${noteSnippet}</td>
       <td><a href="edit.html?id=${c.order_id}" class="btn btn-sm btn-primary">編集</a></td>
       <td><button class="btn btn-sm btn-danger" onclick="deleteCustomer('${c.order_id}')">削除</button></td>`;
     tbody.appendChild(tr);

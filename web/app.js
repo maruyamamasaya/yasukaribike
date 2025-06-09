@@ -19,6 +19,12 @@ function formatDateTime(id) {
   return `${y}/${m}/${d} ${hh}:${mm}:${ss}`;
 }
 
+function getKey(c) {
+  if (c.order_id) return c.order_id.slice(0, 14);
+  if (c.date) return c.date.replace(/\//g, '');
+  return 0;
+}
+
 async function loadDashboard() {
   const res = await fetch(API + '/customers');
   const data = await res.json();
@@ -49,6 +55,7 @@ async function loadCustomers(page = 1) {
   let customers = data.Items || data;
 
   customers = customers.filter(c => (c.status || '') !== '済');
+  customers.sort((a, b) => getKey(a) - getKey(b));
 
   const totalPages = Math.max(1, Math.ceil(customers.length / PAGE_SIZE));
   if (currentPage > totalPages) currentPage = totalPages;
@@ -79,7 +86,7 @@ async function loadCustomers(page = 1) {
         </button>
       </td>
       <td>${formatDateTime(c.order_id)}</td>
-      <td style="white-space: pre-wrap;">${noteSnippet}</td>
+      <td style="width:20%; white-space: pre-wrap;">${noteSnippet}</td>
       <td>
         <button class="btn btn-sm btn-primary" onclick="editCustomer('${c.order_id}')">編集</button>
       </td>`;
