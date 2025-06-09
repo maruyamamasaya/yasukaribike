@@ -11,8 +11,8 @@ function getKey(c) {
 }
 
 async function searchCustomers() {
-  const order = document.getElementById('s-order').value.trim();
-  const date = document.getElementById('s-date').value.trim();
+  const dateInput = document.getElementById('s-date').value.trim();
+  const date = dateInput ? dateInput.replace(/-/g, '/') : '';
   const name = document.getElementById('s-name').value.trim();
   const phone = document.getElementById('s-phone').value.trim();
   const email = document.getElementById('s-email').value.trim();
@@ -26,7 +26,6 @@ async function searchCustomers() {
   let customers = data.Items || data;
 
   customers = customers.filter(c =>
-    (!order || (c.order_id || '').includes(order)) &&
     (!date || (c.date || '').includes(date)) &&
     (!name || (c.name || '').includes(name)) &&
     (!phone || (c.phone || c.phoneNumber || '').includes(phone)) &&
