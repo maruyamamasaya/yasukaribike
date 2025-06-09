@@ -36,9 +36,32 @@ async function loadDetail() {
       }
       hist.appendChild(ul);
     }
+
+    // fetch past records
+    const params2 = new URLSearchParams();
+    if (item.name) params2.append('name', item.name);
+    if (item.phone || item.phoneNumber) params2.append('phone', item.phone || item.phoneNumber);
+    if (item.email) params2.append('email', item.email);
+    params2.append('id', item.order_id);
+    const res2 = await fetch(API + '/customers/search?' + params2.toString());
+    const list = await res2.json();
+    const pastBody = document.querySelector('#past-table tbody');
+    pastBody.innerHTML = '';
+    list.forEach(r => {
+      const tr = document.createElement('tr');
+      let note = '';
+      if (r.history) {
+        const keys = Object.keys(r.history).sort();
+        const last = keys[keys.length - 1];
+        if (last) note = r.history[last];
+      }
+      tr.innerHTML = `<td>${r.date || ''}</td><td>${r.status || ''}</td><td>${note}</td>`;
+      pastBody.appendChild(tr);
+    });
   } catch (e) {
     console.error(e);
   }
 }
 
 window.addEventListener('DOMContentLoaded', loadDetail);
+
