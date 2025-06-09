@@ -60,7 +60,6 @@ async function loadCustomers(page = 1) {
       </td>
       <td>
         <button class="btn btn-sm btn-primary" onclick="editCustomer('${c.order_id}')">編集</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteCustomer('${c.order_id}')">削除</button>
       </td>
       <td><a href="detail.html?id=${c.order_id}" class="btn btn-sm btn-link">詳細</a></td>`;
     tbody.appendChild(tr);
@@ -118,7 +117,7 @@ async function editCustomer(id) {
   document.getElementById('f-name').value = item.name;
   document.getElementById('f-kana').value = item.kana || '';
   document.getElementById('f-email').value = item.email;
-  document.getElementById('f-category').value = item.category;
+  document.getElementById('f-category').value = item.category || item.type || '電話';
   document.getElementById('f-phone').value = item.phoneNumber || item.phone;
   document.getElementById('f-details').value = item.details || '';
   const statusEl = document.getElementById('f-status');
