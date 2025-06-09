@@ -16,7 +16,7 @@ async function loadCustomers() {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${c.name}</td>
-        <td>${c.phone || ''}</td>
+        <td>${c.phoneNumber || c.phone || ''}</td>
         <td>${c.status || ''}</td>
         <td>
           <button onclick="editCustomer('${c.id}')">編集</button>
@@ -53,7 +53,7 @@ async function editCustomer(id) {
   document.getElementById('f-name').value = item.name;
   document.getElementById('f-email').value = item.email;
   document.getElementById('f-category').value = item.category;
-  document.getElementById('f-phone').value = item.phone;
+  document.getElementById('f-phone').value = item.phoneNumber || item.phone;
   document.getElementById('f-note').value = '';
   const hv = document.getElementById('history-view');
   hv.innerHTML = '';
@@ -83,7 +83,7 @@ async function saveCustomer() {
     name: document.getElementById('f-name').value,
     email: document.getElementById('f-email').value,
     category: document.getElementById('f-category').value,
-    phone: document.getElementById('f-phone').value,
+    phoneNumber: document.getElementById('f-phone').value,
     status: '未済',
     history,
     bikes: []
