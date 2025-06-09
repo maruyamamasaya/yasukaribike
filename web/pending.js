@@ -75,10 +75,14 @@ async function loadPending(page = 1) {
     if (noteSnippet.length > 50) noteSnippet = noteSnippet.slice(0, 50) + '…';
     noteSnippet = noteSnippet.replace(/\n/g, '<br>');
 
+    const btnLabel = (c.status || '') === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す';
     tr.innerHTML = `
       <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
       <td>${c.phoneNumber || c.phone || ''}</td>
-      <td>${c.status || ''}</td>
+      <td>
+        ${c.status || ''}
+        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${c.order_id}', '${c.status || ''}')">${btnLabel}</button>
+      </td>
       <td>${formatDateTime(c.order_id)}</td>
       <td style="width:20%; white-space: pre-wrap;">${noteSnippet}</td>
     `;
@@ -100,6 +104,16 @@ function nextPage() {
 
 function prevPage() {
   loadPending(currentPage - 1);
+}
+
+async function toggleStatus(id, current) {
+  const newStatus = current === '済' ? '未済' : '済';
+  await fetch(API + '/customers/' + id, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: newStatus })
+  });
+  loadPending();
 }
 
 window.addEventListener('DOMContentLoaded', () => {
