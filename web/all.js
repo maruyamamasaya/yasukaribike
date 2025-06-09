@@ -8,36 +8,23 @@ function getKey(c) {
   return 0;
 }
 
-async function loadCompleted() {
+async function loadAll() {
   const res = await fetch(API + '/customers');
   const data = await res.json();
-  let customers = (data.Items || data).filter(c => (c.status || '') === '済');
+  let customers = data.Items || data;
   customers.sort((a, b) => getKey(b) - getKey(a));
 
-  const tbody = document.querySelector('#done-table tbody');
+  const tbody = document.querySelector('#all-table tbody');
   tbody.innerHTML = '';
   customers.forEach(c => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
       <td>${c.phoneNumber || c.phone || ''}</td>
-      <td>
-        ${c.status}
-        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${c.order_id}', '${c.status || ''}')">切替</button>
-      </td>
+      <td>${c.status || ''}</td>
       <td><a href="detail.html?id=${c.order_id}">詳細</a></td>`;
     tbody.appendChild(tr);
   });
 }
 
-async function toggleStatus(id, current) {
-  const newStatus = current === '済' ? '未済' : '済';
-  await fetch(API + '/customers/' + id, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: newStatus })
-  });
-  loadCompleted();
-}
-
-window.addEventListener('DOMContentLoaded', loadCompleted);
+window.addEventListener('DOMContentLoaded', loadAll);

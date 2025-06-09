@@ -38,7 +38,13 @@
     </div>
     <div class="mb-3">
       <label class="form-label">種別</label>
-      <input id="s-category" class="form-control" />
+      <select id="s-category" class="form-select">
+        <option value="">--</option>
+        <option value="電話">電話</option>
+        <option value="訪問対応">訪問対応</option>
+        <option value="メール問い合わせ">メール問い合わせ</option>
+        <option value="その他">その他</option>
+      </select>
     </div>
     <div class="mb-3">
       <label class="form-label">詳細</label>
@@ -57,7 +63,7 @@
     </div>
     <table id="result-table" class="table table-striped">
       <thead>
-        <tr><th>名前</th><th>メール</th><th>種別</th><th>状態</th></tr>
+        <tr><th>名前</th><th>メール</th><th>種別</th><th>状態</th><th>詳細</th></tr>
       </thead>
       <tbody></tbody>
     </table>

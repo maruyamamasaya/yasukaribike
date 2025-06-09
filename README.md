@@ -41,7 +41,7 @@ but now it uses `window.location.origin` so the host is detected automatically.
 ## 📊 画面のポイント / UI Features
 
 ### ✅ ダッシュボード指標 / Dashboard Metrics
-- **総問い合わせ / Total Inquiries**: 顧客データの総件数 / Total customer entries  
+- **総問い合わせ / Total Inquiries**: 顧客データの総件数 / Total customer entries (links to `all.html`)
 - **本日の件数 / Today’s Count**: Entries where `date` equals today
 - **未済 / Pending**: Entries with `status` = "未済" (unresolved)
 
