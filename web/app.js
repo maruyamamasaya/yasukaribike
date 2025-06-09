@@ -52,7 +52,7 @@ async function loadCustomers(page = 1) {
   customers.slice(start, start + PAGE_SIZE).forEach(c => {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td>${c.name}</td>
+      <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
       <td>${c.phoneNumber || c.phone || ''}</td>
       <td>
         ${c.status || ''}
@@ -97,10 +97,12 @@ function showAddForm() {
   document.getElementById('f-name').value = '';
   document.getElementById('f-kana').value = '';
   document.getElementById('f-email').value = '';
-  document.getElementById('f-category').value = '';
+  document.getElementById('f-category').value = '電話';
   document.getElementById('f-phone').value = '';
   document.getElementById('f-details').value = '';
-  document.getElementById('f-status').value = '未済';
+  const statusEl = document.getElementById('f-status');
+  statusEl.value = '未済';
+  statusEl.disabled = true;
   document.getElementById('f-staff').value = '';
   document.getElementById('f-history-note').value = '';
   document.getElementById('history-view').innerHTML = '';
@@ -119,7 +121,9 @@ async function editCustomer(id) {
   document.getElementById('f-category').value = item.category;
   document.getElementById('f-phone').value = item.phoneNumber || item.phone;
   document.getElementById('f-details').value = item.details || '';
-  document.getElementById('f-status').value = item.status || '未済';
+  const statusEl = document.getElementById('f-status');
+  statusEl.disabled = false;
+  statusEl.value = item.status || '未済';
   document.getElementById('f-staff').value = item.staff || '';
   document.getElementById('f-history-note').value = '';
   const hv = document.getElementById('history-view');

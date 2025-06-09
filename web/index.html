@@ -19,7 +19,7 @@
           placeholder="検索..."
         />
         <button class="btn btn-primary" onclick="loadCustomers()">更新</button>
-        <button class="btn btn-success" onclick="showAddForm()">新規追加</button>
+        <a class="btn btn-success" href="add.html">新規追加</a>
         <a class="btn btn-outline-secondary" href="search.html">詳細検索</a>
       </div>
     </div>
@@ -27,7 +27,7 @@
     <div class="row mb-3">
       <!-- Dashboard Area -->
       <div id="dashboard" class="col-md-7" style="height:600px; overflow:auto; flex:0 0 70%; max-width:70%;">
-        <div id="dashboard-metrics" class="row mb-3">
+        <div id="dashboard-metrics" class="row row-cols-2 g-2 mb-3">
           <div class="col">
             <a href="search.html" class="text-decoration-none">
               <div class="card text-center">
@@ -39,7 +39,7 @@
             </a>
           </div>
           <div class="col">
-            <a href="search.html" class="text-decoration-none">
+            <a href="today.html" class="text-decoration-none">
               <div class="card text-center">
                 <div class="card-body">
                   <div>本日の件数</div>
@@ -49,7 +49,7 @@
             </a>
           </div>
           <div class="col">
-            <a href="search.html" class="text-decoration-none">
+            <a href="pending.html" class="text-decoration-none">
               <div class="card text-center">
                 <div class="card-body">
                   <div>未済</div>
@@ -89,7 +89,7 @@
               <tr>
                 <th>名前</th>
                 <th>電話番号</th>
-                <th>状態</th>
+                <th>ステータス</th>
                 <th>操作</th>
                 <th>詳細</th>
               </tr>
@@ -114,10 +114,17 @@
               <div class="mb-2">名前: <input id="f-name" class="form-control" /></div>
               <div class="mb-2">カナ: <input id="f-kana" class="form-control" /></div>
               <div class="mb-2">メール: <input id="f-email" class="form-control" /></div>
-              <div class="mb-2">種別: <input id="f-category" class="form-control" /></div>
+              <div class="mb-2">種別:
+                <select id="f-category" class="form-select">
+                  <option value="電話">電話</option>
+                  <option value="訪問対応">訪問対応</option>
+                  <option value="メール問い合わせ">メール問い合わせ</option>
+                  <option value="その他">その他</option>
+                </select>
+              </div>
               <div class="mb-2">電話番号: <input id="f-phone" class="form-control" /></div>
               <div class="mb-2">詳細: <input id="f-details" class="form-control" /></div>
-              <div class="mb-2">状態:
+              <div class="mb-2">ステータス:
                 <select id="f-status" class="form-select">
                   <option value="未済">未済</option>
                   <option value="済">済</option>
