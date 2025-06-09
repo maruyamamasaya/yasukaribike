@@ -42,6 +42,15 @@ async function loadToday(page = 1) {
     if (c.order_id) return c.order_id.slice(0, 8) === todayKey;
     return false;
   });
+  const qEl = document.getElementById('quick-search');
+  const keyword = qEl ? qEl.value.trim() : '';
+  if (keyword) {
+    customers = customers.filter(c =>
+      (c.name || '').includes(keyword) ||
+      (c.phoneNumber || c.phone || '').includes(keyword) ||
+      (c.email || '').includes(keyword)
+    );
+  }
   customers.sort((a, b) =>
     sortDescending ? getKey(b) - getKey(a) : getKey(a) - getKey(b)
   );
@@ -128,5 +137,7 @@ window.addEventListener('DOMContentLoaded', () => {
       loadToday();
     });
   }
+  const qEl = document.getElementById('quick-search');
+  if (qEl) qEl.addEventListener('input', () => loadToday(1));
   loadToday();
 });
