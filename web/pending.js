@@ -27,22 +27,28 @@ async function loadPending() {
 
   const tbody = document.querySelector('#pending-table tbody');
   tbody.innerHTML = '';
+
   customers.forEach(c => {
     const tr = document.createElement('tr');
+
     let noteSnippet = '';
     if (c.history) {
       const keys = Object.keys(c.history).sort();
       const last = keys[keys.length - 1];
       if (last) noteSnippet = c.history[last] || '';
     }
+
     if (noteSnippet.length > 50) noteSnippet = noteSnippet.slice(0, 50) + '…';
     noteSnippet = noteSnippet.replace(/\n/g, '<br>');
+
     tr.innerHTML = `
       <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
       <td>${c.phoneNumber || c.phone || ''}</td>
       <td>${c.status || ''}</td>
       <td>${formatDateTime(c.order_id)}</td>
-      <td style="white-space: pre-wrap;">${noteSnippet}</td>`;
+      <td style="white-space: pre-wrap;">${noteSnippet}</td>
+    `;
+
     tbody.appendChild(tr);
   });
 }

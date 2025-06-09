@@ -55,6 +55,7 @@ async function loadDetail() {
       const ul = document.createElement('ul');
       for (const [d, note] of Object.entries(item.history)) {
         const li = document.createElement('li');
+        li.style.whiteSpace = 'pre-wrap';
         li.textContent = `${d}: ${note}`;
         ul.appendChild(li);
       }
@@ -85,10 +86,11 @@ async function loadDetail() {
         if (last) note = r.history[last];
       }
       const dt = formatDateTime(r.order_id);
+      const noteHtml = note.replace(/\n/g, '<br>');
       tr.innerHTML = `
         <td><a href="detail.html?id=${r.order_id}">${dt}</a></td>
         <td>${r.status || ''}</td>
-        <td>${note}</td>`;
+        <td>${noteHtml}</td>`;
       pastBody.appendChild(tr);
     });
   } catch (e) {

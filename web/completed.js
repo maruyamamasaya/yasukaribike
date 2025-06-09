@@ -8,6 +8,17 @@ function getKey(c) {
   return 0;
 }
 
+function formatDateTime(id) {
+  if (!id || id.length < 14) return '';
+  const y = id.slice(0, 4);
+  const m = id.slice(4, 6);
+  const d = id.slice(6, 8);
+  const hh = id.slice(8, 10);
+  const mm = id.slice(10, 12);
+  const ss = id.slice(12, 14);
+  return `${y}/${m}/${d} ${hh}:${mm}:${ss}`;
+}
+
 async function loadCompleted() {
   const res = await fetch(API + '/customers');
   const data = await res.json();
@@ -18,6 +29,15 @@ async function loadCompleted() {
   tbody.innerHTML = '';
   customers.forEach(c => {
     const tr = document.createElement('tr');
+    let note = '';
+    if (c.history) {
+      const keys = Object.keys(c.history).sort();
+      const last = keys[keys.length - 1];
+      if (last) note = c.history[last];
+    }
+    let snippet = note.slice(0, 50);
+    if (note.length > 50) snippet += '…';
+    snippet = snippet.replace(/\n/g, '<br>');
     tr.innerHTML = `
       <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
       <td>${c.phoneNumber || c.phone || ''}</td>
@@ -27,7 +47,8 @@ async function loadCompleted() {
           ${c.status === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す'}
         </button>
       </td>
-      <td><a href="detail.html?id=${c.order_id}">詳細</a></td>`;
+      <td>${formatDateTime(c.order_id)}</td>
+      <td style="white-space: pre-wrap;">${snippet}</td>`;
     tbody.appendChild(tr);
   });
 }
