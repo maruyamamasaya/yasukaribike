@@ -102,7 +102,7 @@ async function loadDetail() {
       tr.innerHTML = `
         <td><a href="detail.html?id=${r.order_id}">${dt}</a></td>
         <td>${r.status || ''}</td>
-        <td>${noteHtml}</td>`;
+        <td style="width:30%; white-space: pre-wrap;">${noteHtml}</td>`;
       pastBody.appendChild(tr);
     });
   } catch (e) {
