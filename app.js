@@ -21,6 +21,12 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'web')));
 
+function getDateKey(item) {
+  if (item.date) return item.date.replace(/\//g, '');
+  if (item.order_id) return item.order_id.slice(0, 8);
+  return '';
+}
+
 // 注文IDを生成する関数（日時＋ランダム文字列）
 function genOrderId() {
   const now = new Date();
@@ -37,6 +43,38 @@ app.get('/customers', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch' });
+  }
+});
+
+// 条件に一致する顧客を検索
+app.get('/customers/search', async (req, res) => {
+  const { name, phone, email, id } = req.query;
+  if (!name && !phone && !email && !id) {
+    return res.status(400).json({ error: 'Missing query' });
+  }
+  try {
+    let base = { name, phone, email };
+    if (id && (!name || !phone || !email)) {
+      const cur = await ddb.send(new GetCommand({ TableName: TABLE, Key: { order_id: id } }));
+      if (cur.Item) {
+        if (!base.name) base.name = cur.Item.name;
+        if (!base.phone) base.phone = cur.Item.phone || cur.Item.phoneNumber;
+        if (!base.email) base.email = cur.Item.email;
+      }
+    }
+    const data = await ddb.send(new ScanCommand({ TableName: TABLE }));
+    let items = data.Items || [];
+    items = items.filter(c =>
+      (base.name && c.name === base.name) ||
+      (base.phone && (c.phone === base.phone || c.phoneNumber === base.phone)) ||
+      (base.email && c.email === base.email)
+    );
+    if (id) items = items.filter(c => c.order_id !== id);
+    items.sort((a, b) => getDateKey(b).localeCompare(getDateKey(a)));
+    res.json(items);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to search' });
   }
 });
 
