@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>顧客管理サンプル</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/flatly/bootstrap.min.css" />
 </head>
 <body class="p-4">
   <div class="container">
@@ -58,6 +58,16 @@
               </div>
             </a>
           </div>
+          <div class="col">
+            <a href="completed.html" class="text-decoration-none">
+              <div class="card text-center">
+                <div class="card-body">
+                  <div>完了済み</div>
+                  <div id="d-completed" class="fs-3">0</div>
+                </div>
+              </div>
+            </a>
+          </div>
         </div>
 
 
@@ -81,6 +91,7 @@
                 <th>電話番号</th>
                 <th>状態</th>
                 <th>操作</th>
+                <th>詳細</th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -106,6 +117,12 @@
               <div class="mb-2">種別: <input id="f-category" class="form-control" /></div>
               <div class="mb-2">電話番号: <input id="f-phone" class="form-control" /></div>
               <div class="mb-2">詳細: <input id="f-details" class="form-control" /></div>
+              <div class="mb-2">状態:
+                <select id="f-status" class="form-select">
+                  <option value="未済">未済</option>
+                  <option value="済">済</option>
+                </select>
+              </div>
               <div class="mb-2">担当: <input id="f-staff" class="form-control" /></div>
               <div class="mb-2">履歴: <textarea id="f-history-note" class="form-control"></textarea></div>
             <div id="history-view" class="mb-2"></div>

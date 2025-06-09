@@ -22,10 +22,13 @@ async function loadDashboard() {
     return false;
   }).length;
   const unconfirmed = customers.filter(c => (c.status || '') === '未済').length;
+  const completed = customers.filter(c => (c.status || '') === '済').length;
 
   document.getElementById('d-total').textContent = total;
   document.getElementById('d-today').textContent = todayCount;
   document.getElementById('d-unconfirmed').textContent = unconfirmed;
+  const compEl = document.getElementById('d-completed');
+  if (compEl) compEl.textContent = completed;
 }
 
 async function loadCustomers(page = 1) {
@@ -35,6 +38,7 @@ async function loadCustomers(page = 1) {
   const data = await res.json();
   let customers = data.Items || data;
 
+  customers = customers.filter(c => (c.status || '') !== '済');
   customers = customers.filter(c => !q || c.name.includes(q));
 
   const totalPages = Math.max(1, Math.ceil(customers.length / PAGE_SIZE));
@@ -50,12 +54,15 @@ async function loadCustomers(page = 1) {
     tr.innerHTML = `
       <td>${c.name}</td>
       <td>${c.phoneNumber || c.phone || ''}</td>
-      <td>${c.status || ''}</td>
       <td>
-        <button onclick="editCustomer('${c.order_id}')">編集</button>
-        <button onclick="deleteCustomer('${c.order_id}')">削除</button>
+        ${c.status || ''}
+        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${c.order_id}', '${c.status || ''}')">切替</button>
       </td>
-      <td><a href="detail.html?id=${c.order_id}">詳細</a></td>`;
+      <td>
+        <button class="btn btn-sm btn-primary" onclick="editCustomer('${c.order_id}')">編集</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteCustomer('${c.order_id}')">削除</button>
+      </td>
+      <td><a href="detail.html?id=${c.order_id}" class="btn btn-sm btn-link">詳細</a></td>`;
     tbody.appendChild(tr);
   });
 
@@ -73,6 +80,17 @@ async function deleteCustomer(id) {
   loadCustomers();
 }
 
+async function toggleStatus(id, current) {
+  const newStatus = current === '済' ? '未済' : '済';
+  await fetch(API + '/customers/' + id, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: newStatus })
+  });
+  loadCustomers();
+  loadDashboard();
+}
+
 function showAddForm() {
   currentItem = null;
   document.getElementById('f-order_id').value = '';
@@ -82,6 +100,7 @@ function showAddForm() {
   document.getElementById('f-category').value = '';
   document.getElementById('f-phone').value = '';
   document.getElementById('f-details').value = '';
+  document.getElementById('f-status').value = '未済';
   document.getElementById('f-staff').value = '';
   document.getElementById('f-history-note').value = '';
   document.getElementById('history-view').innerHTML = '';
@@ -100,6 +119,7 @@ async function editCustomer(id) {
   document.getElementById('f-category').value = item.category;
   document.getElementById('f-phone').value = item.phoneNumber || item.phone;
   document.getElementById('f-details').value = item.details || '';
+  document.getElementById('f-status').value = item.status || '未済';
   document.getElementById('f-staff').value = item.staff || '';
   document.getElementById('f-history-note').value = '';
   const hv = document.getElementById('history-view');
@@ -126,24 +146,7 @@ async function saveCustomer() {
     history[today] = note;
   }
 
-  let status;
-  if (id) {
-    if (currentItem && currentItem.order_id === id) {
-      status = currentItem.status;
-    } else {
-      try {
-        const res = await fetch(API + '/customers/' + id);
-        if (res.ok) {
-          const data = await res.json();
-          status = (data.Item || data).status;
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    }
-  } else {
-    status = '未済';
-  }
+  const status = document.getElementById('f-status').value || '未済';
 
   const body = {
     name: document.getElementById('f-name').value,
@@ -153,12 +156,10 @@ async function saveCustomer() {
     phoneNumber: document.getElementById('f-phone').value,
     details: document.getElementById('f-details').value,
     staff: document.getElementById('f-staff').value,
+    status,
     history,
     bikes: []
   };
-  if (status !== undefined) {
-    body.status = status;
-  }
   const method = id ? 'PUT' : 'POST';
   const url = id ? API + '/customers/' + id : API + '/customers';
   await fetch(url, {
