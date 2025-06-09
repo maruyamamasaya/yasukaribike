@@ -25,11 +25,14 @@ The phone number field is labeled as "電話番号 (Phone Number)" in the table 
 
 ## 🔗 API 接続設定 / API Configuration
 
-バックエンドの API エンドポイントは `web/app.js` の `API` 定数で設定してください。  
+バックエンドの API エンドポイントは `web/app.js` の `API` 定数で設定してください。
 Set the API endpoint in the `API` constant in `web/app.js`.
 
-`search.js` や `detail.js` にも同様に記述が必要です。  
+`search.js` や `detail.js` にも同様に記述が必要です。
 You also need to set the same endpoint in `search.js` and `detail.js`.
+
+サンプルでは 3 つのファイルすべてで `API = 'http://localhost:3000'` と指定済みです。
+In the sample code all three files already set `API = 'http://localhost:3000'`.
 
 ---
 

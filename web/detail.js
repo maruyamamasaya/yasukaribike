@@ -1,4 +1,5 @@
-const API = '';
+// Express サーバーを利用する場合はローカルの URL を指定する
+const API = 'http://localhost:3000';
 
 async function loadDetail() {
   const params = new URLSearchParams(location.search);
