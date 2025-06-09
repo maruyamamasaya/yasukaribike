@@ -36,7 +36,7 @@ async function loadDetail() {
     const tbody = document.querySelector('#detail-table tbody');
     tbody.innerHTML = '';
     const fields = [
-      ['order_id', '注文ID'],
+      ['order_id', '管理ID'],
       ['date', '日付'],
       ['name', '名前（顧客名）'],
       ['kana', 'カナ'],
