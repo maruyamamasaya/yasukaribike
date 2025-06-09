@@ -29,7 +29,7 @@ async function searchCustomers(page = 1) {
       (!phone || (c.phone || c.phoneNumber || '').includes(phone)) &&
       (!email || (c.email || '').includes(email)) &&
       (!status || (c.status || '') === status) &&
-      (!category || (c.category || '') === category) &&
+      (!category || (c.category || c.type || '') === category) &&
       (!details || (c.details || '').includes(details))
     );
 
@@ -50,7 +50,7 @@ async function searchCustomers(page = 1) {
     tr.innerHTML = `
       <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
       <td>${c.email || ''}</td>
-      <td>${c.category || ''}</td>
+      <td>${c.category || c.type || ''}</td>
       <td>${c.status || ''}</td>
       <td><a href="detail.html?id=${c.order_id}">詳細</a></td>`;
     tbody.appendChild(tr);
