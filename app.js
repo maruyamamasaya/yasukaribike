@@ -13,7 +13,8 @@ const {
 
 const TABLE = process.env.TABLE_NAME || 'kokyakukanri_TBL';
 
-const client = new DynamoDBClient({});
+const region = process.env.AWS_REGION || 'ap-northeast-1';
+const client = new DynamoDBClient({ region });
 const ddb = DynamoDBDocumentClient.from(client);
 
 const app = express();
