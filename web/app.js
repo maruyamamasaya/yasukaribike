@@ -100,7 +100,7 @@ async function saveCustomer() {
     email: document.getElementById('f-email').value,
     category: document.getElementById('f-category').value,
     phoneNumber: document.getElementById('f-phone').value,
-    status: '未済',
+    status: id && currentItem ? currentItem.status : '未済',
     history,
     bikes: []
   };
