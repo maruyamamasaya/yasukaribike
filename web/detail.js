@@ -41,6 +41,7 @@ async function loadDetail() {
       ['name', '名前（顧客名）'],
       ['kana', 'カナ'],
       ['status', 'ステータス'],
+      ['staff', '担当者名'],
       ['phone', '電話番号'],
       ['email', 'メールアドレス'],
       ['type', 'お問い合わせ種別'],
