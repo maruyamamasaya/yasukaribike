@@ -1,0 +1,11 @@
+/* Custom styles for responsive design */
+.container {
+  width: 95% !important;
+  max-width: 95% !important;
+}
+
+@media (max-width: 576px) {
+  body {
+    font-size: 1.2rem;
+  }
+}
