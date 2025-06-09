@@ -1,5 +1,6 @@
-// APIエンドポイント（後で差し替える）
-const API = 'https://example.com/api';
+// APIエンドポイント
+// Express サーバーを利用する場合はローカルの URL を指定する
+const API = 'http://localhost:3000';
 
 let currentItem = null;
 let currentPage = 1;
@@ -112,15 +113,36 @@ async function saveCustomer() {
     history[today] = note;
   }
 
+  let status;
+  if (id) {
+    if (currentItem && currentItem.id === id) {
+      status = currentItem.status;
+    } else {
+      try {
+        const res = await fetch(API + '/customers/' + id);
+        if (res.ok) {
+          const data = await res.json();
+          status = (data.Item || data).status;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  } else {
+    status = '未済';
+  }
+
   const body = {
     name: document.getElementById('f-name').value,
     email: document.getElementById('f-email').value,
     category: document.getElementById('f-category').value,
     phoneNumber: document.getElementById('f-phone').value,
-    status: id && currentItem ? currentItem.status : '未済',
     history,
     bikes: []
   };
+  if (status !== undefined) {
+    body.status = status;
+  }
   const method = id ? 'PUT' : 'POST';
   const url = id ? API + '/customers/' + id : API + '/customers';
   await fetch(url, { method, body: JSON.stringify(body) });
