@@ -56,7 +56,9 @@ async function loadCustomers(page = 1) {
       <td>${c.phoneNumber || c.phone || ''}</td>
       <td>
         ${c.status || ''}
-        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${c.order_id}', '${c.status || ''}')">切替</button>
+        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${c.order_id}', '${c.status || ''}')">
+          ${c.status === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す'}
+        </button>
       </td>
       <td>
         <button class="btn btn-sm btn-primary" onclick="editCustomer('${c.order_id}')">編集</button>
