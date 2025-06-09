@@ -14,7 +14,7 @@ async function loadDashboard() {
   const customers = data.Items || data;
 
   const total = customers.length;
-  const today = new Date().toISOString().split('T')[0].replace(/-/g, '/');
+  const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0].replace(/-/g, '/');
   const todayKey = today.replace(/\//g, '');
   const todayCount = customers.filter(c => {
     if (c.date) return c.date === today;
@@ -77,9 +77,12 @@ function showAddForm() {
   currentItem = null;
   document.getElementById('f-order_id').value = '';
   document.getElementById('f-name').value = '';
+  document.getElementById('f-kana').value = '';
   document.getElementById('f-email').value = '';
   document.getElementById('f-category').value = '';
   document.getElementById('f-phone').value = '';
+  document.getElementById('f-details').value = '';
+  document.getElementById('f-staff').value = '';
   document.getElementById('f-history-note').value = '';
   document.getElementById('history-view').innerHTML = '';
   document.getElementById('form-area').style.display = 'block';
@@ -92,9 +95,12 @@ async function editCustomer(id) {
   currentItem = item;
   document.getElementById('f-order_id').value = item.order_id;
   document.getElementById('f-name').value = item.name;
+  document.getElementById('f-kana').value = item.kana || '';
   document.getElementById('f-email').value = item.email;
   document.getElementById('f-category').value = item.category;
   document.getElementById('f-phone').value = item.phoneNumber || item.phone;
+  document.getElementById('f-details').value = item.details || '';
+  document.getElementById('f-staff').value = item.staff || '';
   document.getElementById('f-history-note').value = '';
   const hv = document.getElementById('history-view');
   hv.innerHTML = '';
@@ -111,7 +117,7 @@ async function editCustomer(id) {
 async function saveCustomer() {
   const id = document.getElementById('f-order_id').value;
   const note = document.getElementById('f-history-note').value.trim();
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
   let history = {};
   if (id && currentItem && currentItem.history) {
     history = { ...currentItem.history };
@@ -141,9 +147,12 @@ async function saveCustomer() {
 
   const body = {
     name: document.getElementById('f-name').value,
+    kana: document.getElementById('f-kana').value,
     email: document.getElementById('f-email').value,
     category: document.getElementById('f-category').value,
     phoneNumber: document.getElementById('f-phone').value,
+    details: document.getElementById('f-details').value,
+    staff: document.getElementById('f-staff').value,
     history,
     bikes: []
   };
