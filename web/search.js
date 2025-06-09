@@ -7,7 +7,7 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
 function getKey(c) {
   if (c.order_id) return c.order_id.slice(0, 14);
   if (c.date) return c.date.replace(/\//g, '');
-  return c.id || 0;
+  return 0;
 }
 
 async function searchCustomers() {
