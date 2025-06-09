@@ -2,6 +2,8 @@
 const API = 'https://example.com/api';
 
 let currentItem = null;
+let currentPage = 1;
+const PAGE_SIZE = 10;
 
 async function loadDashboard() {
   const res = await fetch(API + '/customers');
@@ -18,28 +20,43 @@ async function loadDashboard() {
   document.getElementById('d-unconfirmed').textContent = unconfirmed;
 }
 
-async function loadCustomers() {
+async function loadCustomers(page = 1) {
+  currentPage = page;
   const q = document.getElementById('search-box').value;
   const res = await fetch(API + '/customers');
   const data = await res.json();
+  let customers = data.Items || data;
+
+  customers = customers.filter(c => !q || c.name.includes(q));
+
+  const totalPages = Math.max(1, Math.ceil(customers.length / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
   const tbody = document.querySelector('#customer-table tbody');
   tbody.innerHTML = '';
-  const customers = data.Items || data;
-  customers
-    .filter(c => !q || c.name.includes(q))
-    .forEach(c => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${c.name}</td>
-        <td>${c.phoneNumber || c.phone || ''}</td>
-        <td>${c.status || ''}</td>
-        <td>
-          <button onclick="editCustomer('${c.id}')">編集</button>
-          <button onclick="deleteCustomer('${c.id}')">削除</button>
-        </td>
-        <td><a href="detail.html?id=${c.id}">詳細</a></td>`;
-      tbody.appendChild(tr);
-    });
+
+  const start = (currentPage - 1) * PAGE_SIZE;
+  customers.slice(start, start + PAGE_SIZE).forEach(c => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${c.name}</td>
+      <td>${c.phoneNumber || c.phone || ''}</td>
+      <td>${c.status || ''}</td>
+      <td>
+        <button onclick="editCustomer('${c.id}')">編集</button>
+        <button onclick="deleteCustomer('${c.id}')">削除</button>
+      </td>
+      <td><a href="detail.html?id=${c.id}">詳細</a></td>`;
+    tbody.appendChild(tr);
+  });
+
+  const info = document.getElementById('page-info');
+  if (info) info.textContent = `${currentPage} / ${totalPages}`;
+  const prev = document.getElementById('prev-btn');
+  const next = document.getElementById('next-btn');
+  if (prev) prev.disabled = currentPage === 1;
+  if (next) next.disabled = currentPage === totalPages || customers.length === 0;
 }
 
 async function deleteCustomer(id) {
@@ -113,6 +130,14 @@ async function saveCustomer() {
 
 function hideForm() {
   document.getElementById('form-area').style.display = 'none';
+}
+
+function nextPage() {
+  loadCustomers(currentPage + 1);
+}
+
+function prevPage() {
+  loadCustomers(currentPage - 1);
 }
 
 // 初期表示
