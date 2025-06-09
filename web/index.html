@@ -23,7 +23,7 @@
 
     <div class="row mb-3">
       <!-- Dashboard Area -->
-      <div id="dashboard" class="col-md-6 mb-3 mb-md-0" style="height:600px; overflow:auto;">
+      <div id="dashboard" class="col-md-6 mb-3 mb-md-0" style="height:600px; overflow:auto; resize: horizontal;">
         <div id="dashboard-metrics" class="row row-cols-2 g-2 mb-3">
           <div class="col">
             <a href="all.html" class="text-decoration-none">
@@ -46,10 +46,42 @@
             </a>
           </div>
           <div class="col">
+            <div class="card text-center">
+              <div class="card-body">
+                <div>本日の電話対応一覧</div>
+                <div id="d-phone-today" class="fs-3">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card text-center">
+              <div class="card-body">
+                <div>訪問対応一覧</div>
+                <div id="d-visit-today" class="fs-3">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card text-center">
+              <div class="card-body">
+                <div>メール自動追加</div>
+                <div id="d-mail-auto" class="fs-3">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card text-center">
+              <div class="card-body">
+                <div>受電履歴</div>
+                <div id="d-call-log" class="fs-3">0</div>
+              </div>
+            </div>
+          </div>
+          <div class="col">
             <a href="pending.html" class="text-decoration-none">
               <div class="card text-center">
                 <div class="card-body">
-                  <div>未済</div>
+                  <div>今日時点までの未済</div>
                   <div id="d-unconfirmed" class="fs-3">0</div>
                 </div>
               </div>
@@ -71,7 +103,7 @@
       </div>
 
       <!-- Mail Area -->
-      <div id="mail" class="col-md-6" style="height:600px;">
+      <div id="mail" class="col-md-6" style="height:600px; resize: horizontal; overflow:auto;">
         <div class="d-flex flex-column h-100">
           <div class="border flex-fill p-3 mb-2">メール</div>
           <div class="border flex-fill p-3">受電履歴（アイブリー）</div>

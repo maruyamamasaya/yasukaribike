@@ -38,11 +38,27 @@ async function loadDashboard() {
     if (c.order_id) return c.order_id.slice(0, 8) === todayKey;
     return false;
   }).length;
+  const phoneToday = customers.filter(c => {
+    const isToday = c.date ? c.date === today : c.order_id && c.order_id.slice(0, 8) === todayKey;
+    return isToday && (c.type || c.category) === '電話';
+  }).length;
+  const visitToday = customers.filter(c => {
+    const isToday = c.date ? c.date === today : c.order_id && c.order_id.slice(0, 8) === todayKey;
+    return isToday && (c.type || c.category) === '訪問対応';
+  }).length;
   const unconfirmed = customers.filter(c => (c.status || '') === '未済').length;
   const completed = customers.filter(c => (c.status || '') === '済').length;
 
   document.getElementById('d-total').textContent = total;
   document.getElementById('d-today').textContent = todayCount;
+  const phoneEl = document.getElementById('d-phone-today');
+  if (phoneEl) phoneEl.textContent = phoneToday;
+  const visitEl = document.getElementById('d-visit-today');
+  if (visitEl) visitEl.textContent = visitToday;
+  const mailAutoEl = document.getElementById('d-mail-auto');
+  if (mailAutoEl) mailAutoEl.textContent = 0;
+  const callLogEl = document.getElementById('d-call-log');
+  if (callLogEl) callLogEl.textContent = 0;
   document.getElementById('d-unconfirmed').textContent = unconfirmed;
   const compEl = document.getElementById('d-completed');
   if (compEl) compEl.textContent = completed;
