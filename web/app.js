@@ -6,6 +6,7 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
 
 let currentPage = 1;
 const PAGE_SIZE = 10;
+let sortDescending = true;
 
 function formatDateTime(id) {
   if (!id || id.length < 14) return '';
@@ -54,7 +55,9 @@ async function loadCustomers(page = 1) {
   let customers = data.Items || data;
 
   customers = customers.filter(c => (c.status || '') !== '済');
-  customers.sort((a, b) => getKey(a) - getKey(b));
+  customers.sort((a, b) =>
+    sortDescending ? getKey(b) - getKey(a) : getKey(a) - getKey(b)
+  );
 
   const totalPages = Math.max(1, Math.ceil(customers.length / PAGE_SIZE));
   if (currentPage > totalPages) currentPage = totalPages;
@@ -126,5 +129,13 @@ function prevPage() {
 }
 
 // 初期表示
+const dateHeader = document.getElementById('date-header');
+if (dateHeader) {
+  dateHeader.addEventListener('click', () => {
+    sortDescending = !sortDescending;
+    loadCustomers();
+  });
+}
+
 loadDashboard();
 loadCustomers();

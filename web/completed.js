@@ -2,6 +2,8 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   (typeof process !== 'undefined' && process.env && process.env.API_URL) ||
   window.location.origin;
 
+let sortDescending = true;
+
 function getKey(c) {
   if (c.order_id) return c.order_id.slice(0, 14);
   if (c.date) return c.date.replace(/\//g, '');
@@ -22,7 +24,9 @@ async function loadCompleted() {
   const res = await fetch(API + '/customers');
   const data = await res.json();
   let customers = (data.Items || data).filter(c => (c.status || '') === '済');
-  customers.sort((a, b) => getKey(a) - getKey(b));
+  customers.sort((a, b) =>
+    sortDescending ? getKey(b) - getKey(a) : getKey(a) - getKey(b)
+  );
 
   const tbody = document.querySelector('#done-table tbody');
   tbody.innerHTML = '';
@@ -62,4 +66,13 @@ async function toggleStatus(id, current) {
   loadCompleted();
 }
 
-window.addEventListener('DOMContentLoaded', loadCompleted);
+window.addEventListener('DOMContentLoaded', () => {
+  const header = document.getElementById('date-header');
+  if (header) {
+    header.addEventListener('click', () => {
+      sortDescending = !sortDescending;
+      loadCompleted();
+    });
+  }
+  loadCompleted();
+});
