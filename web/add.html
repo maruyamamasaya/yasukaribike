@@ -2,17 +2,21 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>新規追加</title>
+  <title>電話・訪問対応新規フォーム</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/flatly/bootstrap.min.css" />
 </head>
 <body class="p-4">
   <div class="container">
-    <h1 class="mb-3">新規追加</h1>
+    <h1 class="mb-2">電話・訪問対応新規フォーム</h1>
+    <p class="text-muted">問い合わせ内容を登録するフォームです。必要事項を入力して保存してください。</p>
+    
     <div class="card p-3">
       <input id="f-order_id" type="hidden" />
+
       <div class="mb-2">名前: <input id="f-name" class="form-control" /></div>
       <div class="mb-2">カナ: <input id="f-kana" class="form-control" /></div>
       <div class="mb-2">メール: <input id="f-email" class="form-control" /></div>
+
       <div class="mb-2">種別:
         <select id="f-category" class="form-select">
           <option value="電話">電話</option>
@@ -21,16 +25,20 @@
           <option value="その他">その他</option>
         </select>
       </div>
+
       <div class="mb-2">電話番号: <input id="f-phone" class="form-control" /></div>
       <div class="mb-2">詳細: <input id="f-details" class="form-control" /></div>
+
       <div class="mb-2">ステータス:
         <select id="f-status" class="form-select" disabled>
           <option value="未済">未済</option>
           <option value="済">済</option>
         </select>
       </div>
+
       <div class="mb-2">担当: <input id="f-staff" class="form-control" /></div>
       <div class="mb-2">履歴: <textarea id="f-history-note" class="form-control"></textarea></div>
+
       <div>
         <button class="btn btn-primary" onclick="saveCustomer()">保存</button>
         <a class="btn btn-secondary" href="index.html">キャンセル</a>
