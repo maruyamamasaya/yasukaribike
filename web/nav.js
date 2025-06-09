@@ -10,13 +10,19 @@ function goBack(event) {
 function showBreadcrumb() {
   const el = document.getElementById('breadcrumb');
   if (!el) return;
-  let prev = '';
+  let prevPath = '';
   if (document.referrer && document.referrer.startsWith(window.location.origin)) {
     const url = new URL(document.referrer);
-    prev = decodeURIComponent(url.pathname.split('/').pop());
+    prevPath = decodeURIComponent(url.pathname.split('/').pop());
   }
-  const current = decodeURIComponent(window.location.pathname.split('/').pop());
-  el.textContent = prev ? `${prev} > ${current}` : current;
+  const currPath = decodeURIComponent(window.location.pathname.split('/').pop());
+
+  let html = '';
+  if (prevPath) {
+    html += `<a href="${prevPath}">${prevPath}</a> &gt; `;
+  }
+  html += `<a href="${currPath}">${currPath}</a>`;
+  el.innerHTML = html;
 }
 
 document.addEventListener('DOMContentLoaded', showBreadcrumb);
