@@ -124,12 +124,18 @@ async function editCustomer(id) {
   statusEl.disabled = false;
   statusEl.value = item.status || '未済';
   document.getElementById('f-staff').value = item.staff || '';
-  document.getElementById('f-history-note').value = '';
+  const noteField = document.getElementById('f-history-note');
   const hv = document.getElementById('history-view');
+  noteField.value = '';
   hv.innerHTML = '';
   if (item.history) {
-    Object.entries(item.history).forEach(([d, n]) => {
+    const entries = Object.entries(item.history).sort(([a], [b]) => a.localeCompare(b));
+    if (entries.length) {
+      noteField.value = entries[entries.length - 1][1];
+    }
+    entries.forEach(([d, n]) => {
       const div = document.createElement('div');
+      div.style.whiteSpace = 'pre-wrap';
       div.textContent = `${d}: ${n}`;
       hv.appendChild(div);
     });
