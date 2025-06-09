@@ -64,11 +64,15 @@ which fetches and shows customer details via `detail.js`.
 Node.js + Express を使ってサーバーを起動する手順：
 Steps to start the server using Node.js and Express:
 
+AWS SDK を利用するため `AWS_REGION` を設定します (例: `ap-northeast-1`)。
+Set `AWS_REGION` for the AWS SDK (e.g., `ap-northeast-1`).
+
 ```bash
 npm install
+export AWS_REGION=ap-northeast-1
 npm start
 ```
-サーバーは `server.js` で `process.env.PORT || 3000` を使用して起動します。  
+サーバーは `server.js` で `process.env.PORT || 3000` を使用して起動します。
 The server starts on `process.env.PORT || 3000` in `server.js`.
 
 ブラウザで http://54.95.8.178:3000/ にアクセスしてください。  
