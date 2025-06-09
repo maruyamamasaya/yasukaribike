@@ -2,6 +2,8 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   (typeof process !== 'undefined' && process.env && process.env.API_URL) ||
   window.location.origin;
 
+let sortDescending = true;
+
 function formatDateTime(id) {
   if (!id || id.length < 14) return ''; // 正しく14桁チェック
   const y = id.slice(0, 4);
@@ -23,7 +25,9 @@ async function loadAll() {
   const res = await fetch(API + '/customers');
   const data = await res.json();
   let customers = data.Items || data;
-  customers.sort((a, b) => getKey(a) - getKey(b));
+  customers.sort((a, b) =>
+    sortDescending ? getKey(b) - getKey(a) : getKey(a) - getKey(b)
+  );
 
   const tbody = document.querySelector('#all-table tbody');
   tbody.innerHTML = '';
@@ -71,4 +75,13 @@ async function toggleStatus(id, current) {
   loadAll();
 }
 
-window.addEventListener('DOMContentLoaded', loadAll);
+window.addEventListener('DOMContentLoaded', () => {
+  const header = document.getElementById('date-header');
+  if (header) {
+    header.addEventListener('click', () => {
+      sortDescending = !sortDescending;
+      loadAll();
+    });
+  }
+  loadAll();
+});
