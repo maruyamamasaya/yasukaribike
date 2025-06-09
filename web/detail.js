@@ -23,6 +23,7 @@ async function loadDetail() {
       tbody.appendChild(tr);
     }
 
+    // Display note history
     const hist = document.getElementById('history');
     hist.innerHTML = '';
     if (item.history) {
