@@ -3,33 +3,42 @@
 <head>
   <meta charset="UTF-8" />
   <title>顧客管理サンプル</title>
-  <style>
-    body { font-family: sans-serif; }
-    #search-box { margin-bottom: 10px; }
-    #task-list { margin-top: 20px; }
-  </style>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
 </head>
-<body>
-  <h1>顧客管理サンプル</h1>
-  <input type="text" id="search-box" placeholder="検索..." />
-  <button onclick="loadCustomers()">更新</button>
-  <button onclick="showAddForm()">新規追加</button>
+<body class="p-4">
+  <div class="container">
+    <h1 class="mb-3">顧客管理サンプル</h1>
+    <div class="mb-3 d-flex gap-2">
+      <input
+        type="text"
+        id="search-box"
+        class="form-control"
+        placeholder="検索..."
+      />
+      <button class="btn btn-primary" onclick="loadCustomers()">更新</button>
+      <button class="btn btn-success" onclick="showAddForm()">新規追加</button>
+    </div>
 
-  <table id="customer-table" border="1">
-    <thead>
-      <tr><th>名前</th><th>電話</th><th>状態</th><th>操作</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+    <table id="customer-table" class="table table-striped">
+      <thead>
+        <tr><th>名前</th><th>電話</th><th>状態</th><th>操作</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-  <div id="form-area" style="display:none">
-    <input id="f-id" type="hidden" />
-    <div>名前: <input id="f-name" /></div>
-    <div>メール: <input id="f-email" /></div>
-    <div>種別: <input id="f-category" /></div>
-    <div>電話: <input id="f-phone" /></div>
-    <button onclick="saveCustomer()">保存</button>
-    <button onclick="hideForm()">キャンセル</button>
+    <div id="form-area" class="card p-3" style="display:none">
+      <input id="f-id" type="hidden" />
+      <div class="mb-2">名前: <input id="f-name" class="form-control" /></div>
+      <div class="mb-2">メール: <input id="f-email" class="form-control" /></div>
+      <div class="mb-2">種別: <input id="f-category" class="form-control" /></div>
+      <div class="mb-2">電話: <input id="f-phone" class="form-control" /></div>
+      <div class="mb-2">履歴: <textarea id="f-note" class="form-control"></textarea></div>
+      <div id="history-view" class="mb-2"></div>
+      <div>
+        <button class="btn btn-primary" onclick="saveCustomer()">保存</button>
+        <button class="btn btn-secondary" onclick="hideForm()">キャンセル</button>
+      </div>
+    </div>
   </div>
 
   <script src="app.js"></script>
