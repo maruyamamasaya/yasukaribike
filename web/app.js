@@ -1,5 +1,6 @@
-// APIエンドポイント（後で差し替える）
-const API = '';
+// APIエンドポイント
+// Express サーバーを利用する場合はローカルの URL を指定する
+const API = 'http://localhost:3000';
 
 let currentItem = null;
 let currentPage = 1;
