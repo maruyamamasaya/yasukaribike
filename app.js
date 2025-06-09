@@ -80,10 +80,12 @@ app.get('/customers/search', async (req, res) => {
       values[':email'] = base.email;
     }
 
-    let filterExpression = conditions.join(' OR ');
+    let filterExpression = conditions.length ? conditions.join(' OR ') : '';
     if (id) {
       values[':id'] = id;
-      filterExpression = `(${filterExpression}) AND order_id <> :id`;
+      filterExpression = filterExpression
+        ? `(${filterExpression}) AND order_id <> :id`
+        : 'order_id <> :id';
     }
 
     const params = {
