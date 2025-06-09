@@ -67,8 +67,8 @@ npm start
 ブラウザで http://localhost:3000 にアクセスしてください。
 Access http://localhost:3000 in your browser.
 
-データは sample.csv に保存されます。
-Customer data is stored in sample.csv.
+データはサーバー内にハードコーディングされたサンプルを利用します。
+Customer data is currently hard-coded in memory.
 
 
 ---
