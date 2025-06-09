@@ -39,6 +39,7 @@ async function loadDetail() {
       ['order_id', '注文ID'],
       ['date', '日付'],
       ['name', '名前（顧客名）'],
+      ['kana', 'カナ'],
       ['status', 'ステータス'],
       ['phone', '電話番号'],
       ['email', 'メールアドレス'],
@@ -50,7 +51,12 @@ async function loadDetail() {
       if (key === 'phone') val = item.phoneNumber || item.phone;
       if (val) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<th>${label}</th><td>${val}</td>`;
+        if (key === 'status') {
+          const btnLabel = val === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す';
+          tr.innerHTML = `<th>${label}</th><td>${val} <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${item.order_id}', '${val}')">${btnLabel}</button></td>`;
+        } else {
+          tr.innerHTML = `<th>${label}</th><td>${val}</td>`;
+        }
         tbody.appendChild(tr);
       }
     });
@@ -99,15 +105,29 @@ async function loadDetail() {
       }
       const dt = formatDateTime(r.order_id);
       const noteHtml = note.replace(/\n/g, '<br>');
+      const btnLabel = (r.status || '') === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す';
       tr.innerHTML = `
         <td><a href="detail.html?id=${r.order_id}">${dt}</a></td>
-        <td>${r.status || ''}</td>
+        <td>
+          ${r.status || ''}
+          <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${r.order_id}', '${r.status || ''}')">${btnLabel}</button>
+        </td>
         <td style="width:30%; white-space: pre-wrap;">${noteHtml}</td>`;
       pastBody.appendChild(tr);
     });
   } catch (e) {
     console.error(e);
   }
+}
+
+async function toggleStatus(id, current) {
+  const newStatus = current === '済' ? '未済' : '済';
+  await fetch(API + '/customers/' + id, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: newStatus })
+  });
+  loadDetail();
 }
 
 window.addEventListener('DOMContentLoaded', loadDetail);
