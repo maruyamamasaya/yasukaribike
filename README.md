@@ -68,9 +68,10 @@ Steps to start the server using Node.js and Express:
 npm install
 npm start
 ```
-
-ブラウザでサーバーのホスト (例: http://54.95.8.178/) にアクセスしてください。
-Access the server host in your browser, e.g. http://54.95.8.178/.
+Expressサーバーは `server.js` (1-6 行目) でポート3000を listen します。
+The Express server listens on port 3000 by default (see server.js lines 1–6).
+ブラウザでサーバーのホスト (例: http://54.95.8.178:3000/) にアクセスしてください。`index.html` も同じホスト・ポートで開くか `API_URL` を設定してください。
+Access the server host in your browser, e.g. http://54.95.8.178:3000/. Because the frontend uses `window.location.origin`, open `index.html` from the same host and port or set `API_URL`.
 
 データは DynamoDB テーブル `kokyakukanri_TBL` に保存されます。
 Customer data is stored in the DynamoDB table `kokyakukanri_TBL`.
