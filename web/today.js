@@ -51,11 +51,26 @@ async function loadToday() {
     tr.innerHTML = `
       <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
       <td>${c.phoneNumber || c.phone || ''}</td>
-      <td>${c.status || ''}</td>
+      <td>
+        ${c.status || ''}
+        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${c.order_id}', '${c.status || ''}')">
+          ${c.status === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す'}
+        </button>
+      </td>
       <td>${formatDateTime(c.order_id)}</td>
       <td style="width:20%; white-space: pre-wrap;">${snippet}</td>`;
     tbody.appendChild(tr);
   });
+}
+
+async function toggleStatus(id, current) {
+  const newStatus = current === '済' ? '未済' : '済';
+  await fetch(API + '/customers/' + id, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: newStatus })
+  });
+  loadToday();
 }
 
 window.addEventListener('DOMContentLoaded', () => {
