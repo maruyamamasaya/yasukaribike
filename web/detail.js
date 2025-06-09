@@ -4,6 +4,17 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   (typeof process !== 'undefined' && process.env && process.env.API_URL) ||
   window.location.origin;
 
+function formatDateTime(id) {
+  if (!id || id.length < 14) return '';
+  const y = id.slice(0, 4);
+  const m = id.slice(4, 6);
+  const d = id.slice(6, 8);
+  const hh = id.slice(8, 10);
+  const mm = id.slice(10, 12);
+  const ss = id.slice(12, 14);
+  return `${y}/${m}/${d} ${hh}:${mm}:${ss}`;
+}
+
 async function loadDetail() {
   const params = new URLSearchParams(location.search);
   const id = params.get('id');
@@ -73,7 +84,11 @@ async function loadDetail() {
         const last = keys[keys.length - 1];
         if (last) note = r.history[last];
       }
-      tr.innerHTML = `<td>${r.date || ''}</td><td>${r.status || ''}</td><td>${note}</td>`;
+      const dt = formatDateTime(r.order_id);
+      tr.innerHTML = `
+        <td><a href="detail.html?id=${r.order_id}">${dt}</a></td>
+        <td>${r.status || ''}</td>
+        <td>${note}</td>`;
       pastBody.appendChild(tr);
     });
   } catch (e) {
