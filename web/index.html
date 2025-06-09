@@ -12,6 +12,39 @@
     <div class="row">
       <!-- Dashboard Area -->
       <div id="dashboard" class="col-md-8 mb-3" style="height:600px; overflow:auto;">
+        <div id="dashboard-metrics" class="row mb-3">
+          <div class="col">
+            <a href="search.html" class="text-decoration-none">
+              <div class="card text-center">
+                <div class="card-body">
+                  <div>総問い合わせ</div>
+                  <div id="d-total" class="fs-3">0</div>
+                </div>
+              </div>
+            </a>
+          </div>
+          <div class="col">
+            <a href="search.html" class="text-decoration-none">
+              <div class="card text-center">
+                <div class="card-body">
+                  <div>本日の件数</div>
+                  <div id="d-today" class="fs-3">0</div>
+                </div>
+              </div>
+            </a>
+          </div>
+          <div class="col">
+            <a href="search.html" class="text-decoration-none">
+              <div class="card text-center">
+                <div class="card-body">
+                  <div>未済</div>
+                  <div id="d-unconfirmed" class="fs-3">0</div>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
         <div class="mb-3 d-flex gap-2">
           <input
             type="text"
