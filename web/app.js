@@ -78,6 +78,7 @@ async function saveCustomer() {
   if (note) {
     history[today] = note;
   }
+
   const body = {
     name: document.getElementById('f-name').value,
     email: document.getElementById('f-email').value,
