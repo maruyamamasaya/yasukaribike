@@ -8,54 +8,56 @@
 <body class="p-4">
   <div class="container">
     <h1 class="mb-3">詳細検索</h1>
-    <div class="mb-3">
-      <label class="form-label">日付</label>
-      <input id="s-date" type="date" class="form-control" />
-    </div>
-    <div class="mb-3">
-      <label class="form-label">名前</label>
-      <input id="s-name" class="form-control" />
-    </div>
-    <div class="mb-3">
-      <label class="form-label">電話番号</label>
-      <input id="s-phone" class="form-control" />
-    </div>
-    <div class="mb-3">
-      <label class="form-label">メール</label>
-      <input id="s-email" class="form-control" />
-    </div>
-    <div class="mb-3">
-      <label class="form-label">状態</label>
-      <select id="s-status" class="form-select">
-        <option value="">--</option>
-        <option value="未済">未済</option>
-        <option value="済">済</option>
-      </select>
-    </div>
-    <div class="mb-3">
-      <label class="form-label">種別</label>
-      <select id="s-category" class="form-select">
-        <option value="">--</option>
-        <option value="電話">電話</option>
-        <option value="訪問対応">訪問対応</option>
-        <option value="メール問い合わせ">メール問い合わせ</option>
-        <option value="その他">その他</option>
-      </select>
-    </div>
-    <div class="mb-3">
-      <label class="form-label">バイク機種名</label>
-      <input id="s-details" class="form-control" />
-    </div>
-    <div class="mb-3">
-      <label class="form-label">並び替え</label>
-      <select id="s-sort" class="form-select">
-        <option value="newest">新しい順</option>
-        <option value="oldest">古い順</option>
-      </select>
-    </div>
-    <div class="mb-3">
-      <button class="btn btn-primary" onclick="searchCustomers()">検索</button>
-      <a class="btn btn-secondary" href="index.html">戻る</a>
+    <div id="search-form" class="d-flex flex-wrap gap-2 mb-3">
+      <details>
+        <summary class="btn btn-outline-secondary">日付</summary>
+        <input id="s-date" type="date" class="form-control mt-2" />
+      </details>
+      <details>
+        <summary class="btn btn-outline-secondary">名前</summary>
+        <input id="s-name" class="form-control mt-2" />
+      </details>
+      <details>
+        <summary class="btn btn-outline-secondary">電話番号</summary>
+        <input id="s-phone" class="form-control mt-2" />
+      </details>
+      <details>
+        <summary class="btn btn-outline-secondary">メール</summary>
+        <input id="s-email" class="form-control mt-2" />
+      </details>
+      <details>
+        <summary class="btn btn-outline-secondary">状態</summary>
+        <select id="s-status" class="form-select mt-2">
+          <option value="">--</option>
+          <option value="未済">未済</option>
+          <option value="済">済</option>
+        </select>
+      </details>
+      <details>
+        <summary class="btn btn-outline-secondary">種別</summary>
+        <select id="s-category" class="form-select mt-2">
+          <option value="">--</option>
+          <option value="電話">電話</option>
+          <option value="訪問対応">訪問対応</option>
+          <option value="メール問い合わせ">メール問い合わせ</option>
+          <option value="その他">その他</option>
+        </select>
+      </details>
+      <details>
+        <summary class="btn btn-outline-secondary">バイク機種名</summary>
+        <input id="s-details" class="form-control mt-2" />
+      </details>
+      <details>
+        <summary class="btn btn-outline-secondary">並び替え</summary>
+        <select id="s-sort" class="form-select mt-2">
+          <option value="newest">新しい順</option>
+          <option value="oldest">古い順</option>
+        </select>
+      </details>
+      <div class="align-self-end mt-2">
+        <button class="btn btn-primary me-2" onclick="searchCustomers()">検索</button>
+        <a class="btn btn-secondary" href="index.html">戻る</a>
+      </div>
     </div>
     <table id="result-table" class="table table-striped">
       <thead>
