@@ -9,15 +9,9 @@
   <div class="container">
     <h1 class="mb-3">顧客管理サンプル</h1>
 
-    <!-- Search Area -->
+    <!-- Action Buttons -->
     <div class="row mb-3">
       <div class="col d-flex gap-2">
-        <input
-          type="text"
-          id="search-box"
-          class="form-control"
-          placeholder="検索..."
-        />
         <a class="btn btn-success" href="add.html">電話・訪問対応新規フォーム</a>
         <a class="btn btn-outline-secondary" href="search.html">詳細検索</a>
       </div>
@@ -25,7 +19,7 @@
 
     <div class="row mb-3">
       <!-- Dashboard Area -->
-      <div id="dashboard" class="col-md-7" style="height:600px; overflow:auto; flex:0 0 70%; max-width:70%;">
+      <div id="dashboard" class="col-md-6 mb-3 mb-md-0" style="height:600px; overflow:auto;">
         <div id="dashboard-metrics" class="row row-cols-2 g-2 mb-3">
           <div class="col">
             <a href="all.html" class="text-decoration-none">
@@ -73,9 +67,10 @@
       </div>
 
       <!-- Mail Area -->
-        <div id="mail" class="col-md-5" style="height:600px; flex:0 0 30%; max-width:30%;">
-        <div class="border h-100 p-3">
-          メールエリア
+      <div id="mail" class="col-md-6" style="height:600px;">
+        <div class="d-flex flex-column h-100">
+          <div class="border flex-fill p-3 mb-2">メール</div>
+          <div class="border flex-fill p-3">受電履歴（アイブリー）</div>
         </div>
       </div>
       </div>
