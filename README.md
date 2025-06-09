@@ -16,7 +16,7 @@ Bootstrap を利用しているため、見た目もある程度整っていま�
 It uses Bootstrap for basic styling and layout.
 
 新規追加時には履歴メモを入力でき、編集画面では登録済みの履歴を確認できます。  
-You can input notes when adding new entries, and view history in the edit form.
+You can input notes when adding new entries, and view the saved history in the edit form.
 
 顧客テーブルとフォームの電話項目は「電話番号（Phone Number）」と表記されています。  
 The phone number field is labeled as "電話番号 (Phone Number)" in the table and form.
@@ -88,7 +88,7 @@ Customer data is stored in the DynamoDB table `kokyakukanri_TBL`.
 | `date`     | Handled date in `yyyy/mm/dd`                  | `2024/01/01`                      |
 | `staff`    | Person in charge                              | `佐藤`                             |
 | `phone`    | Phone number                                  | `090-1234-5678`                   |
-| `note`     | Additional notes                              | `特になし`                         |
+| `history`  | Notes history object (`YYYY-MM-DD`: text)     | `{ "2024-01-01": "First call" }` |
 
 
 ---

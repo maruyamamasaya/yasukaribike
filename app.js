@@ -52,7 +52,7 @@ app.post('/customers', async (req, res) => {
     date: req.body.date || new Date().toISOString().split('T')[0].replace(/-/g, '/'),
     staff: req.body.staff || '',
     phone: req.body.phoneNumber || req.body.phone || '',
-    note: req.body.note || ''
+    history: req.body.history || {}
   };
   try {
     await ddb.send(new PutCommand({ TableName: TABLE, Item: item }));
@@ -90,7 +90,7 @@ app.put('/customers/:id', async (req, res) => {
     date: req.body.date || '',
     staff: req.body.staff || '',
     phone: req.body.phoneNumber || req.body.phone || '',
-    note: req.body.note || ''
+    history: req.body.history || {}
   };
   try {
     await ddb.send(new PutCommand({ TableName: TABLE, Item: item }));

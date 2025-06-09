@@ -80,7 +80,7 @@ function showAddForm() {
   document.getElementById('f-email').value = '';
   document.getElementById('f-category').value = '';
   document.getElementById('f-phone').value = '';
-  document.getElementById('f-note').value = '';
+  document.getElementById('f-history-note').value = '';
   document.getElementById('history-view').innerHTML = '';
   document.getElementById('form-area').style.display = 'block';
 }
@@ -95,7 +95,7 @@ async function editCustomer(id) {
   document.getElementById('f-email').value = item.email;
   document.getElementById('f-category').value = item.category;
   document.getElementById('f-phone').value = item.phoneNumber || item.phone;
-  document.getElementById('f-note').value = '';
+  document.getElementById('f-history-note').value = '';
   const hv = document.getElementById('history-view');
   hv.innerHTML = '';
   if (item.history) {
@@ -110,7 +110,7 @@ async function editCustomer(id) {
 
 async function saveCustomer() {
   const id = document.getElementById('f-order_id').value;
-  const note = document.getElementById('f-note').value.trim();
+  const note = document.getElementById('f-history-note').value.trim();
   const today = new Date().toISOString().split('T')[0];
   let history = {};
   if (id && currentItem && currentItem.history) {
