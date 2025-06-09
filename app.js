@@ -20,6 +20,29 @@ const ddb = DynamoDBDocumentClient.from(client);
 
 const app = express();
 
+// Basic Authentication middleware
+const AUTH_USER = process.env.BASIC_USER || 'user';
+const AUTH_PASS = process.env.BASIC_PASS || '0000';
+app.use((req, res, next) => {
+  const header = req.headers['authorization'];
+  if (!header) {
+    res.set('WWW-Authenticate', 'Basic realm="Restricted"');
+    return res.status(401).send('Authentication required');
+  }
+  const [scheme, encoded] = header.split(' ');
+  if (scheme !== 'Basic' || !encoded) {
+    res.set('WWW-Authenticate', 'Basic realm="Restricted"');
+    return res.status(401).send('Invalid authorization header');
+  }
+  const decoded = Buffer.from(encoded, 'base64').toString('utf8');
+  const [user, pass] = decoded.split(':');
+  if (user === AUTH_USER && pass === AUTH_PASS) {
+    return next();
+  }
+  res.set('WWW-Authenticate', 'Basic realm="Restricted"');
+  res.status(401).send('Access denied');
+});
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'web')));
 
