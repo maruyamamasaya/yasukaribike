@@ -3,6 +3,21 @@ const API = 'https://example.com/api';
 
 let currentItem = null;
 
+async function loadDashboard() {
+  const res = await fetch(API + '/customers');
+  const data = await res.json();
+  const customers = data.Items || data;
+
+  const total = customers.length;
+  const today = new Date().toISOString().split('T')[0];
+  const todayCount = customers.filter(c => (c.createdAt || '').startsWith(today)).length;
+  const unconfirmed = customers.filter(c => (c.status || '') === '未済').length;
+
+  document.getElementById('d-total').textContent = total;
+  document.getElementById('d-today').textContent = todayCount;
+  document.getElementById('d-unconfirmed').textContent = unconfirmed;
+}
+
 async function loadCustomers() {
   const q = document.getElementById('search-box').value;
   const res = await fetch(API + '/customers');
@@ -101,4 +116,5 @@ function hideForm() {
 }
 
 // 初期表示
+loadDashboard();
 loadCustomers();
