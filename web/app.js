@@ -14,8 +14,13 @@ async function loadDashboard() {
   const customers = data.Items || data;
 
   const total = customers.length;
-  const today = new Date().toISOString().split('T')[0];
-  const todayCount = customers.filter(c => (c.createdAt || '').startsWith(today)).length;
+  const today = new Date().toISOString().split('T')[0].replace(/-/g, '/');
+  const todayKey = today.replace(/\//g, '');
+  const todayCount = customers.filter(c => {
+    if (c.date) return c.date === today;
+    if (c.order_id) return c.order_id.slice(0, 8) === todayKey;
+    return false;
+  }).length;
   const unconfirmed = customers.filter(c => (c.status || '') === '未済').length;
 
   document.getElementById('d-total').textContent = total;
