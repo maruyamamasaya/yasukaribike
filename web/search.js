@@ -4,11 +4,6 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   (typeof process !== 'undefined' && process.env && process.env.API_URL) ||
   window.location.origin;
 
-function getKey(c) {
-  if (c.order_id) return c.order_id.slice(0, 14);
-  if (c.date) return c.date.replace(/\//g, '');
-  return 0;
-}
 
 async function searchCustomers() {
   const dateInput = document.getElementById('s-date').value.trim();
@@ -19,7 +14,6 @@ async function searchCustomers() {
   const status = document.getElementById('s-status').value.trim();
   const category = document.getElementById('s-category').value.trim();
   const details = document.getElementById('s-details').value.trim();
-  const sort = document.getElementById('s-sort').value;
 
   const res = await fetch(API + '/customers');
   const data = await res.json();
@@ -35,15 +29,6 @@ async function searchCustomers() {
     (!details || (c.details || '').includes(details))
   );
 
-  customers.sort((a, b) => {
-    const ka = getKey(a);
-    const kb = getKey(b);
-    if (ka === kb) return 0;
-    if (sort === 'newest') {
-      return ka > kb ? -1 : 1;
-    }
-    return ka < kb ? -1 : 1;
-  });
 
   const tbody = document.querySelector('#result-table tbody');
   tbody.innerHTML = '';
