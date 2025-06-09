@@ -1,5 +1,5 @@
 // APIエンドポイント（後で差し替える）
-const API = 'https://example.com/api';
+const API = '';
 
 let currentItem = null;
 let currentPage = 1;

@@ -1,4 +1,4 @@
-const API = 'https://example.com/api';
+const API = '';
 
 async function loadDetail() {
   const params = new URLSearchParams(location.search);
