@@ -9,14 +9,21 @@ const PAGE_SIZE = 10;
 let sortDescending = true;
 
 function formatDateTime(id) {
-  if (!id || id.length < 14) return '';
+  if (!id || id.length < 12) return '';
   const y = id.slice(0, 4);
   const m = id.slice(4, 6);
   const d = id.slice(6, 8);
   const hh = id.slice(8, 10);
   const mm = id.slice(10, 12);
-  const ss = id.slice(12, 14);
-  return `${y}/${m}/${d} ${hh}:${mm}:${ss}`;
+  return `${y}/${m}/${d} ${hh}時${mm}分`;
+}
+
+function getDateStr(item) {
+  let key = '';
+  if (item.order_id) key = item.order_id.slice(0, 8);
+  else if (item.date) key = item.date.replace(/\//g, '').slice(0, 8);
+  if (!key) return '';
+  return `${key.slice(0, 4)}/${key.slice(4, 6)}/${key.slice(6, 8)}`;
 }
 
 function getKey(c) {
@@ -83,7 +90,23 @@ async function loadCustomers(page = 1) {
   tbody.innerHTML = '';
 
   const start = (currentPage - 1) * PAGE_SIZE;
-  customers.slice(start, start + PAGE_SIZE).forEach(c => {
+  const slice = customers.slice(start, start + PAGE_SIZE);
+  const colspan = document.querySelector('#customer-table thead tr').children.length;
+  let lastDate = '';
+
+  slice.forEach(c => {
+    const dateStr = getDateStr(c);
+    if (dateStr && dateStr !== lastDate) {
+      const gr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = colspan;
+      td.className = 'table-secondary fw-bold';
+      td.textContent = dateStr;
+      gr.appendChild(td);
+      tbody.appendChild(gr);
+      lastDate = dateStr;
+    }
+
     const tr = document.createElement('tr');
     let noteSnippet = '';
     if (c.history) {
