@@ -5,7 +5,9 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   window.location.origin;
 
 function getKey(c) {
-  return c.createdAt || c.id || 0;
+  if (c.order_id) return c.order_id.slice(0, 14);
+  if (c.date) return c.date.replace(/\//g, '');
+  return c.id || 0;
 }
 
 async function searchCustomers() {
