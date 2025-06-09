@@ -3,6 +3,8 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   window.location.origin;
 
 let sortDescending = true;
+let currentPage = 1;
+const PAGE_SIZE = 20;
 
 function getKey(c) {
   if (c.order_id) return c.order_id.slice(0, 14);
@@ -28,7 +30,8 @@ function getDateStr(item) {
   return `${key.slice(0, 4)}/${key.slice(4, 6)}/${key.slice(6, 8)}`;
 }
 
-async function loadCompleted() {
+async function loadCompleted(page = 1) {
+  currentPage = page;
   const res = await fetch(API + '/customers');
   const data = await res.json();
   let customers = (data.Items || data).filter(c => (c.status || '') === '済');
@@ -36,12 +39,18 @@ async function loadCompleted() {
     sortDescending ? getKey(b) - getKey(a) : getKey(a) - getKey(b)
   );
 
+  const totalPages = Math.max(1, Math.ceil(customers.length / PAGE_SIZE));
+  if (currentPage > totalPages) currentPage = totalPages;
+  if (currentPage < 1) currentPage = 1;
+
   const tbody = document.querySelector('#done-table tbody');
   tbody.innerHTML = '';
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const slice = customers.slice(start, start + PAGE_SIZE);
   const colspan = document.querySelector('#done-table thead tr').children.length;
   let lastDate = '';
 
-  customers.forEach(c => {
+  slice.forEach(c => {
     const dateStr = getDateStr(c);
     if (dateStr && dateStr !== lastDate) {
       const gr = document.createElement('tr');
@@ -77,6 +86,21 @@ async function loadCompleted() {
       <td style="width:20%; white-space: pre-wrap;">${snippet}</td>`;
     tbody.appendChild(tr);
   });
+
+  const info = document.getElementById('page-info');
+  if (info) info.textContent = `${currentPage} / ${totalPages}`;
+  const prev = document.getElementById('prev-btn');
+  const next = document.getElementById('next-btn');
+  if (prev) prev.disabled = currentPage === 1;
+  if (next) next.disabled = currentPage === totalPages || customers.length === 0;
+}
+
+function nextPage() {
+  loadCompleted(currentPage + 1);
+}
+
+function prevPage() {
+  loadCompleted(currentPage - 1);
 }
 
 async function toggleStatus(id, current) {
