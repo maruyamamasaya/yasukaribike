@@ -62,15 +62,40 @@ app.get('/customers/search', async (req, res) => {
         if (!base.email) base.email = cur.Item.email;
       }
     }
-    const data = await ddb.send(new ScanCommand({ TableName: TABLE }));
-    let items = data.Items || [];
-    items = items.filter(c =>
-      (base.name && c.name === base.name) ||
-      (base.phone && (c.phone === base.phone || c.phoneNumber === base.phone)) ||
-      (base.email && c.email === base.email)
+
+    const values = {};
+    const conditions = [];
+
+    if (base.name) {
+      conditions.push('#n = :name');
+      values[':name'] = base.name;
+    }
+    if (base.phone) {
+      conditions.push('(phone = :phone OR phoneNumber = :phone)');
+      values[':phone'] = base.phone;
+    }
+    if (base.email) {
+      conditions.push('email = :email');
+      values[':email'] = base.email;
+    }
+
+    let filterExpression = conditions.join(' OR ');
+    if (id) {
+      values[':id'] = id;
+      filterExpression = `(${filterExpression}) AND order_id <> :id`;
+    }
+
+    const params = {
+      TableName: TABLE,
+      FilterExpression: filterExpression,
+      ExpressionAttributeValues: values,
+      ExpressionAttributeNames: { '#n': 'name' }
+    };
+
+    const data = await ddb.send(new ScanCommand(params));
+    const items = (data.Items || []).sort((a, b) =>
+      getDateKey(b).localeCompare(getDateKey(a))
     );
-    if (id) items = items.filter(c => c.order_id !== id);
-    items.sort((a, b) => getDateKey(b).localeCompare(getDateKey(a)));
     res.json(items);
   } catch (err) {
     console.error(err);
