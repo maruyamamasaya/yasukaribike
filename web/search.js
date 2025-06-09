@@ -11,9 +11,14 @@ function getKey(c) {
 }
 
 async function searchCustomers() {
+  const order = document.getElementById('s-order').value.trim();
+  const date = document.getElementById('s-date').value.trim();
+  const name = document.getElementById('s-name').value.trim();
+  const phone = document.getElementById('s-phone').value.trim();
   const email = document.getElementById('s-email').value.trim();
   const status = document.getElementById('s-status').value.trim();
   const category = document.getElementById('s-category').value.trim();
+  const details = document.getElementById('s-details').value.trim();
   const sort = document.getElementById('s-sort').value;
 
   const res = await fetch(API + '/customers');
@@ -21,9 +26,14 @@ async function searchCustomers() {
   let customers = data.Items || data;
 
   customers = customers.filter(c =>
+    (!order || (c.order_id || '').includes(order)) &&
+    (!date || (c.date || '').includes(date)) &&
+    (!name || (c.name || '').includes(name)) &&
+    (!phone || (c.phone || c.phoneNumber || '').includes(phone)) &&
     (!email || (c.email || '').includes(email)) &&
     (!status || (c.status || '') === status) &&
-    (!category || (c.category || '') === category)
+    (!category || (c.category || '') === category) &&
+    (!details || (c.details || '').includes(details))
   );
 
   customers.sort((a, b) => {
