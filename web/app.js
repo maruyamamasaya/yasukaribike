@@ -5,7 +5,7 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   window.location.origin;
 
 let currentPage = 1;
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 let sortDescending = true;
 
 function formatDateTime(id) {
