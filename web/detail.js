@@ -1,5 +1,8 @@
 // Express サーバーを利用する場合はローカルの URL を指定する
-const API = 'http://localhost:3000';
+// API は環境変数(API_URL)または現在のオリジンを利用する
+const API = (typeof window !== 'undefined' && window.API_URL) ||
+  (typeof process !== 'undefined' && process.env && process.env.API_URL) ||
+  window.location.origin;
 
 async function loadDetail() {
   const params = new URLSearchParams(location.search);
