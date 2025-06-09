@@ -33,13 +33,11 @@ async function loadDashboard() {
 
 async function loadCustomers(page = 1) {
   currentPage = page;
-  const q = document.getElementById('search-box').value;
   const res = await fetch(API + '/customers');
   const data = await res.json();
   let customers = data.Items || data;
 
   customers = customers.filter(c => (c.status || '') !== '済');
-  customers = customers.filter(c => !q || c.name.includes(q));
 
   const totalPages = Math.max(1, Math.ceil(customers.length / PAGE_SIZE));
   if (currentPage > totalPages) currentPage = totalPages;
