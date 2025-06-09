@@ -21,6 +21,14 @@ You can input notes when adding new entries, and view the saved history in the e
 顧客テーブルとフォームの電話項目は「電話番号（Phone Number）」と表記されています。  
 The phone number field is labeled as "電話番号 (Phone Number)" in the table and form.
 
+## 📖 操作マニュアル / User Manual
+
+画面の使い方や検索方法をまとめた `manual.html` を `web` ディレクトリに追加しました。
+The `web` directory now contains `manual.html` explaining how to operate each screen and how to search.
+
+トップページ (`index.html`) 上部のリンクから参照できます。
+You can access it from the link at the top of `index.html`.
+
 ---
 
 ## 🔗 API 接続設定 / API Configuration
