@@ -43,6 +43,8 @@ but now it uses `window.location.origin` so the host is detected automatically.
 ### ✅ ダッシュボード指標 / Dashboard Metrics
 - **総問い合わせ / Total Inquiries**: 顧客データの総件数 / Total customer entries (links to `all.html`)
 - **本日の件数 / Today’s Count**: Entries where `date` equals today
+- **本日の電話対応 / Today’s Phone Calls**: Today's entries with `category` = "電話" (`phone_today.html`)
+- **訪問対応一覧 / Today’s Visits**: Today's entries with `category` = "訪問対応" (`visit_today.html`)
 - **未済 / Pending**: Entries with `status` = "未済" (unresolved)
 
 ### 🔁 ページネーション / Pagination  
