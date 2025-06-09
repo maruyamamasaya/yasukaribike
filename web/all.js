@@ -3,14 +3,13 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   window.location.origin;
 
 function formatDateTime(id) {
-  if (!id || id.length < 14) return '';
+  if (!id || id.length < 12) return '';
   const y = id.slice(0, 4);
   const m = id.slice(4, 6);
   const d = id.slice(6, 8);
   const hh = id.slice(8, 10);
   const mm = id.slice(10, 12);
-  const ss = id.slice(12, 14);
-  return `${y}/${m}/${d} ${hh}:${mm}:${ss}`;
+  return `${y}/${m}/${d} ${hh}:${mm}`;
 }
 
 function getKey(c) {
@@ -48,7 +47,7 @@ async function loadAll() {
         </button>
       </td>
       <td>${formatDateTime(c.order_id)}</td>
-      <td style="white-space: pre-wrap;">${noteSnippet}</td>
+      <td style="width:20%; white-space: pre-wrap;">${noteSnippet}</td>
       <td><a href="edit.html?id=${c.order_id}" class="btn btn-sm btn-primary">編集</a></td>
       <td><button class="btn btn-sm btn-danger" onclick="deleteCustomer('${c.order_id}')">削除</button></td>`;
     tbody.appendChild(tr);
