@@ -69,8 +69,10 @@ npm install
 npm start
 ```
 
-ブラウザでサーバーのホスト (例: http://54.95.8.178/) にアクセスしてください。
-Access the server host in your browser, e.g. http://54.95.8.178/.
+サーバーは `server.js` で `process.env.PORT || 3000` を使用して起動します。
+ブラウザではホストとポート (例: http://54.95.8.178:3000/) にアクセスしてください。
+Access the server host and port in your browser, e.g. http://54.95.8.178:3000/.
+フロントエンドは `window.location.origin` を利用するため、`index.html` を同じホスト・ポートで開くか `API_URL` を指定してください。
 
 データは DynamoDB テーブル `kokyakukanri_TBL` に保存されます。
 Customer data is stored in the DynamoDB table `kokyakukanri_TBL`.
