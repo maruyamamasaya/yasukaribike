@@ -35,6 +35,15 @@ async function loadAll(page = 1) {
   const res = await fetch(API + '/customers');
   const data = await res.json();
   let customers = data.Items || data;
+  const qEl = document.getElementById('quick-search');
+  const keyword = qEl ? qEl.value.trim() : '';
+  if (keyword) {
+    customers = customers.filter(c =>
+      (c.name || '').includes(keyword) ||
+      (c.phoneNumber || c.phone || '').includes(keyword) ||
+      (c.email || '').includes(keyword)
+    );
+  }
   customers.sort((a, b) =>
     sortDescending ? getKey(b) - getKey(a) : getKey(a) - getKey(b)
   );
@@ -129,5 +138,7 @@ window.addEventListener('DOMContentLoaded', () => {
       loadAll();
     });
   }
+  const qEl = document.getElementById('quick-search');
+  if (qEl) qEl.addEventListener('input', () => loadAll(1));
   loadAll();
 });
