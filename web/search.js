@@ -1,4 +1,4 @@
-const API = 'https://example.com/api';
+const API = '';
 
 function getKey(c) {
   return c.createdAt || c.id || 0;

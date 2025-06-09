@@ -1,0 +1,4 @@
+id,name,email,category,phoneNumber,status,createdAt
+1,山田太郎,yamada@example.com,A,000-1111-2222,未済,2023-10-01
+2,佐藤花子,sato@example.com,B,000-2222-3333,済,2023-10-02
+3,鈴木次郎,suzuki@example.com,C,000-3333-4444,未済,2023-10-03
