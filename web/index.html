@@ -103,39 +103,6 @@
         </div>
       </div>
 
-      <div class="row">
-        <div class="col-12">
-          <div id="form-area" class="card p-3" style="display:none">
-            <input id="f-order_id" type="hidden" />
-              <div class="mb-2">名前: <input id="f-name" class="form-control" /></div>
-              <div class="mb-2">カナ: <input id="f-kana" class="form-control" /></div>
-              <div class="mb-2">メール: <input id="f-email" class="form-control" /></div>
-              <div class="mb-2">種別:
-                <select id="f-category" class="form-select">
-                  <option value="電話">電話</option>
-                  <option value="訪問対応">訪問対応</option>
-                  <option value="メール問い合わせ">メール問い合わせ</option>
-                  <option value="その他">その他</option>
-                </select>
-              </div>
-              <div class="mb-2">電話番号: <input id="f-phone" class="form-control" /></div>
-              <div class="mb-2">詳細: <input id="f-details" class="form-control" /></div>
-              <div class="mb-2">ステータス:
-                <select id="f-status" class="form-select">
-                  <option value="未済">未済</option>
-                  <option value="済">済</option>
-                </select>
-              </div>
-              <div class="mb-2">担当: <input id="f-staff" class="form-control" /></div>
-              <div class="mb-2">履歴: <textarea id="f-history-note" class="form-control"></textarea></div>
-            <div id="history-view" class="mb-2"></div>
-            <div>
-              <button class="btn btn-primary" onclick="saveCustomer()">保存</button>
-              <button class="btn btn-secondary" onclick="hideForm()">キャンセル</button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <script src="app.js"></script>

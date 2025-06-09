@@ -25,6 +25,9 @@ async function loadDetail() {
   const id = params.get('id');
   if (!id) return;
 
+  const editLink = document.getElementById('edit-link');
+  if (editLink) editLink.href = `edit.html?id=${encodeURIComponent(id)}`;
+
   try {
     const res = await fetch(API + '/customers/' + id);
     const data = await res.json();
