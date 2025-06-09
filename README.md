@@ -59,7 +59,7 @@ which fetches and shows customer details via `detail.js`.
 
 ## 🚀 サーバーの起動 / Starting the Server (Express)
 
-Node.js + Express を使ってサーバーを起動する手順：  
+Node.js + Express を使ってサーバーを起動する手順：
 Steps to start the server using Node.js and Express:
 
 ```bash
@@ -75,6 +75,20 @@ Customer data is currently hard-coded in memory.
 
 
 ---
+
+## ☁️ AWS Lambda デプロイ / Deploying to AWS Lambda
+
+Serverless Framework を使って AWS Lambda へデプロイできます。
+You can deploy the API to AWS Lambda using the Serverless Framework.
+
+```bash
+npm install
+npm run deploy
+```
+
+`lambda.js` がエクスポートする `handler` を呼び出して API Gateway からアクセスします。
+API Gateway triggers the `handler` exported from `lambda.js`.
+
 
 
 
