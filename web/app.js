@@ -21,7 +21,8 @@ async function loadCustomers() {
         <td>
           <button onclick="editCustomer('${c.id}')">編集</button>
           <button onclick="deleteCustomer('${c.id}')">削除</button>
-        </td>`;
+        </td>
+        <td><a href="detail.html?id=${c.id}">詳細</a></td>`;
       tbody.appendChild(tr);
     });
 }
