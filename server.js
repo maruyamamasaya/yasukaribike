@@ -1,8 +1,6 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const { parse } = require('csv-parse/sync');
-const { stringify } = require('csv-stringify/sync');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,14 +9,39 @@ const DATA_FILE = path.join(__dirname, 'sample.csv');
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'web')));
 
+function parseCSV(data) {
+  const lines = data.trim().split(/\r?\n/);
+  if (lines.length === 0) return [];
+  const headers = lines[0].split(',');
+  return lines.slice(1).map(line => {
+    const values = line.split(',');
+    const obj = {};
+    headers.forEach((h, i) => {
+      obj[h] = values[i] || '';
+    });
+    return obj;
+  });
+}
+
+function stringifyCSV(records) {
+  if (!records.length) return '';
+  const headers = Object.keys(records[0]);
+  const lines = [headers.join(',')];
+  for (const r of records) {
+    const line = headers.map(h => r[h] || '').join(',');
+    lines.push(line);
+  }
+  return lines.join('\n');
+}
+
 function readData() {
   if (!fs.existsSync(DATA_FILE)) return [];
-  const input = fs.readFileSync(DATA_FILE);
-  return parse(input, { columns: true });
+  const input = fs.readFileSync(DATA_FILE, 'utf8');
+  return parseCSV(input);
 }
 
 function writeData(records) {
-  const csv = stringify(records, { header: true });
+  const csv = stringifyCSV(records);
   fs.writeFileSync(DATA_FILE, csv);
 }
 
