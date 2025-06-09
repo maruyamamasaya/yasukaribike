@@ -8,6 +8,22 @@ let currentItem = null;
 let currentPage = 1;
 const PAGE_SIZE = 10;
 
+function formatDateTime(id) {
+  if (!id || id.length < 12) return '';
+  const y = id.slice(0, 4);
+  const m = id.slice(4, 6);
+  const d = id.slice(6, 8);
+  const hh = id.slice(8, 10);
+  const mm = id.slice(10, 12);
+  return `${y}/${m}/${d} ${hh}:${mm}`;
+}
+
+function getKey(c) {
+  if (c.order_id) return c.order_id.slice(0, 14);
+  if (c.date) return c.date.replace(/\//g, '');
+  return 0;
+}
+
 async function loadDashboard() {
   const res = await fetch(API + '/customers');
   const data = await res.json();
@@ -38,6 +54,7 @@ async function loadCustomers(page = 1) {
   let customers = data.Items || data;
 
   customers = customers.filter(c => (c.status || '') !== '済');
+  customers.sort((a, b) => getKey(a) - getKey(b));
 
   const totalPages = Math.max(1, Math.ceil(customers.length / PAGE_SIZE));
   if (currentPage > totalPages) currentPage = totalPages;
@@ -49,6 +66,15 @@ async function loadCustomers(page = 1) {
   const start = (currentPage - 1) * PAGE_SIZE;
   customers.slice(start, start + PAGE_SIZE).forEach(c => {
     const tr = document.createElement('tr');
+    let noteSnippet = '';
+    if (c.history) {
+      const keys = Object.keys(c.history).sort();
+      const last = keys[keys.length - 1];
+      if (last) noteSnippet = c.history[last] || '';
+    }
+    if (noteSnippet.length > 50) noteSnippet = noteSnippet.slice(0, 50) + '…';
+    noteSnippet = noteSnippet.replace(/\n/g, '<br>');
+
     tr.innerHTML = `
       <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
       <td>${c.phoneNumber || c.phone || ''}</td>
@@ -58,10 +84,11 @@ async function loadCustomers(page = 1) {
           ${c.status === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す'}
         </button>
       </td>
+      <td>${formatDateTime(c.order_id)}</td>
+      <td style="width:20%; white-space: pre-wrap;">${noteSnippet}</td>
       <td>
         <button class="btn btn-sm btn-primary" onclick="editCustomer('${c.order_id}')">編集</button>
-      </td>
-      <td><a href="detail.html?id=${c.order_id}" class="btn btn-sm btn-link">詳細</a></td>`;
+      </td>`;
     tbody.appendChild(tr);
   });
 

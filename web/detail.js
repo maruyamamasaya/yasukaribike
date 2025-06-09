@@ -5,14 +5,19 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   window.location.origin;
 
 function formatDateTime(id) {
-  if (!id || id.length < 14) return '';
+  if (!id || id.length < 12) return '';
   const y = id.slice(0, 4);
   const m = id.slice(4, 6);
   const d = id.slice(6, 8);
   const hh = id.slice(8, 10);
   const mm = id.slice(10, 12);
-  const ss = id.slice(12, 14);
-  return `${y}/${m}/${d} ${hh}:${mm}:${ss}`;
+  return `${y}/${m}/${d} ${hh}:${mm}`;
+}
+
+function getKey(c) {
+  if (c.order_id) return c.order_id.slice(0, 14);
+  if (c.date) return c.date.replace(/\//g, '');
+  return 0;
 }
 
 async function loadDetail() {
@@ -53,12 +58,15 @@ async function loadDetail() {
     if (item.history) {
       hist.innerHTML = '<h4>履歴</h4>';
       const ul = document.createElement('ul');
-      for (const [d, note] of Object.entries(item.history)) {
+      const entries = Object.entries(item.history).sort(([a], [b]) =>
+        a.localeCompare(b)
+      );
+      entries.forEach(([d, note]) => {
         const li = document.createElement('li');
         li.style.whiteSpace = 'pre-wrap';
         li.textContent = `${d}: ${note}`;
         ul.appendChild(li);
-      }
+      });
       hist.appendChild(ul);
     }
 
@@ -77,6 +85,7 @@ async function loadDetail() {
     }
     const pastBody = document.querySelector('#past-table tbody');
     pastBody.innerHTML = '';
+    list.sort((a, b) => getKey(a) - getKey(b));
     list.forEach(r => {
       const tr = document.createElement('tr');
       let note = '';

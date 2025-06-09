@@ -9,21 +9,20 @@ function getKey(c) {
 }
 
 function formatDateTime(id) {
-  if (!id || id.length < 14) return '';
+  if (!id || id.length < 12) return '';
   const y = id.slice(0, 4);
   const m = id.slice(4, 6);
   const d = id.slice(6, 8);
   const hh = id.slice(8, 10);
   const mm = id.slice(10, 12);
-  const ss = id.slice(12, 14);
-  return `${y}/${m}/${d} ${hh}:${mm}:${ss}`;
+  return `${y}/${m}/${d} ${hh}:${mm}`;
 }
 
 async function loadPending() {
   const res = await fetch(API + '/customers');
   const data = await res.json();
   let customers = (data.Items || data).filter(c => (c.status || '') === '未済');
-  customers.sort((a, b) => getKey(b) - getKey(a));
+  customers.sort((a, b) => getKey(a) - getKey(b));
 
   const tbody = document.querySelector('#pending-table tbody');
   tbody.innerHTML = '';
@@ -46,7 +45,7 @@ async function loadPending() {
       <td>${c.phoneNumber || c.phone || ''}</td>
       <td>${c.status || ''}</td>
       <td>${formatDateTime(c.order_id)}</td>
-      <td style="white-space: pre-wrap;">${noteSnippet}</td>
+      <td style="width:20%; white-space: pre-wrap;">${noteSnippet}</td>
     `;
 
     tbody.appendChild(tr);
