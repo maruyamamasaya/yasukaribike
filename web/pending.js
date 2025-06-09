@@ -17,7 +17,15 @@ function formatDateTime(id) {
   const d = id.slice(6, 8);
   const hh = id.slice(8, 10);
   const mm = id.slice(10, 12);
-  return `${y}/${m}/${d} ${hh}:${mm}`;
+  return `${y}/${m}/${d} ${hh}時${mm}分`;
+}
+
+function getDateStr(item) {
+  let key = '';
+  if (item.order_id) key = item.order_id.slice(0, 8);
+  else if (item.date) key = item.date.replace(/\//g, '').slice(0, 8);
+  if (!key) return '';
+  return `${key.slice(0, 4)}/${key.slice(4, 6)}/${key.slice(6, 8)}`;
 }
 
 async function loadPending() {
@@ -30,8 +38,22 @@ async function loadPending() {
 
   const tbody = document.querySelector('#pending-table tbody');
   tbody.innerHTML = '';
+  const colspan = document.querySelector('#pending-table thead tr').children.length;
+  let lastDate = '';
 
   customers.forEach(c => {
+    const dateStr = getDateStr(c);
+    if (dateStr && dateStr !== lastDate) {
+      const gr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = colspan;
+      td.className = 'table-secondary fw-bold';
+      td.textContent = dateStr;
+      gr.appendChild(td);
+      tbody.appendChild(gr);
+      lastDate = dateStr;
+    }
+
     const tr = document.createElement('tr');
 
     let noteSnippet = '';

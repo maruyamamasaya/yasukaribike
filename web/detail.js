@@ -11,7 +11,7 @@ function formatDateTime(id) {
   const d = id.slice(6, 8);
   const hh = id.slice(8, 10);
   const mm = id.slice(10, 12);
-  return `${y}/${m}/${d} ${hh}:${mm}`;
+  return `${y}/${m}/${d} ${hh}時${mm}分`;
 }
 
 function getKey(c) {
