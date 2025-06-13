@@ -66,7 +66,7 @@ async function loadDetail() {
     const hist = document.getElementById('history');
     hist.innerHTML = '';
     if (item.history) {
-      hist.innerHTML = '<h4>履歴</h4>';
+      hist.innerHTML = '<h4>メモ</h4>';
       const ul = document.createElement('ul');
       const entries = Object.entries(item.history).sort(([a], [b]) =>
         a.localeCompare(b)
