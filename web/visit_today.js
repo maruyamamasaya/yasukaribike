@@ -12,6 +12,16 @@ function getKey(c) {
   return 0;
 }
 
+function hasText(customer, keyword) {
+  if ((customer.details || '').includes(keyword)) return true;
+  if (customer.history) {
+    for (const note of Object.values(customer.history)) {
+      if (typeof note === 'string' && note.includes(keyword)) return true;
+    }
+  }
+  return false;
+}
+
 function formatDateTime(id) {
   if (!id || id.length < 12) return '';
   const y = id.slice(0, 4);
@@ -45,13 +55,18 @@ async function loadVisitToday(page = 1) {
     return isToday && (c.type || c.category) === '訪問対応';
   });
   const qEl = document.getElementById('quick-search');
+  const tEl = document.getElementById('text-search');
   const keyword = qEl ? qEl.value.trim() : '';
+  const textKey = tEl ? tEl.value.trim() : '';
   if (keyword) {
     customers = customers.filter(c =>
       (c.name || '').includes(keyword) ||
       (c.phoneNumber || c.phone || '').includes(keyword) ||
       (c.email || '').includes(keyword)
     );
+  }
+  if (textKey) {
+    customers = customers.filter(c => hasText(c, textKey));
   }
   customers.sort((a, b) =>
     sortDescending ? getKey(b) - getKey(a) : getKey(a) - getKey(b)
@@ -140,6 +155,8 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   const qEl = document.getElementById('quick-search');
+  const tEl = document.getElementById('text-search');
   if (qEl) qEl.addEventListener('input', () => loadVisitToday(1));
+  if (tEl) tEl.addEventListener('input', () => loadVisitToday(1));
   loadVisitToday();
 });
