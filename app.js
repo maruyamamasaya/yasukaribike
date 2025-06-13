@@ -130,6 +130,50 @@ app.get('/customers/search', async (req, res) => {
   }
 });
 
+// 本日の未済タスクを要約
+app.get('/summary', async (req, res) => {
+  try {
+    const data = await ddb.send(new ScanCommand({ TableName: TABLE }));
+    const items = data.Items || [];
+    const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0]
+      .replace(/-/g, '/');
+    const tasks = items.filter(
+      t => (t.date === today || t.order_id?.startsWith(today.replace(/\//g, '')))
+        && (t.status || '') === '未済'
+    );
+    const lines = tasks.map(t => `${t.name || '不明'}さん: ${t.details || ''}`);
+    const baseSummary = lines.join('\n');
+
+    const key = process.env.OPENAI_API_KEY;
+    if (!key) {
+      return res.json({ summary: baseSummary });
+    }
+
+    const prompt = `以下は本日未完了のタスク一覧です。箇条書きの内容を要約してください。\n${baseSummary}`;
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${key}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7
+      })
+    });
+    const json = await response.json();
+    const summary =
+      json.choices && json.choices[0] && json.choices[0].message.content;
+    res.json({ summary: summary || baseSummary });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to summarize' });
+  }
+});
+
 // 顧客を新規追加
 app.post('/customers', async (req, res) => {
   const item = {

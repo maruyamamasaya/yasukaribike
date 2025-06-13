@@ -178,3 +178,17 @@ if (dateHeader) {
 
 loadDashboard();
 loadCustomers();
+
+// AI要約ボタン
+const summaryBtn = document.getElementById('ai-summary-btn');
+if (summaryBtn) {
+  summaryBtn.addEventListener('click', async () => {
+    try {
+      const res = await fetch(API + '/summary');
+      const data = await res.json();
+      alert(data.summary || data.error || 'No summary available');
+    } catch (err) {
+      alert('要約の取得に失敗しました');
+    }
+  });
+}

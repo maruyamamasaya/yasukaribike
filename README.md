@@ -129,5 +129,12 @@ npm run deploy
 API Gateway triggers the `handler` exported from `lambda.js`.
 
 
+## 🧠 AI要約サンプル / AI Summary Sample
+
+`/summary` エンドポイントで本日の未済タスクを取得し、OpenAI API を用いて要約文を返します。
+環境変数 `OPENAI_API_KEY` に API キーを設定してください。
+トップページの「AI要約」ボタンから呼び出し、結果をダイアログ表示します。
+
+
 
 
