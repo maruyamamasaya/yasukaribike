@@ -102,7 +102,7 @@ async function loadDrafts(page = 1) {
       <td>${c.phoneNumber || c.phone || ''}</td>
       <td>${c.status || ''}</td>
       <td>${formatDateTime(c.order_id)}</td>
-      <td style="width:20%; white-space: pre-wrap;">${noteSnippet}</td>
+      <td style="width:40%; white-space: pre-wrap; font-size:0.85rem;">${noteSnippet}</td>
       <td>
         <a href="add.html?id=${c.order_id}" class="btn btn-sm btn-primary">編集</a>
         <button class="btn btn-sm btn-danger" onclick="deleteDraft('${c.order_id}')">削除</button>

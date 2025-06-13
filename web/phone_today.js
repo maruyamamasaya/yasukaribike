@@ -116,7 +116,7 @@ async function loadPhoneToday(page = 1) {
         </button>
       </td>
       <td>${formatDateTime(c.order_id)}</td>
-      <td style="width:20%; white-space: pre-wrap;">${snippet}</td>`;
+      <td style="width:40%; white-space: pre-wrap; font-size:0.85rem;">${snippet}</td>`;
     tbody.appendChild(tr);
   });
 
