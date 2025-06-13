@@ -107,7 +107,7 @@ async function loadAll(page = 1) {
         </button>
       </td>
       <td>${formatDateTime(c.order_id)}</td>
-      <td style="width:20%; white-space: pre-wrap;">${noteSnippet}</td>
+      <td style="width:40%; white-space: pre-wrap; font-size:0.85rem;">${noteSnippet}</td>
       <td><a href="edit.html?id=${c.order_id}" class="btn btn-sm btn-primary">編集</a></td>
       <td><button class="btn btn-sm btn-danger" onclick="deleteCustomer('${c.order_id}')">削除</button></td>`;
     tbody.appendChild(tr);

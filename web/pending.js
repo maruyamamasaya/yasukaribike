@@ -110,7 +110,7 @@ async function loadPending(page = 1) {
         <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${c.order_id}', '${c.status || ''}')">${btnLabel}</button>
       </td>
       <td>${formatDateTime(c.order_id)}</td>
-      <td style="width:20%; white-space: pre-wrap;">${noteSnippet}</td>
+      <td style="width:40%; white-space: pre-wrap; font-size:0.85rem;">${noteSnippet}</td>
     `;
 
     tbody.appendChild(tr);
