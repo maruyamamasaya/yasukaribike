@@ -9,3 +9,13 @@
     font-size: 1.2rem;
   }
 }
+
+/* Styling for date/time display */
+.date-part {
+  font-weight: bold;
+}
+
+.time-part {
+  color: #555;
+  font-size: 0.9em;
+}

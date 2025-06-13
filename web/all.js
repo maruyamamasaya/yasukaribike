@@ -13,7 +13,7 @@ function formatDateTime(id) {
   const d = id.slice(6, 8);
   const hh = id.slice(8, 10);
   const mm = id.slice(10, 12);
-  return `${y}/${m}/${d} ${hh}時${mm}分`;
+  return `<span class="date-part">${y}/${m}/${d}</span><br><span class="time-part">${hh}時${mm}分</span>`;
 }
 
 function getDateStr(item) {
