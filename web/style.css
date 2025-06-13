@@ -19,3 +19,7 @@
   color: #555;
   font-size: 0.9em;
 }
+
+#save-status {
+  min-height: 1.5em;
+}
