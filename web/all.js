@@ -30,19 +30,34 @@ function getKey(c) {
   return 0;
 }
 
+function hasText(customer, keyword) {
+  if ((customer.details || '').includes(keyword)) return true;
+  if (customer.history) {
+    for (const note of Object.values(customer.history)) {
+      if (typeof note === 'string' && note.includes(keyword)) return true;
+    }
+  }
+  return false;
+}
+
 async function loadAll(page = 1) {
   currentPage = page;
   const res = await fetch(API + '/customers');
   const data = await res.json();
   let customers = data.Items || data;
   const qEl = document.getElementById('quick-search');
+  const tEl = document.getElementById('text-search');
   const keyword = qEl ? qEl.value.trim() : '';
+  const textKey = tEl ? tEl.value.trim() : '';
   if (keyword) {
     customers = customers.filter(c =>
       (c.name || '').includes(keyword) ||
       (c.phoneNumber || c.phone || '').includes(keyword) ||
       (c.email || '').includes(keyword)
     );
+  }
+  if (textKey) {
+    customers = customers.filter(c => hasText(c, textKey));
   }
   customers.sort((a, b) =>
     sortDescending ? getKey(b) - getKey(a) : getKey(a) - getKey(b)
@@ -139,6 +154,8 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   const qEl = document.getElementById('quick-search');
+  const tEl = document.getElementById('text-search');
   if (qEl) qEl.addEventListener('input', () => loadAll(1));
+  if (tEl) tEl.addEventListener('input', () => loadAll(1));
   loadAll();
 });
