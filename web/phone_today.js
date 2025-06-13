@@ -44,6 +44,15 @@ async function loadPhoneToday(page = 1) {
     const isToday = c.date ? c.date === today : c.order_id && c.order_id.slice(0, 8) === todayKey;
     return isToday && (c.type || c.category) === '電話';
   });
+  const qEl = document.getElementById('quick-search');
+  const keyword = qEl ? qEl.value.trim() : '';
+  if (keyword) {
+    customers = customers.filter(c =>
+      (c.name || '').includes(keyword) ||
+      (c.phoneNumber || c.phone || '').includes(keyword) ||
+      (c.email || '').includes(keyword)
+    );
+  }
   customers.sort((a, b) =>
     sortDescending ? getKey(b) - getKey(a) : getKey(a) - getKey(b)
   );
@@ -130,5 +139,7 @@ window.addEventListener('DOMContentLoaded', () => {
       loadPhoneToday();
     });
   }
+  const qEl = document.getElementById('quick-search');
+  if (qEl) qEl.addEventListener('input', () => loadPhoneToday(1));
   loadPhoneToday();
 });
