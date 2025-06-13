@@ -4,6 +4,18 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
 
 let currentItem = null;
 
+const HISTORY_TEMPLATE = `【お客様のご用件】\n\n【担当者】\n担当者のメモをここに打つ`;
+
+function insertTemplate() {
+  const field = document.getElementById('f-history-note');
+  if (!field) return;
+  if (field.value.trim() &&
+      !confirm('テンプレートを挿入すると現在の入力が失われます。よろしいですか？')) {
+    return;
+  }
+  field.value = HISTORY_TEMPLATE;
+}
+
 async function loadCustomer() {
   const params = new URLSearchParams(location.search);
   const id = params.get('id');
