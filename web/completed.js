@@ -6,6 +6,16 @@ let sortDescending = true;
 let currentPage = 1;
 const PAGE_SIZE = 20;
 
+function hasText(customer, keyword) {
+  if ((customer.details || '').includes(keyword)) return true;
+  if (customer.history) {
+    for (const note of Object.values(customer.history)) {
+      if (typeof note === 'string' && note.includes(keyword)) return true;
+    }
+  }
+  return false;
+}
+
 function getKey(c) {
   if (c.order_id) return c.order_id.slice(0, 14);
   if (c.date) return c.date.replace(/\//g, '');
@@ -34,7 +44,23 @@ async function loadCompleted(page = 1) {
   currentPage = page;
   const res = await fetch(API + '/customers');
   const data = await res.json();
-  let customers = (data.Items || data).filter(c => (c.status || '') === '済');
+  let customers = (data.Items || data)
+    .filter(c => !c.draft)
+    .filter(c => (c.status || '') === '済');
+  const qEl = document.getElementById('quick-search');
+  const tEl = document.getElementById('text-search');
+  const keyword = qEl ? qEl.value.trim() : '';
+  const textKey = tEl ? tEl.value.trim() : '';
+  if (keyword) {
+    customers = customers.filter(c =>
+      (c.name || '').includes(keyword) ||
+      (c.phoneNumber || c.phone || '').includes(keyword) ||
+      (c.email || '').includes(keyword)
+    );
+  }
+  if (textKey) {
+    customers = customers.filter(c => hasText(c, textKey));
+  }
   customers.sort((a, b) =>
     sortDescending ? getKey(b) - getKey(a) : getKey(a) - getKey(b)
   );
@@ -121,5 +147,9 @@ window.addEventListener('DOMContentLoaded', () => {
       loadCompleted();
     });
   }
+  const qEl = document.getElementById('quick-search');
+  const tEl = document.getElementById('text-search');
+  if (qEl) qEl.addEventListener('input', () => loadCompleted(1));
+  if (tEl) tEl.addEventListener('input', () => loadCompleted(1));
   loadCompleted();
 });

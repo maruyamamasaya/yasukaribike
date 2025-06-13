@@ -14,7 +14,9 @@ function sanitizePhoneInput(e) {
   e.target.value = toHalfWidth(e.target.value).replace(/-/g, '');
 }
 
-async function saveCustomer() {
+let autoSaveTimer = null;
+
+async function saveCustomer(isDraft = false) {
   const note = document.getElementById('f-history-note').value.trim();
   const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
   let history = {};
@@ -47,19 +49,43 @@ async function saveCustomer() {
     staff: document.getElementById('f-staff').value,
     status: '未済',
     history,
-    bikes: []
+    bikes: [],
+    draft: isDraft
   };
+  const idField = document.getElementById('f-order_id');
+  const id = idField.value;
 
-  await fetch(API + '/customers', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
+  if (id) {
+    await fetch(API + '/customers/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  } else {
+    const res = await fetch(API + '/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.order_id) idField.value = data.order_id;
+    }
+  }
 
-  window.location.href = 'index.html';
+  if (!isDraft) {
+    window.location.href = 'index.html';
+  }
+}
+
+function scheduleAutoSave() {
+  if (autoSaveTimer) clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => saveCustomer(true), 5000);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('f-email').addEventListener('input', sanitizeEmailInput);
   document.getElementById('f-phone').addEventListener('input', sanitizePhoneInput);
+  const inputs = document.querySelectorAll('input, textarea, select');
+  inputs.forEach(el => el.addEventListener('input', scheduleAutoSave));
 });

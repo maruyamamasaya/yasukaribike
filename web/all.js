@@ -44,7 +44,7 @@ async function loadAll(page = 1) {
   currentPage = page;
   const res = await fetch(API + '/customers');
   const data = await res.json();
-  let customers = data.Items || data;
+  let customers = (data.Items || data).filter(c => !c.draft);
   const qEl = document.getElementById('quick-search');
   const tEl = document.getElementById('text-search');
   const keyword = qEl ? qEl.value.trim() : '';

@@ -187,7 +187,8 @@ app.post('/customers', async (req, res) => {
     date: req.body.date || new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0].replace(/-/g, '/'),
     staff: req.body.staff || '',
     phone: req.body.phoneNumber || req.body.phone || '',
-    history: req.body.history || {}
+    history: req.body.history || {},
+    draft: !!req.body.draft
   };
   try {
     await ddb.send(new PutCommand({ TableName: TABLE, Item: item }));
@@ -225,7 +226,8 @@ app.put('/customers/:id', async (req, res) => {
     date: req.body.date,
     staff: req.body.staff,
     phone: req.body.phoneNumber || req.body.phone,
-    history: req.body.history
+    history: req.body.history,
+    draft: req.body.draft
   };
 
   const sets = [];
