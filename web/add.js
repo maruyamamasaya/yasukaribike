@@ -17,6 +17,13 @@ function sanitizePhoneInput(e) {
 let autoSaveTimer = null;
 let currentItem = null;
 
+function showStatus(message) {
+  const el = document.getElementById('save-status');
+  if (!el) return;
+  el.textContent = message;
+  setTimeout(() => { el.textContent = ''; }, 3000);
+}
+
 async function saveCustomer(isDraft = false) {
   const note = document.getElementById('f-history-note').value.trim();
   const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
@@ -77,6 +84,9 @@ async function saveCustomer(isDraft = false) {
       const data = await res.json();
       if (data.order_id) idField.value = data.order_id;
     }
+  }
+  if (isDraft) {
+    showStatus('一時保存しました');
   }
   if (!isDraft) {
     window.location.href = 'index.html';
