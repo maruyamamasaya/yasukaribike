@@ -6,22 +6,6 @@ let sortDescending = true;
 let currentPage = 1;
 const PAGE_SIZE = 20;
 
-function getKey(c) {
-  if (c.order_id) return c.order_id.slice(0, 14);
-  if (c.date) return c.date.replace(/\//g, '');
-  return 0;
-}
-
-function hasText(customer, keyword) {
-  if ((customer.details || '').includes(keyword)) return true;
-  if (customer.history) {
-    for (const note of Object.values(customer.history)) {
-      if (typeof note === 'string' && note.includes(keyword)) return true;
-    }
-  }
-  return false;
-}
-
 function formatDateTime(id) {
   if (!id || id.length < 12) return '';
   const y = id.slice(0, 4);
@@ -40,18 +24,27 @@ function getDateStr(item) {
   return `${key.slice(0, 4)}/${key.slice(4, 6)}/${key.slice(6, 8)}`;
 }
 
-async function loadToday(page = 1) {
+function getKey(c) {
+  if (c.order_id) return c.order_id.slice(0, 14);
+  if (c.date) return c.date.replace(/\//g, '');
+  return 0;
+}
+
+function hasText(customer, keyword) {
+  if ((customer.details || '').includes(keyword)) return true;
+  if (customer.history) {
+    for (const note of Object.values(customer.history)) {
+      if (typeof note === 'string' && note.includes(keyword)) return true;
+    }
+  }
+  return false;
+}
+
+async function loadDrafts(page = 1) {
   currentPage = page;
   const res = await fetch(API + '/customers');
   const data = await res.json();
-  let customers = (data.Items || data).filter(c => !c.draft);
-  const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0].replace(/-/g, '/');
-  const todayKey = today.replace(/\//g, '');
-  customers = customers.filter(c => {
-    if (c.date) return c.date === today;
-    if (c.order_id) return c.order_id.slice(0, 8) === todayKey;
-    return false;
-  });
+  let customers = (data.Items || data).filter(c => c.draft);
   const qEl = document.getElementById('quick-search');
   const tEl = document.getElementById('text-search');
   const keyword = qEl ? qEl.value.trim() : '';
@@ -74,11 +67,11 @@ async function loadToday(page = 1) {
   if (currentPage > totalPages) currentPage = totalPages;
   if (currentPage < 1) currentPage = 1;
 
-  const tbody = document.querySelector('#today-table tbody');
+  const tbody = document.querySelector('#drafts-table tbody');
   tbody.innerHTML = '';
   const start = (currentPage - 1) * PAGE_SIZE;
   const slice = customers.slice(start, start + PAGE_SIZE);
-  const colspan = document.querySelector('#today-table thead tr').children.length;
+  const colspan = document.querySelector('#drafts-table thead tr').children.length;
   let lastDate = '';
 
   slice.forEach(c => {
@@ -95,26 +88,26 @@ async function loadToday(page = 1) {
     }
 
     const tr = document.createElement('tr');
-    let note = '';
+    let noteSnippet = '';
     if (c.history) {
       const keys = Object.keys(c.history).sort();
       const last = keys[keys.length - 1];
-      if (last) note = c.history[last];
+      if (last) noteSnippet = c.history[last] || '';
     }
-    let snippet = note.slice(0, 50);
-    if (note.length > 50) snippet += '…';
-    snippet = snippet.replace(/\n/g, '<br>');
+    if (noteSnippet.length > 50) noteSnippet = noteSnippet.slice(0, 50) + '…';
+    noteSnippet = noteSnippet.replace(/\n/g, '<br>');
+
     tr.innerHTML = `
-      <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
+      <td><a href="add.html?id=${c.order_id}">${c.name}</a></td>
       <td>${c.phoneNumber || c.phone || ''}</td>
-      <td>
-        ${c.status || ''}
-        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${c.order_id}', '${c.status || ''}')">
-          ${c.status === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す'}
-        </button>
-      </td>
+      <td>${c.status || ''}</td>
       <td>${formatDateTime(c.order_id)}</td>
-      <td style="width:20%; white-space: pre-wrap;">${snippet}</td>`;
+      <td style="width:20%; white-space: pre-wrap;">${noteSnippet}</td>
+      <td>
+        <a href="add.html?id=${c.order_id}" class="btn btn-sm btn-primary">編集</a>
+        <button class="btn btn-sm btn-danger" onclick="deleteDraft('${c.order_id}')">削除</button>
+      </td>
+    `;
     tbody.appendChild(tr);
   });
 
@@ -127,21 +120,17 @@ async function loadToday(page = 1) {
 }
 
 function nextPage() {
-  loadToday(currentPage + 1);
+  loadDrafts(currentPage + 1);
 }
 
 function prevPage() {
-  loadToday(currentPage - 1);
+  loadDrafts(currentPage - 1);
 }
 
-async function toggleStatus(id, current) {
-  const newStatus = current === '済' ? '未済' : '済';
-  await fetch(API + '/customers/' + id, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: newStatus })
-  });
-  loadToday();
+async function deleteDraft(id) {
+  if (!confirm('削除してよろしいですか？')) return;
+  await fetch(API + '/customers/' + id, { method: 'DELETE' });
+  loadDrafts();
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -149,12 +138,12 @@ window.addEventListener('DOMContentLoaded', () => {
   if (header) {
     header.addEventListener('click', () => {
       sortDescending = !sortDescending;
-      loadToday();
+      loadDrafts();
     });
   }
   const qEl = document.getElementById('quick-search');
   const tEl = document.getElementById('text-search');
-  if (qEl) qEl.addEventListener('input', () => loadToday(1));
-  if (tEl) tEl.addEventListener('input', () => loadToday(1));
-  loadToday();
+  if (qEl) qEl.addEventListener('input', () => loadDrafts(1));
+  if (tEl) tEl.addEventListener('input', () => loadDrafts(1));
+  loadDrafts();
 });
