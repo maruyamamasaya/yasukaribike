@@ -78,7 +78,6 @@ async function saveCustomer(isDraft = false) {
       if (data.order_id) idField.value = data.order_id;
     }
   }
-
   if (!isDraft) {
     window.location.href = 'index.html';
   }
