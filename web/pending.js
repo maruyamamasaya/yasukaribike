@@ -35,6 +35,15 @@ async function loadPending(page = 1) {
   const res = await fetch(API + '/customers');
   const data = await res.json();
   let customers = (data.Items || data).filter(c => (c.status || '') === '未済');
+  const qEl = document.getElementById('quick-search');
+  const keyword = qEl ? qEl.value.trim() : '';
+  if (keyword) {
+    customers = customers.filter(c =>
+      (c.name || '').includes(keyword) ||
+      (c.phoneNumber || c.phone || '').includes(keyword) ||
+      (c.email || '').includes(keyword)
+    );
+  }
   customers.sort((a, b) =>
     sortDescending ? getKey(b) - getKey(a) : getKey(a) - getKey(b)
   );
@@ -124,5 +133,7 @@ window.addEventListener('DOMContentLoaded', () => {
       loadPending();
     });
   }
+  const qEl = document.getElementById('quick-search');
+  if (qEl) qEl.addEventListener('input', () => loadPending(1));
   loadPending();
 });

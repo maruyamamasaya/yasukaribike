@@ -8,6 +8,16 @@ let currentPage = 1;
 const PAGE_SIZE = 20;
 let searchResults = [];
 
+function hasText(customer, keyword) {
+  if ((customer.details || '').includes(keyword)) return true;
+  if (customer.history) {
+    for (const note of Object.values(customer.history)) {
+      if (typeof note === 'string' && note.includes(keyword)) return true;
+    }
+  }
+  return false;
+}
+
 async function searchCustomers(page = 1) {
   if (page === 1) {
     const dateInput = document.getElementById('s-date').value.trim();
@@ -18,6 +28,7 @@ async function searchCustomers(page = 1) {
     const status = document.getElementById('s-status').value.trim();
     const category = document.getElementById('s-category').value.trim();
     const details = document.getElementById('s-details').value.trim();
+    const text = document.getElementById('s-text').value.trim();
 
     const res = await fetch(API + '/customers');
     const data = await res.json();
@@ -30,7 +41,8 @@ async function searchCustomers(page = 1) {
       (!email || (c.email || '').includes(email)) &&
       (!status || (c.status || '') === status) &&
       (!category || (c.category || c.type || '') === category) &&
-      (!details || (c.details || '').includes(details))
+      (!details || (c.details || '').includes(details)) &&
+      (!text || hasText(c, text))
     );
 
     searchResults = customers;
