@@ -26,6 +26,9 @@ The phone number field is labeled as "電話番号 (Phone Number)" in the table 
 画面の使い方や検索方法をまとめた `manual.html` を `web` ディレクトリに追加しました。
 The `web` directory now contains `manual.html` explaining how to operate each screen and how to search.
 
+最新版では目次とインデックスを備え、項目間を簡単に行き来できます。
+The latest manual includes a table of contents and an index for easier navigation.
+
 トップページ (`index.html`) 上部のリンクから参照できます。
 You can access it from the link at the top of `index.html`.
 
