@@ -12,15 +12,47 @@
   <div class="container">
     <h1 class="mb-3">操作マニュアル</h1>
     <p>当システムでは問い合わせの登録や検索、メモ確認を行うことができます。以下は各ページの概要です。</p>
-    <h2 class="h4 mt-4">トップページ</h2>
+    <nav>
+      <ul class="list-unstyled">
+        <li><a href="#top">トップページ</a></li>
+        <li><a href="#search">検索</a></li>
+        <li><a href="#add-edit">登録・編集</a></li>
+        <li><a href="#list">一覧ページ</a></li>
+      </ul>
+    </nav>
+    <h2 id="top" class="h4 mt-4">トップページ</h2>
     <p>ダッシュボードでは総問い合わせ数や本日の件数などを表示します。各カードをクリックすると一覧ページへ移動します。</p>
-    <h2 class="h4 mt-4">検索</h2>
+    <ul>
+      <li>ダッシュボードカードから各一覧へ直接移動できます。</li>
+      <li>「AI要約」ボタンで本日の未済タスクを要約表示します。</li>
+    </ul>
+    <h2 id="search" class="h4 mt-4">検索</h2>
     <p>上部の「詳細検索」ボタンから <code>search.html</code> に移動し、日付や名前、種別などで絞り込みが可能です。</p>
-    <h2 class="h4 mt-4">登録・編集</h2>
+    <ul>
+      <li>名前や電話番号は部分一致で検索できます。</li>
+      <li>日付は範囲を指定して入力できます。</li>
+    </ul>
+    <h2 id="add-edit" class="h4 mt-4">登録・編集</h2>
     <p>「電話・訪問対応新規フォーム」ボタンで新しい問い合わせを登録できます (<code>add.html</code>)。一覧の「詳細」から編集画面 (<code>edit.html</code>) を開けます。</p>
-    <h2 class="h4 mt-4">一覧ページ</h2>
+    <ul>
+      <li>履歴メモを時系列で追加して保存できます。</li>
+      <li>入力途中の内容は「一時保存一覧」で確認可能です。</li>
+    </ul>
+    <h2 id="list" class="h4 mt-4">一覧ページ</h2>
     <p>「本日の問い合わせ」「電話対応」「訪問対応」「未済」「完了済み」などのページでは問い合わせを一覧表示します。ページ下部の「前へ」「次へ」でページ移動できます。</p>
     <p>各行の「詳細」リンクから <code>detail.html</code> を開き、メモや編集リンクを確認できます。</p>
+    <ul>
+      <li>各ページはページネーションに対応しています。</li>
+      <li>並び替えや検索条件を保持したまま移動できます。</li>
+    </ul>
+
+    <h2 id="index" class="h4 mt-4">インデックス</h2>
+    <ul>
+      <li><a href="#top">トップページ</a> - ダッシュボード、AI要約</li>
+      <li><a href="#search">検索</a> - 絞り込み機能</li>
+      <li><a href="#add-edit">登録・編集</a> - メモ管理</li>
+      <li><a href="#list">一覧ページ</a> - ページネーション</li>
+    </ul>
     <div id="breadcrumb" class="text-muted small mb-2"></div>
     <a href="#" class="btn btn-secondary" onclick="goBack(event)">戻る</a>
   </div>
