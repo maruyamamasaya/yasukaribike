@@ -32,7 +32,7 @@ async function searchCustomers(page = 1) {
 
     const res = await fetch(API + '/customers');
     const data = await res.json();
-    let customers = data.Items || data;
+    let customers = (data.Items || data).filter(c => !c.draft);
 
     customers = customers.filter(c =>
       (!date || (c.date || '').includes(date)) &&

@@ -44,7 +44,9 @@ async function loadPending(page = 1) {
   currentPage = page;
   const res = await fetch(API + '/customers');
   const data = await res.json();
-  let customers = (data.Items || data).filter(c => (c.status || '') === '未済');
+  let customers = (data.Items || data)
+    .filter(c => !c.draft)
+    .filter(c => (c.status || '') === '未済');
   const qEl = document.getElementById('quick-search');
   const tEl = document.getElementById('text-search');
   const keyword = qEl ? qEl.value.trim() : '';

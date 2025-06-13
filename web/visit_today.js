@@ -44,7 +44,7 @@ async function loadVisitToday(page = 1) {
   currentPage = page;
   const res = await fetch(API + '/customers');
   const data = await res.json();
-  let customers = data.Items || data;
+  let customers = (data.Items || data).filter(c => !c.draft);
   const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
     .toISOString()
     .split('T')[0]

@@ -35,7 +35,7 @@ function getKey(c) {
 async function loadDashboard() {
   const res = await fetch(API + '/customers');
   const data = await res.json();
-  const customers = data.Items || data;
+  const customers = (data.Items || data).filter(c => !c.draft);
 
   const total = customers.length;
   const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0].replace(/-/g, '/');
@@ -75,7 +75,7 @@ async function loadCustomers(page = 1) {
   currentPage = page;
   const res = await fetch(API + '/customers');
   const data = await res.json();
-  let customers = data.Items || data;
+  let customers = (data.Items || data).filter(c => !c.draft);
 
   customers = customers.filter(c => (c.status || '') !== '済');
   customers.sort((a, b) =>
