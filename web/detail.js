@@ -37,7 +37,6 @@ async function loadDetail() {
     tbody.innerHTML = '';
     const fields = [
       ['order_id', '管理ID'],
-      ['date', '日付'],
       ['name', '名前（顧客名）'],
       ['kana', 'カナ'],
       ['status', 'ステータス'],
@@ -45,7 +44,7 @@ async function loadDetail() {
       ['phone', '電話番号'],
       ['email', 'メールアドレス'],
       ['type', 'お問い合わせ種別'],
-      ['details', 'お問い合わせいただいてるバイク名']
+      ['details', 'バイク名など']
     ];
     fields.forEach(([key, label]) => {
       let val = item[key];
@@ -74,7 +73,7 @@ async function loadDetail() {
       entries.forEach(([d, note]) => {
         const li = document.createElement('li');
         li.style.whiteSpace = 'pre-wrap';
-        li.textContent = `${d}: ${note}`;
+        li.textContent = note;
         ul.appendChild(li);
       });
       hist.appendChild(ul);

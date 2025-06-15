@@ -23,3 +23,13 @@
 #save-status {
   min-height: 1.5em;
 }
+
+/* Styling for customer detail table */
+#detail-table th,
+#detail-table td {
+  width: 50%;
+}
+
+#detail-table th {
+  background-color: #f8f9fa;
+}
