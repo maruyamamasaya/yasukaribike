@@ -24,6 +24,8 @@ const ddb = DynamoDBDocumentClient.from(client);
 AWS.config.update({ region });
 const dynamo = new AWS.DynamoDB.DocumentClient();
 const GOOBIKE_TABLE = process.env.GOOBIKE_TABLE || 'Rebikele_goobikemail03_TBL';
+const RESERVE_NOTICE_TABLE =
+  process.env.RESERVE_NOTICE_TABLE || 'Rebikele_goobikemail01_TBL';
 
 function respondError(res, status, label, err) {
   console.error(err);
@@ -145,6 +147,25 @@ function parseGoobikeReserveEmail(text) {
   return {
     inquiry_id: idMatch ? idMatch[1].trim() : undefined,
     reserve_datetime: dateMatch ? dateMatch[1].trim() : undefined
+  };
+}
+
+function parseGoobikeReserveNoticeEmail(text) {
+  const receptionMatch = text.match(/\u53d7\u4ed8\u756a\u53f7[^\d]*(\d+)/); // 受付番号
+  const inquiryMatch = text.match(/\u554f\u5408\u305b\u756a\u53f7[^\d]*(\d+)/); // 問合せ番号
+  const nameMatch = text.match(/\uff3b\u6c0f\u540d\uff3d\s*([^\n]+)/); // ［氏名］
+  const phoneMatch = text.match(/(\u96fb\u8a71\u756a\u53f7|TEL)[:\uff1a]?\s*([0-9-]{8,16})/);
+  const emailMatch = text.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/);
+  const dateMatch = text.match(/\u4e88\u7d04\u65e5\u6642[^\d]*(\d{4}\/\d{2}\/\d{2}\s*\d{2}:\d{2})/);
+  const typeMatch = text.match(/\u554f\u5408\u305b\u7a2e\u5225[^\n]*([^\n]+)/);
+  return {
+    reception_number: receptionMatch ? receptionMatch[1].trim() : undefined,
+    inquiry_number: inquiryMatch ? inquiryMatch[1].trim() : undefined,
+    customer_name: nameMatch ? nameMatch[1].trim() : undefined,
+    phone: phoneMatch ? phoneMatch[2].trim() : undefined,
+    customer_email: emailMatch ? emailMatch[0] : undefined,
+    reserve_datetime: dateMatch ? dateMatch[1].trim() : undefined,
+    inquiry_type: typeMatch ? typeMatch[1].trim() : undefined
   };
 }
 
@@ -952,6 +973,104 @@ app.get('/api/fetch-goobike-est-all', async (req, res) => {
           imap.end();
           const emails = await Promise.all(tasks);
           res.json({ emails });
+        });
+      });
+    });
+  });
+
+  imap.once('error', err => {
+    respondError(res, 500, 'IMAP connection error', err);
+  });
+
+  imap.connect();
+});
+
+// グーバイク予約お知らせメールを取得してDynamoDBへ保存
+app.get('/api/save-goobike-reserve-notice', async (req, res) => {
+  const imap = new Imap(getImapConfig());
+  const targetFrom = 'goobike_reserve@goobike.com';
+
+  imap.once('ready', () => {
+    imap.openBox('INBOX', false, (err, box) => {
+      if (err) {
+        imap.end();
+        return respondError(res, 500, 'Failed to open mailbox', err);
+      }
+
+      const since = new Date();
+      since.setMonth(since.getMonth() - 2);
+
+      imap.search([
+        ['FROM', targetFrom],
+        ['HEADER', 'SUBJECT', 'ご予約'],
+        ['SINCE', since.toUTCString()]
+      ], (err, results) => {
+        if (err) {
+          imap.end();
+          return respondError(res, 500, 'Failed to search mailbox', err);
+        }
+        if (!results.length) {
+          imap.end();
+          return res.json({ results: [] });
+        }
+
+        const f = imap.fetch(results, { bodies: '' });
+        const tasks = [];
+
+        f.on('message', msg => {
+          tasks.push(new Promise(resolve => {
+            msg.on('body', stream => {
+              simpleParser(stream, async (err, mail) => {
+                if (err) return resolve({ status: 'error', message: err.message });
+
+                const info = parseGoobikeReserveNoticeEmail(mail.text || '');
+                const uniqueId = mail.messageId ||
+                  `${info.reception_number || 'UNKNOWN'}-${Date.now()}`;
+                const item = {
+                  unique_id: uniqueId,
+                  date: mail.date ? mail.date.toISOString() : new Date().toISOString(),
+                  customer_name: info.customer_name || '',
+                  customer_email:
+                    info.customer_email || (mail.from && mail.from.value && mail.from.value[0] ? mail.from.value[0].address : ''),
+                  phone: info.phone || '',
+                  body: mail.text || '',
+                  inquiry_number: info.inquiry_number || '',
+                  reception_number: info.reception_number || '',
+                  reserve_datetime: info.reserve_datetime || '',
+                  inquiry_type: info.inquiry_type || '',
+                  createdAt: new Date().toISOString()
+                };
+
+                const params = {
+                  TableName: RESERVE_NOTICE_TABLE,
+                  Item: item,
+                  ConditionExpression: 'attribute_not_exists(unique_id)'
+                };
+
+                try {
+                  await dynamo.put(params).promise();
+                  resolve({ unique_id: uniqueId, status: 'saved' });
+                } catch (e) {
+                  if (e.code === 'ConditionalCheckFailedException') {
+                    resolve({ unique_id: uniqueId, status: 'skipped' });
+                  } else {
+                    resolve({ unique_id: uniqueId, status: 'error', message: e.message });
+                  }
+                }
+              });
+            });
+          }));
+        });
+
+        f.once('error', err => {
+          imap.end();
+          respondError(res, 500, 'Failed to fetch emails', err);
+        });
+
+        f.once('end', async () => {
+          imap.end();
+          const results = await Promise.all(tasks);
+          res.json({ results });
         });
       });
     });
