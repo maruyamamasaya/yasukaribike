@@ -25,9 +25,9 @@
       </div>
     </div>
 
-    <div class="row mb-3">
+    <div id="split-container" class="d-flex mb-3 flex-nowrap">
       <!-- Dashboard Area -->
-      <div id="dashboard" class="col-md-6 mb-3 mb-md-0" style="height:600px; overflow:auto; resize: horizontal;">
+      <div id="dashboard" class="flex-grow-1 p-0" style="height:600px; overflow:auto;">
         <div id="dashboard-metrics" class="row row-cols-2 g-2 mb-3">
           <div class="col">
             <a href="all.html" class="text-decoration-none">
@@ -110,8 +110,10 @@
 
       </div>
 
+      <div id="divider" class="flex-shrink-0 p-0" style="width:5px; cursor:ew-resize; background:#eee;"></div>
+
       <!-- Mail Area -->
-      <div id="mail" class="col-md-6" style="height:600px; resize: horizontal; overflow:auto;">
+      <div id="mail" class="flex-grow-1 p-0" style="height:600px; overflow:auto;">
         <div class="d-flex flex-column h-100">
           <div class="border flex-fill p-3 mb-2">メール</div>
           <div class="border flex-fill p-3">受電履歴（アイブリー）</div>
@@ -153,5 +155,6 @@
     </footer>
 
     <script src="app.js"></script>
+    <script src="split.js"></script>
   </body>
 </html>

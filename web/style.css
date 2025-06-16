@@ -33,3 +33,20 @@
 #detail-table th {
   background-color: #f8f9fa;
 }
+
+/* Split container for dashboard and mail */
+#split-container {
+  width: 100%;
+}
+
+#dashboard,
+#mail {
+  width: 50%;
+  flex-shrink: 0;
+}
+
+#divider {
+  width: 5px;
+  background: #eee;
+  cursor: ew-resize;
+}
