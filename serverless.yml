@@ -8,7 +8,6 @@ provider:
   environment:
     TABLE_NAME: kokyakukanri_TBL
     GOOBIKE_TABLE: Rebikele_goobikemail03_TBL
-    RESERVE_NOTICE_TABLE: Rebikele_goobikemail01_TBL
     OPENAI_API_KEY: ${env:OPENAI_API_KEY}
   iamRoleStatements:
     - Effect: Allow
@@ -34,7 +33,6 @@ provider:
         - dynamodb:Scan
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-      Resource: arn:aws:dynamodb:*:*:table/Rebikele_goobikemail01_TBL
 
 functions:
   app:
@@ -64,16 +62,5 @@ resources:
             AttributeType: S
         KeySchema:
           - AttributeName: inquiry_id
-            KeyType: HASH
-        BillingMode: PAY_PER_REQUEST
-    ReserveNoticeTable:
-      Type: AWS::DynamoDB::Table
-      Properties:
-        TableName: Rebikele_goobikemail01_TBL
-        AttributeDefinitions:
-          - AttributeName: unique_id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: unique_id
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
