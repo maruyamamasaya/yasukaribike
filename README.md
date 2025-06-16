@@ -80,6 +80,18 @@ Steps to start the server using Node.js and Express:
 AWS SDK を利用するため `AWS_REGION` を設定します (例: `ap-northeast-1`)。
 Set `AWS_REGION` for the AWS SDK (e.g., `ap-northeast-1`).
 
+### 必要な環境変数 / Required Environment Variables
+- **BASIC_USER / BASIC_PASS**: ベーシック認証のユーザー名とパスワード / Basic auth credentials
+- **EMAIL_USER / EMAIL_PASS**: メール取得用 IMAP アカウント / IMAP login for email
+- **IMAP_HOST / IMAP_PORT**: IMAP サーバーのホスト名とポート / IMAP server host and port
+- **TABLE_NAME**, **GOOBIKE_TABLE**: 利用する DynamoDB テーブル名 / DynamoDB table names
+- **AWS_REGION**: AWS SDK が利用するリージョン / AWS region used by the SDK
+
+これらは `.env` ファイルまたは環境変数として設定してください。 / Add these values in a `.env` file or export them.
+`.env.example` に典型的な値のサンプルを用意しています。 / See `.env.example` for typical values.
+値が不足していると `/api/fetch-email` などのエンドポイントは 500 エラーを返します。
+Missing values will cause endpoints such as `/api/fetch-email` to return 500 errors.
+
 ```bash
 npm install
 export AWS_REGION=ap-northeast-1
