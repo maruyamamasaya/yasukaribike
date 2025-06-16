@@ -85,6 +85,8 @@ npm install
 export AWS_REGION=ap-northeast-1
 npm start
 ```
+アプリは起動時に `EMAIL_USER`、`EMAIL_PASS`、`IMAP_HOST` を確認し、不足しているとエラーで停止します。
+The application checks `EMAIL_USER`, `EMAIL_PASS`, and `IMAP_HOST` on startup. Missing values throw an error and stop the server.
 サーバーは `server.js` で `process.env.PORT || 3000` を使用して起動します。
 The server starts on `process.env.PORT || 3000` in `server.js`.
 

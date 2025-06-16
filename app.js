@@ -25,7 +25,18 @@ AWS.config.update({ region });
 const dynamo = new AWS.DynamoDB.DocumentClient();
 const GOOBIKE_TABLE = process.env.GOOBIKE_TABLE || 'Rebikele_goobikemail03_TBL';
 
+function verifyEmailConfig() {
+  const required = ['EMAIL_USER', 'EMAIL_PASS', 'IMAP_HOST'];
+  for (const key of required) {
+    if (!process.env[key]) {
+      console.error(`Missing ${key}`);
+      throw new Error(`Missing ${key}`);
+    }
+  }
+}
+
 const app = express();
+verifyEmailConfig();
 
 // Basic Authentication middleware
 const AUTH_USER = process.env.BASIC_USER || 'user';
