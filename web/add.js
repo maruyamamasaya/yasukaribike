@@ -17,7 +17,7 @@ function sanitizePhoneInput(e) {
 let autoSaveTimer = null;
 let currentItem = null;
 
-const HISTORY_TEMPLATE = `【お客様のご用件】\n\n【担当者】\n担当者のメモをここに打つ`;
+const HISTORY_TEMPLATE = `入力してください。\n\n例）\n【お客様のご用件】\n\n【担当者】\n担当者のメモをここに打つ`;
 
 function insertTemplate() {
   const field = document.getElementById('f-history-note');
