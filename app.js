@@ -77,22 +77,31 @@ function extractGoobikeSections(rawText) {
   const key = '様からのご返信内容：';
   const start = rawText.indexOf(key);
   if (start === -1) return { body: '', info: {} };
-  const normalized = rawText.slice(start + key.length).replace(/\r\n/g, '\n');
 
-  const endMarkers = ['差出人', 'お客様のメールアドレスは'];
-  let end = normalized.length;
-  for (const m of endMarkers) {
-    const idx = normalized.indexOf(m);
-    if (idx !== -1 && idx < end) end = idx;
+  const normalized = rawText.slice(start + key.length).replace(/\r\n/g, '\n');
+  const lines = normalized.split('\n');
+
+  let endIdx = lines.length;
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (
+      l.includes('差出人') ||
+      l.includes('お客様のメールアドレスは') ||
+      /20\d{2}\/\d{2}\/\d{2}/.test(l) ||
+      /━━━━/.test(l) ||
+      /^[-=]{3,}/.test(l)
+    ) {
+      endIdx = i;
+      break;
+    }
   }
 
-  const bodyPart = normalized.slice(0, end).trim();
-  const body = bodyPart
-    .split('\n')
-    .filter(l => l.trim() !== '')
-    .join('\n');
+  const bodyPart = lines.slice(0, endIdx)
+    .map(s => s.trim().replace(/^[?？]+/, ''))
+    .filter(Boolean);
+  const body = bodyPart.join('\n');
 
-  const tail = normalized.slice(end);
+  const tail = lines.slice(endIdx).join('\n');
   const info = {};
   const emailMatch = tail.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/);
   if (emailMatch) info.customer_email = emailMatch[0];
