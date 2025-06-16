@@ -34,6 +34,9 @@ You can access it from the link at the top of `index.html`.
 
 The mail area now also links to `goobike_reserve.html`, which fetches all
 emails from `goobike_reserve@goobike.com` grouped by subject.
+Another link `goobike_est.html` lists messages from `goobike_est@goobike.com`
+grouped by subject, with pages for each category similar to the additional
+contact screen.
 
 ---
 
@@ -104,6 +107,7 @@ replies and forwarded messages with the same inquiry ID are also captured.
 `/api/fetch-goobike-reserve-all` can be used to retrieve every email sent from
 `goobike_reserve@goobike.com` in the last two months. The response groups the
 messages by subject category without saving them to DynamoDB.
+`/api/fetch-goobike-est-all` works the same way for `goobike_est@goobike.com`.
 
 ```bash
 npm install
