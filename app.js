@@ -73,12 +73,37 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'web')));
 
-function extractBody(rawText) {
+function extractGoobikeSections(rawText) {
   const key = '様からのご返信内容：';
   const start = rawText.indexOf(key);
-  if (start === -1) return '';
-  const sliced = rawText.slice(start + key.length).trim();
-  return sliced.split('\n').filter(l => l.trim() !== '').join('\n');
+  if (start === -1) return { body: '', info: {} };
+  const normalized = rawText.slice(start + key.length).replace(/\r\n/g, '\n');
+
+  const endMarkers = ['差出人', 'お客様のメールアドレスは'];
+  let end = normalized.length;
+  for (const m of endMarkers) {
+    const idx = normalized.indexOf(m);
+    if (idx !== -1 && idx < end) end = idx;
+  }
+
+  const bodyPart = normalized.slice(0, end).trim();
+  const body = bodyPart
+    .split('\n')
+    .filter(l => l.trim() !== '')
+    .join('\n');
+
+  const tail = normalized.slice(end);
+  const info = {};
+  const emailMatch = tail.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/);
+  if (emailMatch) info.customer_email = emailMatch[0];
+  const methodMatch = tail.match(/問合せ方法：(.+)/);
+  if (methodMatch) info.inquiry_method = methodMatch[1].trim();
+  const contentMatch = tail.match(/問合せ内容：(.+)/);
+  if (contentMatch) info.inquiry_content = contentMatch[1].trim();
+  const carMatch = tail.match(/依頼車種：(.+)/);
+  if (carMatch) info.request_car = carMatch[1].trim();
+
+  return { body, info };
 }
 
 function getImapConfig() {
@@ -359,13 +384,17 @@ app.get('/api/fetch-email', async (req, res) => {
                   : '';
               const nameMatch = mail.subject.match(/([^\s]+)\s*様/);
               const customerName = nameMatch ? nameMatch[1] : 'UNKNOWN';
-              const cleanBody = extractBody(mail.text || '');
+              const { body: cleanBody, info } = extractGoobikeSections(mail.text || '');
 
               const item = {
                 inquiry_id: inquiryId,
                 name: customerName,
-                email: customerEmail,
+                email: info.customer_email || customerEmail,
+                from_email: customerEmail,
                 body: cleanBody,
+                inquiry_method: info.inquiry_method,
+                inquiry_content: info.inquiry_content,
+                request_car: info.request_car,
                 createdAt: new Date().toISOString()
               };
 
