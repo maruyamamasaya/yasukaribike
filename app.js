@@ -126,6 +126,28 @@ function parseGoobikeSkipEmail(text) {
   };
 }
 
+function parseGoobikeAnswerRequestEmail(text) {
+  const idMatch = text.match(/問合せ番号：([^\]\n]+)/);
+  const methodMatch = text.match(/問合せ方法：([^\]\n]+)/);
+  const contentMatch = text.match(/問合せ内容：([^\]\n]+)/);
+  const carMatch = text.match(/依頼車種：([^\]\n]+)/);
+  return {
+    inquiry_id: idMatch ? idMatch[1].trim() : undefined,
+    inquiry_method: methodMatch ? methodMatch[1].trim() : undefined,
+    inquiry_content: contentMatch ? contentMatch[1].trim() : undefined,
+    request_car: carMatch ? carMatch[1].trim() : undefined
+  };
+}
+
+function parseGoobikeReserveEmail(text) {
+  const idMatch = text.match(/受付番号[^\d]*(\d+)/);
+  const dateMatch = text.match(/予約日時[^\d]*(\d{4}\/\d{2}\/\d{2}\s*\d{2}:\d{2})/);
+  return {
+    inquiry_id: idMatch ? idMatch[1].trim() : undefined,
+    reserve_datetime: dateMatch ? dateMatch[1].trim() : undefined
+  };
+}
+
 function getImapConfig() {
   return {
     user: process.env.EMAIL_USER,
@@ -520,6 +542,188 @@ app.get('/api/fetch-skip-email', async (req, res) => {
                     status: '見送り',
                     inquiry_method: info.inquiry_method,
                     request_car: info.request_car,
+                    createdAt: now
+                  };
+                  await dynamo
+                    .put({ TableName: GOOBIKE_TABLE, Item: item })
+                    .promise();
+                  res.json({ status: 'saved', item });
+                }
+              } catch (e) {
+                respondError(res, 500, 'Failed to update DynamoDB', e);
+              } finally {
+                imap.end();
+              }
+            });
+          });
+        });
+      });
+    });
+  });
+
+  imap.once('error', err => {
+    respondError(res, 500, 'IMAP connection error', err);
+  });
+
+  imap.connect();
+});
+
+// グーバイク見積りサービス ご回答依頼メールを取得して保存/更新
+app.get('/api/fetch-answer-request-email', async (req, res) => {
+  const imap = new Imap(getImapConfig());
+  const targetSubject = 'ご回答依頼';
+
+  imap.once('ready', () => {
+    imap.openBox('INBOX', false, (err, box) => {
+      if (err) {
+        imap.end();
+        return respondError(res, 500, 'Failed to open mailbox', err);
+      }
+      imap.search([['HEADER', 'SUBJECT', targetSubject]], (err, results) => {
+        if (err) {
+          imap.end();
+          return respondError(res, 500, 'Failed to search mailbox', err);
+        }
+        if (!results.length) {
+          imap.end();
+          return res.json({ message: 'No matching emails.' });
+        }
+        const f = imap.fetch(results.slice(-1), { bodies: '' });
+        f.on('message', msg => {
+          msg.on('body', stream => {
+            simpleParser(stream, async (err, mail) => {
+              if (err) {
+                imap.end();
+                return respondError(res, 500, 'Failed to parse email', err);
+              }
+
+              const info = parseGoobikeAnswerRequestEmail(mail.text || '');
+              if (!info.inquiry_id) {
+                imap.end();
+                return res.json({ message: 'Inquiry ID not found.' });
+              }
+
+              const inquiryId = info.inquiry_id;
+              const now = new Date().toISOString();
+              try {
+                const existing = await dynamo
+                  .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: inquiryId } })
+                  .promise();
+
+                if (existing && existing.Item) {
+                  const updateParams = {
+                    TableName: GOOBIKE_TABLE,
+                    Key: { inquiry_id: inquiryId },
+                    UpdateExpression:
+                      'SET answer_request = :r, answer_request_date = :d, inquiry_method = if_not_exists(inquiry_method, :m), inquiry_content = if_not_exists(inquiry_content, :c), request_car = if_not_exists(request_car, :car), updatedAt = :u',
+                    ExpressionAttributeValues: {
+                      ':r': true,
+                      ':d': now,
+                      ':m': info.inquiry_method || null,
+                      ':c': info.inquiry_content || null,
+                      ':car': info.request_car || null,
+                      ':u': now
+                    },
+                    ReturnValues: 'ALL_NEW'
+                  };
+                  const result = await dynamo.update(updateParams).promise();
+                  res.json({ status: 'updated', item: result.Attributes });
+                } else {
+                  const item = {
+                    inquiry_id: inquiryId,
+                    answer_request: true,
+                    answer_request_date: now,
+                    inquiry_method: info.inquiry_method,
+                    inquiry_content: info.inquiry_content,
+                    request_car: info.request_car,
+                    createdAt: now
+                  };
+                  await dynamo
+                    .put({ TableName: GOOBIKE_TABLE, Item: item })
+                    .promise();
+                  res.json({ status: 'saved', item });
+                }
+              } catch (e) {
+                respondError(res, 500, 'Failed to update DynamoDB', e);
+              } finally {
+                imap.end();
+              }
+            });
+          });
+        });
+      });
+    });
+  });
+
+  imap.once('error', err => {
+    respondError(res, 500, 'IMAP connection error', err);
+  });
+
+  imap.connect();
+});
+
+// グーバイク予約サービス 仮予約受付メールを取得して保存
+app.get('/api/fetch-reserve-email', async (req, res) => {
+  const imap = new Imap(getImapConfig());
+  const targetSubject = '仮予約受付';
+
+  imap.once('ready', () => {
+    imap.openBox('INBOX', false, (err, box) => {
+      if (err) {
+        imap.end();
+        return respondError(res, 500, 'Failed to open mailbox', err);
+      }
+      imap.search([['HEADER', 'SUBJECT', targetSubject]], (err, results) => {
+        if (err) {
+          imap.end();
+          return respondError(res, 500, 'Failed to search mailbox', err);
+        }
+        if (!results.length) {
+          imap.end();
+          return res.json({ message: 'No matching emails.' });
+        }
+        const f = imap.fetch(results.slice(-1), { bodies: '' });
+        f.on('message', msg => {
+          msg.on('body', stream => {
+            simpleParser(stream, async (err, mail) => {
+              if (err) {
+                imap.end();
+                return respondError(res, 500, 'Failed to parse email', err);
+              }
+
+              const info = parseGoobikeReserveEmail(mail.text || '');
+              if (!info.inquiry_id) {
+                imap.end();
+                return res.json({ message: 'Inquiry ID not found.' });
+              }
+
+              const inquiryId = info.inquiry_id;
+              const now = new Date().toISOString();
+              try {
+                const existing = await dynamo
+                  .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: inquiryId } })
+                  .promise();
+
+                if (existing && existing.Item) {
+                  const updateParams = {
+                    TableName: GOOBIKE_TABLE,
+                    Key: { inquiry_id: inquiryId },
+                    UpdateExpression:
+                      'SET reserve_notice = :r, reserve_datetime = if_not_exists(reserve_datetime, :dt), updatedAt = :u',
+                    ExpressionAttributeValues: {
+                      ':r': true,
+                      ':dt': info.reserve_datetime || null,
+                      ':u': now
+                    },
+                    ReturnValues: 'ALL_NEW'
+                  };
+                  const result = await dynamo.update(updateParams).promise();
+                  res.json({ status: 'updated', item: result.Attributes });
+                } else {
+                  const item = {
+                    inquiry_id: inquiryId,
+                    reserve_notice: true,
+                    reserve_datetime: info.reserve_datetime,
                     createdAt: now
                   };
                   await dynamo
