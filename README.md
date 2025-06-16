@@ -32,6 +32,9 @@ The latest manual includes a table of contents and an index for easier navigatio
 トップページ (`index.html`) 上部のリンクから参照できます。
 You can access it from the link at the top of `index.html`.
 
+The mail area now also links to `goobike_reserve.html`, which fetches all
+emails from `goobike_reserve@goobike.com` grouped by subject.
+
 ---
 
 ## 🔗 API 接続設定 / API Configuration
