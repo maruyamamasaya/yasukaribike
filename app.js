@@ -184,7 +184,7 @@ app.get('/summary', async (req, res) => {
         Authorization: `Bearer ${key}`
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-3.5-turbo-0125',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.7
       })
