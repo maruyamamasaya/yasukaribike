@@ -105,6 +105,14 @@ npm install
 export AWS_REGION=ap-northeast-1
 npm start
 ```
+メールをすべて取得したい場合は次のスクリプトを実行できます。
+You can fetch every message via IMAP with the following command:
+
+```bash
+npm run fetch-all
+```
+実行中はスピナーと件数表示で進捗が確認できます。
+While running, a spinner shows progress as each mail is downloaded.
 Node.js 18 以上を使用してください。アプリはグローバル `fetch` API に依存します。古い Node.js を利用する場合は `node-fetch` などのポリフィルが必要です。
 Use Node.js 18 or later because the app relies on the global `fetch` API. Older Node versions require a fetch polyfill such as `node-fetch`.
 アプリは起動時に `EMAIL_USER`、`EMAIL_PASS`、`IMAP_HOST` を確認し、不足しているとエラーで停止します。
