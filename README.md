@@ -95,10 +95,10 @@ Set `AWS_REGION` for the AWS SDK (e.g., `ap-northeast-1`).
 値が不足していると `/api/fetch-email` などのエンドポイントは 500 エラーを返します。
 Missing values will cause endpoints such as `/api/fetch-email` to return 500 errors.
 
-`/api/fetch-email` will read up to 500 messages (or the last two months) and
-save them in DynamoDB. When multiple emails share the same inquiry number, a
-`-01`, `-02` suffix is appended so every record has a unique key.
-The endpoint now searches for the pattern `[UB` in the subject line so that
+`/api/fetch-email` will read all matching messages from the last two months and
+save them in DynamoDB. If an email with the same inquiry number already exists,
+the record is updated with the latest details instead of creating a suffixed
+duplicate. The endpoint now searches for the pattern `[UB` in the subject line so that
 replies and forwarded messages with the same inquiry ID are also captured.
 
 `/api/fetch-goobike-reserve-all` can be used to retrieve every email sent from

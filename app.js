@@ -421,8 +421,7 @@ app.get('/api/fetch-email', async (req, res) => {
             return res.json({ message: 'No matching emails.' });
           }
 
-          const fetchUids = results.slice(-500);
-          const f = imap.fetch(fetchUids, { bodies: '' });
+          const f = imap.fetch(results, { bodies: '' });
           const tasks = [];
 
           f.on('message', msg => {
@@ -447,14 +446,37 @@ app.get('/api/fetch-email', async (req, res) => {
                     );
                     const now = new Date().toISOString();
 
-                    let seq = 0;
-                    let inquiryId = baseId;
+                    const key = { inquiry_id: baseId };
+                    try {
+                      const existing = await dynamo
+                        .get({ TableName: GOOBIKE_TABLE, Key: key })
+                        .promise();
 
-                    while (true) {
+                      if (existing && existing.Item) {
+                        const updateParams = {
+                          TableName: GOOBIKE_TABLE,
+                          Key: key,
+                          UpdateExpression:
+                            'SET #n = :n, email = :e, from_email = :f, body = :b, inquiry_method = :m, inquiry_content = :c, request_car = :r, updatedAt = :u',
+                          ExpressionAttributeNames: { '#n': 'name' },
+                          ExpressionAttributeValues: {
+                            ':n': customerName,
+                            ':e': info.customer_email || customerEmail,
+                            ':f': customerEmail,
+                            ':b': cleanBody,
+                            ':m': info.inquiry_method || null,
+                            ':c': info.inquiry_content || null,
+                            ':r': info.request_car || null,
+                            ':u': now
+                          },
+                          ReturnValues: 'ALL_NEW'
+                        };
+                        await dynamo.update(updateParams).promise();
+                        return resolve({ status: 'updated', inquiry_id: baseId });
+                      }
+
                       const item = {
-                        inquiry_id: inquiryId,
-                        base_inquiry_id: baseId,
-                        seq,
+                        inquiry_id: baseId,
                         name: customerName,
                         email: info.customer_email || customerEmail,
                         from_email: customerEmail,
@@ -464,23 +486,12 @@ app.get('/api/fetch-email', async (req, res) => {
                         request_car: info.request_car,
                         createdAt: now
                       };
-                      try {
-                        await dynamo
-                          .put({
-                            TableName: GOOBIKE_TABLE,
-                            Item: item,
-                            ConditionExpression: 'attribute_not_exists(inquiry_id)'
-                          })
-                          .promise();
-                        return resolve({ status: 'saved', inquiry_id });
-                      } catch (e) {
-                        if (e.code === 'ConditionalCheckFailedException') {
-                          seq += 1;
-                          inquiryId = `${baseId}-${String(seq).padStart(2, '0')}`;
-                        } else {
-                          return resolve({ status: 'error', message: e.message });
-                        }
-                      }
+                      await dynamo
+                        .put({ TableName: GOOBIKE_TABLE, Item: item })
+                        .promise();
+                      return resolve({ status: 'saved', inquiry_id: baseId });
+                    } catch (e) {
+                      return resolve({ status: 'error', message: e.message });
                     }
                   });
                 });
@@ -811,7 +822,7 @@ app.get('/api/fetch-goobike-reserve-all', async (req, res) => {
           return res.json({ emails: [] });
         }
 
-        const f = imap.fetch(results.slice(-500), { bodies: '' });
+        const f = imap.fetch(results, { bodies: '' });
         const tasks = [];
 
         f.on('message', msg => {
