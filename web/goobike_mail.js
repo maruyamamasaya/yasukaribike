@@ -40,7 +40,10 @@ async function fetchData() {
 
 async function loadEmails(page = 1) {
   currentPage = page;
+  const spinner = document.getElementById('loading');
+  if (spinner) spinner.style.display = 'block';
   let items = await fetchData();
+  if (spinner) spinner.style.display = 'none';
   const cat = getCategory();
   if (cat) items = items.filter(i => i.category === cat);
 
