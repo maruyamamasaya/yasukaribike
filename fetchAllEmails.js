@@ -1,6 +1,17 @@
 require('dotenv').config();
+const fs = require('fs');
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
+
+const FROM_ADDRESS = 'goobike_reserve@goobike.com';
+
+const logStream = fs.createWriteStream('fetchAllEmails.log', { flags: 'a' });
+function log(message) {
+  const line = `[${new Date().toISOString()}] ${message}`;
+  console.log(line);
+  logStream.write(line + '\n');
+}
+
 
 function getImapConfig() {
   return {
@@ -22,6 +33,9 @@ function fetchAllMails() {
     const frames = ['|', '/', '-', '\\'];
     let frame = 0;
 
+    log('Connecting to IMAP server');
+
+
     const update = () => {
       process.stdout.write(
         `\r${frames[frame++ % frames.length]} Fetching emails ${count}/${total}`
@@ -29,16 +43,23 @@ function fetchAllMails() {
     };
 
     imap.once('ready', () => {
-      imap.openBox('INBOX', true, (err, box) => {
-        if (err) return reject(err);
+    log('IMAP connection ready, opening INBOX');
+    imap.openBox('INBOX', true, (err, box) => {
+      if (err) return reject(err);
 
-        imap.search(['ALL'], (err, results) => {
+        log(`Searching for messages from ${FROM_ADDRESS}`);
+        imap.search(['ALL', ['FROM', FROM_ADDRESS]], (err, results) => {
           if (err) return reject(err);
           if (!results || results.length === 0) {
+            log('No emails found');
+            imap.end();
+
             return resolve([]);
           }
 
           total = results.length;
+          log(`Fetching ${total} emails`);
+
           spinnerInterval = setInterval(update, 100);
           update();
 
@@ -53,6 +74,8 @@ function fetchAllMails() {
             });
             msg.once('end', async () => {
               count += 1;
+              log(`Fetched message ${count} of ${total}`);
+
               try {
                 const parsed = await simpleParser(raw);
                 mails.push(parsed);
@@ -65,12 +88,16 @@ function fetchAllMails() {
           f.once('error', err => {
             clearInterval(spinnerInterval);
             process.stdout.write('\n');
+            log(`Fetch error: ${err.message}`);
+
             reject(err);
           });
 
           f.once('end', () => {
             clearInterval(spinnerInterval);
             process.stdout.write(`\rFetched emails ${count}/${total}\n`);
+            log(`Finished fetching ${count} emails`);
+
             imap.end();
             resolve(mails);
           });
@@ -81,6 +108,8 @@ function fetchAllMails() {
     imap.once('error', err => {
       clearInterval(spinnerInterval);
       process.stdout.write('\n');
+      log(`Connection error: ${err.message}`);
+
       reject(err);
     });
 
@@ -90,9 +119,9 @@ function fetchAllMails() {
 
 fetchAllMails()
   .then(mails => {
-    console.log(`Total fetched: ${mails.length}`);
+    log(`Total fetched: ${mails.length}`);
   })
   .catch(err => {
-    console.error('Error fetching emails', err);
+    log(`Error fetching emails: ${err.message}`);
     process.exit(1);
   });
