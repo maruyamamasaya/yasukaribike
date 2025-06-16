@@ -400,73 +400,104 @@ app.get('/api/fetch-email', async (req, res) => {
         imap.end();
         return respondError(res, 500, 'Failed to open mailbox', err);
       }
-      imap.search([['HEADER', 'SUBJECT', targetSubject]], (err, results) => {
-        if (err) {
-          imap.end();
-          return respondError(res, 500, 'Failed to search mailbox', err);
-        }
-        if (!results.length) {
-          imap.end();
-          return res.json({ message: 'No matching emails.' });
-        }
-        const f = imap.fetch(results.slice(-1), { bodies: '' });
-        f.on('message', msg => {
-          msg.on('body', stream => {
-            simpleParser(stream, async (err, mail) => {
-              if (err) {
-                imap.end();
-                return respondError(res, 500, 'Failed to parse email', err);
-              }
 
-              const match = mail.subject.match(/\[(UB\d+)\]/);
-              const inquiryId = match ? match[1] : 'UNKNOWN';
-              const customerEmail =
-                mail.from && mail.from.value && mail.from.value[0]
-                  ? mail.from.value[0].address
-                  : '';
-              const nameMatch = mail.subject.match(/([^\s]+)\s*様/);
-              const customerName = nameMatch ? nameMatch[1] : 'UNKNOWN';
-              const { body: cleanBody, info } = extractGoobikeSections(mail.text || '');
+      const since = new Date();
+      since.setMonth(since.getMonth() - 2);
 
-              const item = {
-                inquiry_id: inquiryId,
-                name: customerName,
-                email: info.customer_email || customerEmail,
-                from_email: customerEmail,
-                body: cleanBody,
-                inquiry_method: info.inquiry_method,
-                inquiry_content: info.inquiry_content,
-                request_car: info.request_car,
-                createdAt: new Date().toISOString()
-              };
+      imap.search(
+        [
+          ['HEADER', 'SUBJECT', targetSubject],
+          ['SINCE', since.toUTCString()]
+        ],
+        (err, results) => {
+          if (err) {
+            imap.end();
+            return respondError(res, 500, 'Failed to search mailbox', err);
+          }
+          if (!results.length) {
+            imap.end();
+            return res.json({ message: 'No matching emails.' });
+          }
 
-              try {
-                await dynamo
-                  .put({
-                    TableName: GOOBIKE_TABLE,
-                    Item: item,
-                    ConditionExpression: 'attribute_not_exists(inquiry_id)'
-                  })
-                  .promise();
-                res.json({ status: 'saved', item });
-              } catch (e) {
-                if (e.code === 'ConditionalCheckFailedException') {
-                  res.json({ status: 'duplicate', inquiryId });
-                } else {
-                  respondError(
-                    res,
-                    500,
-                    'Failed to save email to DynamoDB',
-                    e
-                  );
-                }
-              } finally {
-                imap.end();
-              }
-            });
+          const fetchUids = results.slice(-500);
+          const f = imap.fetch(fetchUids, { bodies: '' });
+          const tasks = [];
+
+          f.on('message', msg => {
+            tasks.push(
+              new Promise(resolve => {
+                msg.on('body', stream => {
+                  simpleParser(stream, async (err, mail) => {
+                    if (err) {
+                      return resolve({ status: 'error', message: err.message });
+                    }
+
+                    const match = mail.subject.match(/\[(UB\d+)\]/);
+                    const baseId = match ? match[1] : 'UNKNOWN';
+                    const customerEmail =
+                      mail.from && mail.from.value && mail.from.value[0]
+                        ? mail.from.value[0].address
+                        : '';
+                    const nameMatch = mail.subject.match(/([^\s]+)\s*様/);
+                    const customerName = nameMatch ? nameMatch[1] : 'UNKNOWN';
+                    const { body: cleanBody, info } = extractGoobikeSections(
+                      mail.text || ''
+                    );
+                    const now = new Date().toISOString();
+
+                    let seq = 0;
+                    let inquiryId = baseId;
+
+                    while (true) {
+                      const item = {
+                        inquiry_id: inquiryId,
+                        base_inquiry_id: baseId,
+                        seq,
+                        name: customerName,
+                        email: info.customer_email || customerEmail,
+                        from_email: customerEmail,
+                        body: cleanBody,
+                        inquiry_method: info.inquiry_method,
+                        inquiry_content: info.inquiry_content,
+                        request_car: info.request_car,
+                        createdAt: now
+                      };
+                      try {
+                        await dynamo
+                          .put({
+                            TableName: GOOBIKE_TABLE,
+                            Item: item,
+                            ConditionExpression: 'attribute_not_exists(inquiry_id)'
+                          })
+                          .promise();
+                        return resolve({ status: 'saved', inquiry_id });
+                      } catch (e) {
+                        if (e.code === 'ConditionalCheckFailedException') {
+                          seq += 1;
+                          inquiryId = `${baseId}-${String(seq).padStart(2, '0')}`;
+                        } else {
+                          return resolve({ status: 'error', message: e.message });
+                        }
+                      }
+                    }
+                  });
+                });
+              })
+            );
           });
-        });
-      });
+
+          f.once('error', err => {
+            imap.end();
+            respondError(res, 500, 'Failed to fetch emails', err);
+          });
+
+          f.once('end', async () => {
+            imap.end();
+            const results = await Promise.all(tasks);
+            res.json({ results });
+          });
+        }
+      );
     });
   });
 

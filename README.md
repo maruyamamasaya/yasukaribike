@@ -92,6 +92,10 @@ Set `AWS_REGION` for the AWS SDK (e.g., `ap-northeast-1`).
 値が不足していると `/api/fetch-email` などのエンドポイントは 500 エラーを返します。
 Missing values will cause endpoints such as `/api/fetch-email` to return 500 errors.
 
+`/api/fetch-email` will read up to 500 messages (or the last two months) and
+save them in DynamoDB. When multiple emails share the same inquiry number, a
+`-01`, `-02` suffix is appended so every record has a unique key.
+
 ```bash
 npm install
 export AWS_REGION=ap-northeast-1
