@@ -19,10 +19,7 @@ function renderList(groups) {
   Object.keys(groups).forEach(cat => {
     const li = document.createElement('li');
     li.className = 'list-group-item';
-    const a = document.createElement('a');
-    a.href = `goobike_est.html?category=${encodeURIComponent(cat)}`;
-    a.textContent = cat;
-    li.appendChild(a);
+    li.textContent = cat;
     ul.appendChild(li);
   });
   container.appendChild(ul);
