@@ -548,65 +548,77 @@ app.get('/api/fetch-skip-email', async (req, res) => {
           imap.end();
           return res.json({ message: 'No matching emails.' });
         }
-        const f = imap.fetch(results.slice(-1), { bodies: '' });
+        const f = imap.fetch(results, { bodies: '' });
+        const tasks = [];
         f.on('message', msg => {
-          msg.on('body', stream => {
-            simpleParser(stream, async (err, mail) => {
-              if (err) {
-                imap.end();
-                return respondError(res, 500, 'Failed to parse email', err);
-              }
+          tasks.push(
+            new Promise(resolve => {
+              msg.on('body', stream => {
+                simpleParser(stream, async (err, mail) => {
+                  if (err) {
+                    return resolve({ status: 'error', message: err.message });
+                  }
 
-              const info = parseGoobikeSkipEmail(mail.text || '');
-              if (!info.inquiry_id) {
-                imap.end();
-                return res.json({ message: 'Inquiry ID not found.' });
-              }
+                  const info = parseGoobikeSkipEmail(mail.text || '');
+                  if (!info.inquiry_id) {
+                    return resolve({ status: 'error', message: 'Inquiry ID not found.' });
+                  }
 
-              const inquiryId = info.inquiry_id;
-              const now = new Date().toISOString();
-              try {
-                const existing = await dynamo
-                  .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: inquiryId } })
-                  .promise();
+                  const inquiryId = info.inquiry_id;
+                  const now = new Date().toISOString();
+                  try {
+                    const existing = await dynamo
+                      .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: inquiryId } })
+                      .promise();
 
-                if (existing && existing.Item) {
-                  const updateParams = {
-                    TableName: GOOBIKE_TABLE,
-                    Key: { inquiry_id: inquiryId },
-                    UpdateExpression:
-                      'SET #s = :s, inquiry_method = if_not_exists(inquiry_method, :m), request_car = if_not_exists(request_car, :c), updatedAt = :u',
-                    ExpressionAttributeNames: { '#s': 'status' },
-                    ExpressionAttributeValues: {
-                      ':s': '見送り',
-                      ':m': info.inquiry_method || null,
-                      ':c': info.request_car || null,
-                      ':u': now
-                    },
-                    ReturnValues: 'ALL_NEW'
-                  };
-                  const result = await dynamo.update(updateParams).promise();
-                  res.json({ status: 'updated', item: result.Attributes });
-                } else {
-                  const item = {
-                    inquiry_id: inquiryId,
-                    status: '見送り',
-                    inquiry_method: info.inquiry_method,
-                    request_car: info.request_car,
-                    createdAt: now
-                  };
-                  await dynamo
-                    .put({ TableName: GOOBIKE_TABLE, Item: item })
-                    .promise();
-                  res.json({ status: 'saved', item });
-                }
-              } catch (e) {
-                respondError(res, 500, 'Failed to update DynamoDB', e);
-              } finally {
-                imap.end();
-              }
-            });
-          });
+                    if (existing && existing.Item) {
+                      const updateParams = {
+                        TableName: GOOBIKE_TABLE,
+                        Key: { inquiry_id: inquiryId },
+                        UpdateExpression:
+                          'SET #s = :s, inquiry_method = if_not_exists(inquiry_method, :m), request_car = if_not_exists(request_car, :c), updatedAt = :u',
+                        ExpressionAttributeNames: { '#s': 'status' },
+                        ExpressionAttributeValues: {
+                          ':s': '見送り',
+                          ':m': info.inquiry_method || null,
+                          ':c': info.request_car || null,
+                          ':u': now
+                        },
+                        ReturnValues: 'ALL_NEW'
+                      };
+                      await dynamo.update(updateParams).promise();
+                      resolve({ status: 'updated', inquiry_id: inquiryId });
+                    } else {
+                      const item = {
+                        inquiry_id: inquiryId,
+                        status: '見送り',
+                        inquiry_method: info.inquiry_method,
+                        request_car: info.request_car,
+                        createdAt: now
+                      };
+                      await dynamo
+                        .put({ TableName: GOOBIKE_TABLE, Item: item })
+                        .promise();
+                      resolve({ status: 'saved', inquiry_id: inquiryId });
+                    }
+                  } catch (e) {
+                    resolve({ status: 'error', message: e.message });
+                  }
+                });
+              });
+            })
+          );
+        });
+
+        f.once('error', err => {
+          imap.end();
+          respondError(res, 500, 'Failed to fetch emails', err);
+        });
+
+        f.once('end', async () => {
+          imap.end();
+          const results = await Promise.all(tasks);
+          res.json({ results });
         });
       });
     });
@@ -639,68 +651,80 @@ app.get('/api/fetch-answer-request-email', async (req, res) => {
           imap.end();
           return res.json({ message: 'No matching emails.' });
         }
-        const f = imap.fetch(results.slice(-1), { bodies: '' });
+        const f = imap.fetch(results, { bodies: '' });
+        const tasks = [];
         f.on('message', msg => {
-          msg.on('body', stream => {
-            simpleParser(stream, async (err, mail) => {
-              if (err) {
-                imap.end();
-                return respondError(res, 500, 'Failed to parse email', err);
-              }
+          tasks.push(
+            new Promise(resolve => {
+              msg.on('body', stream => {
+                simpleParser(stream, async (err, mail) => {
+                  if (err) {
+                    return resolve({ status: 'error', message: err.message });
+                  }
 
-              const info = parseGoobikeAnswerRequestEmail(mail.text || '');
-              if (!info.inquiry_id) {
-                imap.end();
-                return res.json({ message: 'Inquiry ID not found.' });
-              }
+                  const info = parseGoobikeAnswerRequestEmail(mail.text || '');
+                  if (!info.inquiry_id) {
+                    return resolve({ status: 'error', message: 'Inquiry ID not found.' });
+                  }
 
-              const inquiryId = info.inquiry_id;
-              const now = new Date().toISOString();
-              try {
-                const existing = await dynamo
-                  .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: inquiryId } })
-                  .promise();
+                  const inquiryId = info.inquiry_id;
+                  const now = new Date().toISOString();
+                  try {
+                    const existing = await dynamo
+                      .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: inquiryId } })
+                      .promise();
 
-                if (existing && existing.Item) {
-                  const updateParams = {
-                    TableName: GOOBIKE_TABLE,
-                    Key: { inquiry_id: inquiryId },
-                    UpdateExpression:
-                      'SET answer_request = :r, answer_request_date = :d, inquiry_method = if_not_exists(inquiry_method, :m), inquiry_content = if_not_exists(inquiry_content, :c), request_car = if_not_exists(request_car, :car), updatedAt = :u',
-                    ExpressionAttributeValues: {
-                      ':r': true,
-                      ':d': now,
-                      ':m': info.inquiry_method || null,
-                      ':c': info.inquiry_content || null,
-                      ':car': info.request_car || null,
-                      ':u': now
-                    },
-                    ReturnValues: 'ALL_NEW'
-                  };
-                  const result = await dynamo.update(updateParams).promise();
-                  res.json({ status: 'updated', item: result.Attributes });
-                } else {
-                  const item = {
-                    inquiry_id: inquiryId,
-                    answer_request: true,
-                    answer_request_date: now,
-                    inquiry_method: info.inquiry_method,
-                    inquiry_content: info.inquiry_content,
-                    request_car: info.request_car,
-                    createdAt: now
-                  };
-                  await dynamo
-                    .put({ TableName: GOOBIKE_TABLE, Item: item })
-                    .promise();
-                  res.json({ status: 'saved', item });
-                }
-              } catch (e) {
-                respondError(res, 500, 'Failed to update DynamoDB', e);
-              } finally {
-                imap.end();
-              }
-            });
-          });
+                    if (existing && existing.Item) {
+                      const updateParams = {
+                        TableName: GOOBIKE_TABLE,
+                        Key: { inquiry_id: inquiryId },
+                        UpdateExpression:
+                          'SET answer_request = :r, answer_request_date = :d, inquiry_method = if_not_exists(inquiry_method, :m), inquiry_content = if_not_exists(inquiry_content, :c), request_car = if_not_exists(request_car, :car), updatedAt = :u',
+                        ExpressionAttributeValues: {
+                          ':r': true,
+                          ':d': now,
+                          ':m': info.inquiry_method || null,
+                          ':c': info.inquiry_content || null,
+                          ':car': info.request_car || null,
+                          ':u': now
+                        },
+                        ReturnValues: 'ALL_NEW'
+                      };
+                      await dynamo.update(updateParams).promise();
+                      resolve({ status: 'updated', inquiry_id: inquiryId });
+                    } else {
+                      const item = {
+                        inquiry_id: inquiryId,
+                        answer_request: true,
+                        answer_request_date: now,
+                        inquiry_method: info.inquiry_method,
+                        inquiry_content: info.inquiry_content,
+                        request_car: info.request_car,
+                        createdAt: now
+                      };
+                      await dynamo
+                        .put({ TableName: GOOBIKE_TABLE, Item: item })
+                        .promise();
+                      resolve({ status: 'saved', inquiry_id: inquiryId });
+                    }
+                  } catch (e) {
+                    resolve({ status: 'error', message: e.message });
+                  }
+                });
+              });
+            })
+          );
+        });
+
+        f.once('error', err => {
+          imap.end();
+          respondError(res, 500, 'Failed to fetch emails', err);
+        });
+
+        f.once('end', async () => {
+          imap.end();
+          const results = await Promise.all(tasks);
+          res.json({ results });
         });
       });
     });
@@ -733,62 +757,74 @@ app.get('/api/fetch-reserve-email', async (req, res) => {
           imap.end();
           return res.json({ message: 'No matching emails.' });
         }
-        const f = imap.fetch(results.slice(-1), { bodies: '' });
+        const f = imap.fetch(results, { bodies: '' });
+        const tasks = [];
         f.on('message', msg => {
-          msg.on('body', stream => {
-            simpleParser(stream, async (err, mail) => {
-              if (err) {
-                imap.end();
-                return respondError(res, 500, 'Failed to parse email', err);
-              }
+          tasks.push(
+            new Promise(resolve => {
+              msg.on('body', stream => {
+                simpleParser(stream, async (err, mail) => {
+                  if (err) {
+                    return resolve({ status: 'error', message: err.message });
+                  }
 
-              const info = parseGoobikeReserveEmail(mail.text || '');
-              if (!info.inquiry_id) {
-                imap.end();
-                return res.json({ message: 'Inquiry ID not found.' });
-              }
+                  const info = parseGoobikeReserveEmail(mail.text || '');
+                  if (!info.inquiry_id) {
+                    return resolve({ status: 'error', message: 'Inquiry ID not found.' });
+                  }
 
-              const inquiryId = info.inquiry_id;
-              const now = new Date().toISOString();
-              try {
-                const existing = await dynamo
-                  .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: inquiryId } })
-                  .promise();
+                  const inquiryId = info.inquiry_id;
+                  const now = new Date().toISOString();
+                  try {
+                    const existing = await dynamo
+                      .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: inquiryId } })
+                      .promise();
 
-                if (existing && existing.Item) {
-                  const updateParams = {
-                    TableName: GOOBIKE_TABLE,
-                    Key: { inquiry_id: inquiryId },
-                    UpdateExpression:
-                      'SET reserve_notice = :r, reserve_datetime = if_not_exists(reserve_datetime, :dt), updatedAt = :u',
-                    ExpressionAttributeValues: {
-                      ':r': true,
-                      ':dt': info.reserve_datetime || null,
-                      ':u': now
-                    },
-                    ReturnValues: 'ALL_NEW'
-                  };
-                  const result = await dynamo.update(updateParams).promise();
-                  res.json({ status: 'updated', item: result.Attributes });
-                } else {
-                  const item = {
-                    inquiry_id: inquiryId,
-                    reserve_notice: true,
-                    reserve_datetime: info.reserve_datetime,
-                    createdAt: now
-                  };
-                  await dynamo
-                    .put({ TableName: GOOBIKE_TABLE, Item: item })
-                    .promise();
-                  res.json({ status: 'saved', item });
-                }
-              } catch (e) {
-                respondError(res, 500, 'Failed to update DynamoDB', e);
-              } finally {
-                imap.end();
-              }
-            });
-          });
+                    if (existing && existing.Item) {
+                      const updateParams = {
+                        TableName: GOOBIKE_TABLE,
+                        Key: { inquiry_id: inquiryId },
+                        UpdateExpression:
+                          'SET reserve_notice = :r, reserve_datetime = if_not_exists(reserve_datetime, :dt), updatedAt = :u',
+                        ExpressionAttributeValues: {
+                          ':r': true,
+                          ':dt': info.reserve_datetime || null,
+                          ':u': now
+                        },
+                        ReturnValues: 'ALL_NEW'
+                      };
+                      await dynamo.update(updateParams).promise();
+                      resolve({ status: 'updated', inquiry_id: inquiryId });
+                    } else {
+                      const item = {
+                        inquiry_id: inquiryId,
+                        reserve_notice: true,
+                        reserve_datetime: info.reserve_datetime,
+                        createdAt: now
+                      };
+                      await dynamo
+                        .put({ TableName: GOOBIKE_TABLE, Item: item })
+                        .promise();
+                      resolve({ status: 'saved', inquiry_id: inquiryId });
+                    }
+                  } catch (e) {
+                    resolve({ status: 'error', message: e.message });
+                  }
+                });
+              });
+            })
+          );
+        });
+
+        f.once('error', err => {
+          imap.end();
+          respondError(res, 500, 'Failed to fetch emails', err);
+        });
+
+        f.once('end', async () => {
+          imap.end();
+          const results = await Promise.all(tasks);
+          res.json({ results });
         });
       });
     });
