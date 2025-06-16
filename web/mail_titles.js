@@ -25,7 +25,13 @@ async function loadTitles() {
   tbody.innerHTML = '';
   items.forEach(m => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${escapeHtml(m.subject || '')}</td><td>${escapeHtml(m.createdAt || '')}</td>`;
+    const link = `mail_detail.html?id=${encodeURIComponent(m.inquiry_id || '')}`;
+    tr.innerHTML = `
+      <td><a href="${link}">${escapeHtml(m.inquiry_id || '')}</a></td>
+      <td>${escapeHtml(m.name || '')}</td>
+      <td>${escapeHtml(m.email || '')}</td>
+      <td>${escapeHtml(m.subject || '')}</td>
+      <td>${escapeHtml(m.createdAt || '')}</td>`;
     tbody.appendChild(tr);
   });
   if (spinner) spinner.style.display = 'none';
