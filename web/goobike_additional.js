@@ -41,12 +41,14 @@ async function loadEmails() {
 
   items.forEach(item => {
     const tr = document.createElement('tr');
+    let bodySnippet = item.body || '';
+    if (bodySnippet.length > 200) bodySnippet = bodySnippet.slice(0, 200) + '…';
     tr.innerHTML = `
       <td>${item.inquiry_id}</td>
       <td>${escapeHtml(item.name || '')}</td>
       <td>${escapeHtml(item.email || '')}</td>
       <td>${escapeHtml(item.phone || '')}</td>
-      <td style="white-space:pre-wrap;">${escapeHtml(item.body || '')}</td>
+      <td style="white-space:pre-wrap;">${escapeHtml(bodySnippet)}</td>
       <td>${item.createdAt || ''}</td>`;
     tbody.appendChild(tr);
   });
