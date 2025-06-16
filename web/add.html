@@ -13,15 +13,16 @@
     <h1 class="mb-2">電話・訪問対応新規フォーム</h1>
     <p class="text-muted">問い合わせ内容を登録するフォームです。必要事項を入力して保存してください。</p>
     <p class="text-muted">一定時間操作がなかった場合も、自動で一時保存されます。</p>
+    <p class="text-muted">※すべて必須項目ではありません。必要な箇所のみ入力してください。</p>
 
     <div class="card p-3">
       <input id="f-order_id" type="hidden" />
 
-      <div class="mb-2">名前: <input id="f-name" class="form-control" /></div>
-      <div class="mb-2">カナ: <input id="f-kana" class="form-control" /></div>
-      <div class="mb-2">メール: <input id="f-email" class="form-control" /></div>
+      <div class="mb-2">① 名前: <input id="f-name" class="form-control" /></div>
+      <div class="mb-2">② カナ: <input id="f-kana" class="form-control" /></div>
+      <div class="mb-2">③ メール: <input id="f-email" class="form-control" /></div>
 
-      <div class="mb-2">種別:
+      <div class="mb-2">④ 種別:
         <select id="f-category" class="form-select">
           <option value="電話">電話</option>
           <option value="訪問対応">訪問対応</option>
@@ -30,19 +31,19 @@
         </select>
       </div>
 
-      <div class="mb-2">電話番号: <input id="f-phone" class="form-control" /></div>
-      <div class="mb-2">バイク名など: <input id="f-details" class="form-control" placeholder="バイク名などを入力してください" /></div>
+      <div class="mb-2">⑤ 電話番号: <input id="f-phone" class="form-control" /></div>
+      <div class="mb-2">⑥ バイク名など: <input id="f-details" class="form-control" placeholder="バイク名などを入力してください" /></div>
 
-      <div class="mb-2">ステータス:
+      <div class="mb-2">⑦ ステータス:
         <select id="f-status" class="form-select" disabled>
           <option value="未済">未済</option>
           <option value="済">済</option>
         </select>
       </div>
 
-      <div class="mb-2">担当: <input id="f-staff" class="form-control" /></div>
-      <div class="mb-2">メモ:
-        <textarea id="f-history-note" class="form-control" rows="12" placeholder="【お客様のご用件】&#10;&#10;【担当者】&#10;担当者のメモをここに打つ"></textarea>
+      <div class="mb-2">⑧ 担当: <input id="f-staff" class="form-control" /></div>
+      <div class="mb-2">⑨ メモ:
+        <textarea id="f-history-note" class="form-control" rows="12" placeholder="入力してください。&#10;&#10;例）&#10;【お客様のご用件】&#10;&#10;【担当者】&#10;担当者のメモをここに打つ"></textarea>
         <button type="button" class="btn btn-outline-secondary mt-2" onclick="insertTemplate()">テンプレートを挿入</button>
       </div>
 
