@@ -115,6 +115,17 @@ function extractGoobikeSections(rawText) {
   return { body, info };
 }
 
+function parseGoobikeSkipEmail(text) {
+  const idMatch = text.match(/問合せ番号：([^\]\n]+)/);
+  const methodMatch = text.match(/問合せ方法：([^\]\n]+)/);
+  const carMatch = text.match(/依頼車種：([^\]\n]+)/);
+  return {
+    inquiry_id: idMatch ? idMatch[1].trim() : undefined,
+    inquiry_method: methodMatch ? methodMatch[1].trim() : undefined,
+    request_car: carMatch ? carMatch[1].trim() : undefined
+  };
+}
+
 function getImapConfig() {
   return {
     user: process.env.EMAIL_USER,
@@ -427,6 +438,97 @@ app.get('/api/fetch-email', async (req, res) => {
                     e
                   );
                 }
+              } finally {
+                imap.end();
+              }
+            });
+          });
+        });
+      });
+    });
+  });
+
+  imap.once('error', err => {
+    respondError(res, 500, 'IMAP connection error', err);
+  });
+
+  imap.connect();
+});
+
+// グーバイク見積りサービス 見送りメールを取得して保存/更新
+app.get('/api/fetch-skip-email', async (req, res) => {
+  const imap = new Imap(getImapConfig());
+  const targetSubject = '見送りのお知らせ';
+
+  imap.once('ready', () => {
+    imap.openBox('INBOX', false, (err, box) => {
+      if (err) {
+        imap.end();
+        return respondError(res, 500, 'Failed to open mailbox', err);
+      }
+      imap.search([['HEADER', 'SUBJECT', targetSubject]], (err, results) => {
+        if (err) {
+          imap.end();
+          return respondError(res, 500, 'Failed to search mailbox', err);
+        }
+        if (!results.length) {
+          imap.end();
+          return res.json({ message: 'No matching emails.' });
+        }
+        const f = imap.fetch(results.slice(-1), { bodies: '' });
+        f.on('message', msg => {
+          msg.on('body', stream => {
+            simpleParser(stream, async (err, mail) => {
+              if (err) {
+                imap.end();
+                return respondError(res, 500, 'Failed to parse email', err);
+              }
+
+              const info = parseGoobikeSkipEmail(mail.text || '');
+              if (!info.inquiry_id) {
+                imap.end();
+                return res.json({ message: 'Inquiry ID not found.' });
+              }
+
+              const inquiryId = info.inquiry_id;
+              const now = new Date().toISOString();
+              try {
+                const existing = await dynamo
+                  .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: inquiryId } })
+                  .promise();
+
+                if (existing && existing.Item) {
+                  const updateParams = {
+                    TableName: GOOBIKE_TABLE,
+                    Key: { inquiry_id: inquiryId },
+                    UpdateExpression:
+                      'SET #s = :s, inquiry_method = if_not_exists(inquiry_method, :m), request_car = if_not_exists(request_car, :c), updatedAt = :u',
+                    ExpressionAttributeNames: { '#s': 'status' },
+                    ExpressionAttributeValues: {
+                      ':s': '見送り',
+                      ':m': info.inquiry_method || null,
+                      ':c': info.request_car || null,
+                      ':u': now
+                    },
+                    ReturnValues: 'ALL_NEW'
+                  };
+                  const result = await dynamo.update(updateParams).promise();
+                  res.json({ status: 'updated', item: result.Attributes });
+                } else {
+                  const item = {
+                    inquiry_id: inquiryId,
+                    status: '見送り',
+                    inquiry_method: info.inquiry_method,
+                    request_car: info.request_car,
+                    createdAt: now
+                  };
+                  await dynamo
+                    .put({ TableName: GOOBIKE_TABLE, Item: item })
+                    .promise();
+                  res.json({ status: 'saved', item });
+                }
+              } catch (e) {
+                respondError(res, 500, 'Failed to update DynamoDB', e);
               } finally {
                 imap.end();
               }
