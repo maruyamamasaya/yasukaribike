@@ -819,4 +819,19 @@ app.get('/goobike-emails', async (req, res) => {
   }
 });
 
+// 単一のグーバイクメールを取得
+app.get('/goobike-emails/:id', async (req, res) => {
+  const id = req.params.id;
+  if (!id) return res.status(400).json({ error: 'Missing id' });
+  try {
+    const data = await dynamo
+      .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: id } })
+      .promise();
+    if (!data || !data.Item) return res.status(404).json({ error: 'Not found' });
+    res.json(data.Item);
+  } catch (err) {
+    respondError(res, 500, 'Failed to fetch email', err);
+  }
+});
+
 module.exports = app;
