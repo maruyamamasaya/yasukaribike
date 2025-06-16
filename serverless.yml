@@ -7,6 +7,7 @@ provider:
   region: ap-northeast-1
   environment:
     TABLE_NAME: kokyakukanri_TBL
+    GOOBIKE_TABLE: Rebikele_goobikemail03_TBL
     OPENAI_API_KEY: ${env:OPENAI_API_KEY}
   iamRoleStatements:
     - Effect: Allow
@@ -17,6 +18,14 @@ provider:
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
       Resource: arn:aws:dynamodb:*:*:table/kokyakukanri_TBL
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+        - dynamodb:GetItem
+        - dynamodb:Scan
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: arn:aws:dynamodb:*:*:table/Rebikele_goobikemail03_TBL
 
 functions:
   app:
@@ -35,5 +44,16 @@ resources:
             AttributeType: S
         KeySchema:
           - AttributeName: order_id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+    GooBikeMailTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: Rebikele_goobikemail03_TBL
+        AttributeDefinitions:
+          - AttributeName: inquiry_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: inquiry_id
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST

@@ -1,5 +1,9 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const Imap = require('imap');
+const { simpleParser } = require('mailparser');
+const AWS = require('aws-sdk');
 const {
   DynamoDBClient
 } = require('@aws-sdk/client-dynamodb');
@@ -17,6 +21,9 @@ const TABLE = process.env.TABLE_NAME || 'kokyakukanri_TBL';
 const region = process.env.AWS_REGION || 'ap-northeast-1';
 const client = new DynamoDBClient({ region });
 const ddb = DynamoDBDocumentClient.from(client);
+AWS.config.update({ region });
+const dynamo = new AWS.DynamoDB.DocumentClient();
+const GOOBIKE_TABLE = process.env.GOOBIKE_TABLE || 'Rebikele_goobikemail03_TBL';
 
 const app = express();
 
@@ -45,6 +52,24 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'web')));
+
+function extractBody(rawText) {
+  const key = '様からのご返信内容：';
+  const start = rawText.indexOf(key);
+  if (start === -1) return '';
+  const sliced = rawText.slice(start + key.length).trim();
+  return sliced.split('\n').filter(l => l.trim() !== '').join('\n');
+}
+
+function getImapConfig() {
+  return {
+    user: process.env.EMAIL_USER,
+    password: process.env.EMAIL_PASS,
+    host: process.env.IMAP_HOST,
+    port: parseInt(process.env.IMAP_PORT || '993'),
+    tls: true
+  };
+}
 
 function getDateKey(item) {
   if (item.date) return item.date.replace(/\//g, '');
@@ -274,6 +299,103 @@ app.delete('/customers/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete' });
+  }
+});
+
+// グーバイク追加連絡メールを取得して保存
+app.get('/api/fetch-email', async (req, res) => {
+  const imap = new Imap(getImapConfig());
+  const targetSubject = '【グーバイク】追加のご連絡';
+
+  imap.once('ready', () => {
+    imap.openBox('INBOX', false, (err, box) => {
+      if (err) {
+        imap.end();
+        return res.status(500).json({ error: err.message });
+      }
+      imap.search([['HEADER', 'SUBJECT', targetSubject]], (err, results) => {
+        if (err) {
+          imap.end();
+          return res.status(500).json({ error: err.message });
+        }
+        if (!results.length) {
+          imap.end();
+          return res.json({ message: 'No matching emails.' });
+        }
+        const f = imap.fetch(results.slice(-1), { bodies: '' });
+        f.on('message', msg => {
+          msg.on('body', stream => {
+            simpleParser(stream, async (err, mail) => {
+              if (err) {
+                imap.end();
+                return res.status(500).json({ error: err.message });
+              }
+
+              const match = mail.subject.match(/\[(UB\d+)\]/);
+              const inquiryId = match ? match[1] : 'UNKNOWN';
+              const customerEmail =
+                mail.from && mail.from.value && mail.from.value[0]
+                  ? mail.from.value[0].address
+                  : '';
+              const nameMatch = mail.subject.match(/([^\s]+)\s*様/);
+              const customerName = nameMatch ? nameMatch[1] : 'UNKNOWN';
+              const cleanBody = extractBody(mail.text || '');
+
+              const item = {
+                inquiry_id: inquiryId,
+                name: customerName,
+                email: customerEmail,
+                body: cleanBody,
+                createdAt: new Date().toISOString()
+              };
+
+              try {
+                await dynamo
+                  .put({
+                    TableName: GOOBIKE_TABLE,
+                    Item: item,
+                    ConditionExpression: 'attribute_not_exists(inquiry_id)'
+                  })
+                  .promise();
+                res.json({ status: 'saved', item });
+              } catch (e) {
+                if (e.code === 'ConditionalCheckFailedException') {
+                  res.json({ status: 'duplicate', inquiryId });
+                } else {
+                  console.error(e);
+                  res.status(500).json({ error: e.message });
+                }
+              } finally {
+                imap.end();
+              }
+            });
+          });
+        });
+      });
+    });
+  });
+
+  imap.once('error', err => {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  });
+
+  imap.connect();
+});
+
+// グーバイク追加連絡データ取得
+app.get('/goobike-emails', async (req, res) => {
+  try {
+    const data = await dynamo
+      .scan({ TableName: GOOBIKE_TABLE })
+      .promise();
+    const items = (data.Items || []).sort((a, b) =>
+      (b.createdAt || '').localeCompare(a.createdAt || '')
+    );
+    res.json(items);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch emails' });
   }
 });
 
