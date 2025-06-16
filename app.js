@@ -298,6 +298,12 @@ app.get('/summary', async (req, res) => {
       })
     });
     const json = await response.json();
+    if (!response.ok) {
+      console.error(json.error);
+      return res
+        .status(500)
+        .json({ error: 'OpenAI API request failed' });
+    }
     const summary =
       json.choices && json.choices[0] && json.choices[0].message.content;
     res.json({ summary: summary || baseSummary });
