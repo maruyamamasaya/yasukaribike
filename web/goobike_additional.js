@@ -24,16 +24,18 @@ async function loadEmails() {
     return;
   }
 
+  if (!res.ok) {
+    const msg = data.error || data.message || res.statusText || 'Failed to fetch';
+    console.error(msg);
+    displayError(msg);
+    return;
+  }
+
   const items = Array.isArray(data.Items) ? data.Items : Array.isArray(data) ? data : [];
   const tbody = document.querySelector('#goobike-table tbody');
   tbody.innerHTML = '';
 
   if (!items.length) {
-    if (!res.ok) {
-      const msg = data.error || data.message || res.statusText || 'Failed to fetch';
-      console.error(msg);
-      displayError(msg);
-    }
     return;
   }
 
@@ -55,9 +57,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById('fetch-btn');
     btn.disabled = true;
     try {
-      await fetch(API + '/api/fetch-email');
+      const res = await fetch(API + '/api/fetch-email');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const msg = data.error || data.message || res.statusText || 'Failed to fetch';
+        displayError(msg);
+      }
     } catch (err) {
       console.error(err);
+      displayError('メールの取得に失敗しました');
     }
     await loadEmails();
     btn.disabled = false;

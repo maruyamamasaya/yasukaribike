@@ -25,6 +25,15 @@ AWS.config.update({ region });
 const dynamo = new AWS.DynamoDB.DocumentClient();
 const GOOBIKE_TABLE = process.env.GOOBIKE_TABLE || 'Rebikele_goobikemail03_TBL';
 
+function respondError(res, status, label, err) {
+  console.error(err);
+  const body = { error: label };
+  if (process.env.NODE_ENV !== 'production' && err) {
+    body.message = err.message || String(err);
+  }
+  res.status(status).json(body);
+}
+
 function verifyEmailConfig() {
   const required = ['EMAIL_USER', 'EMAIL_PASS', 'IMAP_HOST'];
   for (const key of required) {
@@ -322,12 +331,12 @@ app.get('/api/fetch-email', async (req, res) => {
     imap.openBox('INBOX', false, (err, box) => {
       if (err) {
         imap.end();
-        return res.status(500).json({ error: err.message });
+        return respondError(res, 500, 'Failed to open mailbox', err);
       }
       imap.search([['HEADER', 'SUBJECT', targetSubject]], (err, results) => {
         if (err) {
           imap.end();
-          return res.status(500).json({ error: err.message });
+          return respondError(res, 500, 'Failed to search mailbox', err);
         }
         if (!results.length) {
           imap.end();
@@ -339,7 +348,7 @@ app.get('/api/fetch-email', async (req, res) => {
             simpleParser(stream, async (err, mail) => {
               if (err) {
                 imap.end();
-                return res.status(500).json({ error: err.message });
+                return respondError(res, 500, 'Failed to parse email', err);
               }
 
               const match = mail.subject.match(/\[(UB\d+)\]/);
@@ -373,8 +382,12 @@ app.get('/api/fetch-email', async (req, res) => {
                 if (e.code === 'ConditionalCheckFailedException') {
                   res.json({ status: 'duplicate', inquiryId });
                 } else {
-                  console.error(e);
-                  res.status(500).json({ error: e.message });
+                  respondError(
+                    res,
+                    500,
+                    'Failed to save email to DynamoDB',
+                    e
+                  );
                 }
               } finally {
                 imap.end();
@@ -387,8 +400,7 @@ app.get('/api/fetch-email', async (req, res) => {
   });
 
   imap.once('error', err => {
-    console.error(err);
-    res.status(500).json({ error: err.message });
+    respondError(res, 500, 'IMAP connection error', err);
   });
 
   imap.connect();
@@ -405,8 +417,7 @@ app.get('/goobike-emails', async (req, res) => {
     );
     res.json(items);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch emails' });
+    respondError(res, 500, 'Failed to fetch emails from DynamoDB', err);
   }
 });
 
