@@ -434,10 +434,12 @@ app.get('/api/fetch-email', async (req, res) => {
           f.on('message', msg => {
             tasks.push(
               new Promise(resolve => {
+                const handleError = err => resolve({ status: 'error', message: err.message });
+                msg.once('error', handleError);
                 msg.on('body', stream => {
                   simpleParser(stream, async (err, mail) => {
                     if (err) {
-                      return resolve({ status: 'error', message: err.message });
+                      return handleError(err);
                     }
 
                     const match = mail.subject.match(/\[(UB\d+)\]/);
@@ -553,10 +555,12 @@ app.get('/api/fetch-skip-email', async (req, res) => {
         f.on('message', msg => {
           tasks.push(
             new Promise(resolve => {
+              const handleError = err => resolve({ status: 'error', message: err.message });
+              msg.once('error', handleError);
               msg.on('body', stream => {
                 simpleParser(stream, async (err, mail) => {
                   if (err) {
-                    return resolve({ status: 'error', message: err.message });
+                    return handleError(err);
                   }
 
                   const info = parseGoobikeSkipEmail(mail.text || '');
@@ -656,10 +660,12 @@ app.get('/api/fetch-answer-request-email', async (req, res) => {
         f.on('message', msg => {
           tasks.push(
             new Promise(resolve => {
+              const handleError = err => resolve({ status: 'error', message: err.message });
+              msg.once('error', handleError);
               msg.on('body', stream => {
                 simpleParser(stream, async (err, mail) => {
                   if (err) {
-                    return resolve({ status: 'error', message: err.message });
+                    return handleError(err);
                   }
 
                   const info = parseGoobikeAnswerRequestEmail(mail.text || '');
@@ -762,10 +768,12 @@ app.get('/api/fetch-reserve-email', async (req, res) => {
         f.on('message', msg => {
           tasks.push(
             new Promise(resolve => {
+              const handleError = err => resolve({ status: 'error', message: err.message });
+              msg.once('error', handleError);
               msg.on('body', stream => {
                 simpleParser(stream, async (err, mail) => {
                   if (err) {
-                    return resolve({ status: 'error', message: err.message });
+                    return handleError(err);
                   }
 
                   const info = parseGoobikeReserveEmail(mail.text || '');
