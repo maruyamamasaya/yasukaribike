@@ -783,6 +783,84 @@ app.get('/api/fetch-reserve-email', async (req, res) => {
   imap.connect();
 });
 
+// グーバイクお客様センターからのメールを全取得して分類
+app.get('/api/fetch-goobike-reserve-all', async (req, res) => {
+  const imap = new Imap(getImapConfig());
+  const targetFrom = 'goobike_reserve@goobike.com';
+
+  imap.once('ready', () => {
+    imap.openBox('INBOX', false, (err, box) => {
+      if (err) {
+        imap.end();
+        return respondError(res, 500, 'Failed to open mailbox', err);
+      }
+
+      const since = new Date();
+      since.setMonth(since.getMonth() - 2);
+
+      imap.search([
+        ['FROM', targetFrom],
+        ['SINCE', since.toUTCString()]
+      ], (err, results) => {
+        if (err) {
+          imap.end();
+          return respondError(res, 500, 'Failed to search mailbox', err);
+        }
+        if (!results.length) {
+          imap.end();
+          return res.json({ emails: [] });
+        }
+
+        const f = imap.fetch(results.slice(-500), { bodies: '' });
+        const tasks = [];
+
+        f.on('message', msg => {
+          tasks.push(new Promise(resolve => {
+            msg.on('body', stream => {
+              simpleParser(stream, (err, mail) => {
+                if (err) return resolve({ error: err.message });
+
+                const subject = mail.subject || '';
+                let category = 'その他';
+                if (/追加のご連絡/.test(subject)) category = '追加のご連絡';
+                else if (/見送りのお知らせ/.test(subject)) category = '見送りのお知らせ';
+                else if (/ご回答依頼/.test(subject)) category = 'ご回答依頼';
+                else if (/仮予約受付/.test(subject)) category = '仮予約受付';
+                else if (/ご予約/.test(subject)) category = 'ご予約';
+
+                resolve({
+                  date: mail.date,
+                  from: mail.from && mail.from.text,
+                  subject,
+                  body: mail.text || '',
+                  category
+                });
+              });
+            });
+          }));
+        });
+
+        f.once('error', err => {
+          imap.end();
+          respondError(res, 500, 'Failed to fetch emails', err);
+        });
+
+        f.once('end', async () => {
+          imap.end();
+          const emails = await Promise.all(tasks);
+          res.json({ emails });
+        });
+      });
+    });
+  });
+
+  imap.once('error', err => {
+    respondError(res, 500, 'IMAP connection error', err);
+  });
+
+  imap.connect();
+});
+
 // グーバイク追加連絡データ取得
 app.get('/goobike-emails', async (req, res) => {
   try {

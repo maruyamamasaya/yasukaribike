@@ -32,6 +32,9 @@ The latest manual includes a table of contents and an index for easier navigatio
 トップページ (`index.html`) 上部のリンクから参照できます。
 You can access it from the link at the top of `index.html`.
 
+The mail area now also links to `goobike_reserve.html`, which fetches all
+emails from `goobike_reserve@goobike.com` grouped by subject.
+
 ---
 
 ## 🔗 API 接続設定 / API Configuration
@@ -97,6 +100,10 @@ save them in DynamoDB. When multiple emails share the same inquiry number, a
 `-01`, `-02` suffix is appended so every record has a unique key.
 The endpoint now searches for the pattern `[UB` in the subject line so that
 replies and forwarded messages with the same inquiry ID are also captured.
+
+`/api/fetch-goobike-reserve-all` can be used to retrieve every email sent from
+`goobike_reserve@goobike.com` in the last two months. The response groups the
+messages by subject category without saving them to DynamoDB.
 
 ```bash
 npm install
