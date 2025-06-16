@@ -392,7 +392,9 @@ app.delete('/customers/:id', async (req, res) => {
 // グーバイク追加連絡メールを取得して保存
 app.get('/api/fetch-email', async (req, res) => {
   const imap = new Imap(getImapConfig());
-  const targetSubject = '【グーバイク】追加のご連絡';
+  // Capture replies as well as original GooBike notices by
+  // searching for the inquiry ID pattern "[UB" in the subject.
+  const targetSubject = '[UB';
 
   imap.once('ready', () => {
     imap.openBox('INBOX', false, (err, box) => {

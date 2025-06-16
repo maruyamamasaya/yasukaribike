@@ -95,6 +95,8 @@ Missing values will cause endpoints such as `/api/fetch-email` to return 500 err
 `/api/fetch-email` will read up to 500 messages (or the last two months) and
 save them in DynamoDB. When multiple emails share the same inquiry number, a
 `-01`, `-02` suffix is appended so every record has a unique key.
+The endpoint now searches for the pattern `[UB` in the subject line so that
+replies and forwarded messages with the same inquiry ID are also captured.
 
 ```bash
 npm install
