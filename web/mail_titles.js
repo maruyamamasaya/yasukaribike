@@ -9,11 +9,14 @@ function escapeHtml(text) {
 async function loadTitles() {
   let res;
   let data = {};
+  const spinner = document.getElementById('loading');
+  if (spinner) spinner.style.display = 'block';
   try {
     res = await fetch(API + '/goobike-emails');
     data = await res.json();
   } catch (err) {
     console.error(err);
+    if (spinner) spinner.style.display = 'none';
     return;
   }
   if (!res.ok) return;
@@ -25,9 +28,34 @@ async function loadTitles() {
     tr.innerHTML = `<td>${escapeHtml(m.subject || '')}</td><td>${escapeHtml(m.createdAt || '')}</td>`;
     tbody.appendChild(tr);
   });
+  if (spinner) spinner.style.display = 'none';
+}
+
+async function fetchEmails() {
+  const endpoints = [
+    '/api/fetch-email',
+    '/api/fetch-skip-email',
+    '/api/fetch-answer-request-email',
+    '/api/fetch-reserve-email'
+  ];
+  for (const ep of endpoints) {
+    try {
+      await fetch(API + ep);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+}
+
+async function fetchAndLoad() {
+  const spinner = document.getElementById('loading');
+  if (spinner) spinner.style.display = 'block';
+  await fetchEmails();
+  await loadTitles();
+  if (spinner) spinner.style.display = 'none';
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('load-btn').addEventListener('click', loadTitles);
+  document.getElementById('load-btn').addEventListener('click', fetchAndLoad);
   loadTitles();
 });
