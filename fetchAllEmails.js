@@ -12,6 +12,7 @@ function log(message) {
   logStream.write(line + '\n');
 }
 
+
 function getImapConfig() {
   return {
     user: process.env.EMAIL_USER,
@@ -34,6 +35,7 @@ function fetchAllMails() {
 
     log('Connecting to IMAP server');
 
+
     const update = () => {
       process.stdout.write(
         `\r${frames[frame++ % frames.length]} Fetching emails ${count}/${total}`
@@ -51,11 +53,13 @@ function fetchAllMails() {
           if (!results || results.length === 0) {
             log('No emails found');
             imap.end();
+
             return resolve([]);
           }
 
           total = results.length;
           log(`Fetching ${total} emails`);
+
           spinnerInterval = setInterval(update, 100);
           update();
 
@@ -71,6 +75,7 @@ function fetchAllMails() {
             msg.once('end', async () => {
               count += 1;
               log(`Fetched message ${count} of ${total}`);
+
               try {
                 const parsed = await simpleParser(raw);
                 mails.push(parsed);
@@ -84,6 +89,7 @@ function fetchAllMails() {
             clearInterval(spinnerInterval);
             process.stdout.write('\n');
             log(`Fetch error: ${err.message}`);
+
             reject(err);
           });
 
@@ -91,6 +97,7 @@ function fetchAllMails() {
             clearInterval(spinnerInterval);
             process.stdout.write(`\rFetched emails ${count}/${total}\n`);
             log(`Finished fetching ${count} emails`);
+
             imap.end();
             resolve(mails);
           });
@@ -102,6 +109,7 @@ function fetchAllMails() {
       clearInterval(spinnerInterval);
       process.stdout.write('\n');
       log(`Connection error: ${err.message}`);
+
       reject(err);
     });
 
