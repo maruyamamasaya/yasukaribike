@@ -136,6 +136,7 @@ API Gateway triggers the `handler` exported from `lambda.js`.
 
 `/summary` エンドポイントで本日の未済タスクを取得し、OpenAI API を用いて要約文を返します。
 環境変数 `OPENAI_API_KEY` に API キーを設定してください。
+このサンプルでは最も低コストな `gpt-3.5-turbo-0125` モデルを使用します。
 トップページの「AI要約」ボタンから呼び出し、結果をダイアログ表示します。
 
 
