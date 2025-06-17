@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderTable();
     });
   });
-  loadTitles();
+  fetchAndLoad();
 });
 
 function nextPage() {
