@@ -93,7 +93,10 @@ async function loadDashboard() {
   const webEl = document.getElementById('d-web-today');
   if (webEl) webEl.textContent = webInputToday;
   const mailAutoEl = document.getElementById('d-mail-auto');
-  if (mailAutoEl) mailAutoEl.textContent = 0;
+  if (mailAutoEl)
+    mailAutoEl.textContent = customers.filter(
+      c => (c.type || c.category) === 'メール問い合わせ'
+    ).length;
   const callLogEl = document.getElementById('d-call-log');
   if (callLogEl) callLogEl.textContent = 0;
   document.getElementById('d-unconfirmed').textContent = unconfirmed;
