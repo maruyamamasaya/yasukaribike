@@ -79,10 +79,17 @@ function getAllFolders() {
 }
 
 async function saveMail(uid, parsed, folder) {
+  let category = FOLDER_CATEGORIES[folder] || null;
+  if (!category) {
+    const idx = folder.lastIndexOf('..');
+    if (idx !== -1 && idx + 2 < folder.length) {
+      category = folder.substring(idx + 2);
+    }
+  }
   const item = {
     unique_id: String(uid),
     folder,
-    category: FOLDER_CATEGORIES[folder] || null,
+    category,
     subject: parsed.subject || '',
     from: parsed.from ? parsed.from.text : '',
     to: parsed.to ? parsed.to.text : '',
