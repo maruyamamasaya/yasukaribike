@@ -88,6 +88,7 @@ window.addEventListener('DOMContentLoaded', loadCustomer);
 
 const postponeBtn = document.getElementById('postpone-btn');
 const scheduleInput = document.getElementById('schedule-input');
+const deleteBtn = document.getElementById('delete-btn');
 
 if (postponeBtn && scheduleInput) {
   postponeBtn.addEventListener('click', () => {
@@ -107,5 +108,15 @@ if (postponeBtn && scheduleInput) {
     const disp = document.getElementById('schedule-display');
     if (disp) disp.textContent = date ? `先送り日: ${date}` : '';
     scheduleInput.style.display = 'none';
+  });
+}
+
+if (deleteBtn) {
+  deleteBtn.addEventListener('click', async () => {
+    const id = document.getElementById('f-order_id').value;
+    if (!id) return;
+    if (!confirm('削除してよろしいですか？')) return;
+    await fetch(API + '/customers/' + id, { method: 'DELETE' });
+    window.location.href = 'all.html';
   });
 }
