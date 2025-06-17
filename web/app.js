@@ -172,7 +172,11 @@ async function loadEmailStats() {
           hour12: false
         })
       : '';
-    el.textContent = `最終更新: ${dateStr} / 件数: ${data.count}`;
+    let text = `最終更新: ${dateStr} / 全件: ${data.count}`;
+    if (typeof data.todayCount === 'number') {
+      text += ` / 今日: ${data.todayCount}`;
+    }
+    el.textContent = text;
   } catch (err) {
     console.error(err);
   }

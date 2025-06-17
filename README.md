@@ -15,8 +15,8 @@ Open `index.html` in a browser to use a searchable table and forms for adding/ed
 Bootstrap を利用しているため、見た目もある程度整っています。
 It uses Bootstrap for basic styling and layout.
 
-メールカテゴリの一覧は `/categories` API から取得し、トップページで自動表示されます。
-The category list on the top page is now populated automatically via the `/categories` API.
+メールカテゴリの一覧は `/categories` API から取得し、トップページで自動表示されます。各カテゴリの件数も横に表示されます。
+The category list on the top page is now populated automatically via the `/categories` API, and each category shows its entry count.
 
 新規追加時には履歴メモを入力でき、編集画面では登録済みの履歴を確認できます。  
 You can input notes when adding new entries, and view the saved history in the edit form.
