@@ -85,6 +85,11 @@ th[data-key] {
   margin-left: 4px;
 }
 
+/* clickable table row */
+.link-row {
+  cursor: pointer;
+}
+
 /* Ensure mail list table remains within the screen */
 #mail-table {
   table-layout: fixed;
