@@ -89,7 +89,7 @@ async function loadEmails(page = 1) {
   slice.forEach(item => {
     const tr = document.createElement('tr');
     let bodySnippet = item.body || '';
-    if (bodySnippet.length > 500) bodySnippet = bodySnippet.slice(0, 500) + '…';
+    if (bodySnippet.length > 200) bodySnippet = bodySnippet.slice(0, 200) + '…';
     const link = `mail_detail.html?id=${encodeURIComponent(item.unique_id || '')}`;
     const dateText = formatDateJST(item.date || item.createdAt);
     const btnLabel = item.task_added ? '追加済み' : 'タスクに追加';

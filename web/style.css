@@ -84,3 +84,14 @@ th[data-key] {
   font-size: 0.8em;
   margin-left: 4px;
 }
+
+/* Ensure mail list table remains within the screen */
+#mail-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+#mail-table th,
+#mail-table td {
+  word-break: break-word;
+}
