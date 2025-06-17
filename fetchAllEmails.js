@@ -16,6 +16,12 @@ AWS.config.update({ region });
 const dynamo = new AWS.DynamoDB.DocumentClient();
 const MAIL_TABLE = process.env.MAIL_TABLE || 'Rebikele_goobikemail01_TBL';
 
+// Only fetch messages received on or after this date
+const SINCE_DATE = new Date('2025-06-01');
+
+// Folders to completely skip when scanning
+const EXCLUDED_FOLDERS = ['INBOX.Junk', 'INBOX.Trash'];
+
 function getImapConfig() {
   return {
     user: process.env.EMAIL_USER,
@@ -98,7 +104,7 @@ function processFolder(name) {
           return reject(err);
         }
 
-        imap.search(['ALL'], (err, results) => {
+        imap.search([['SINCE', SINCE_DATE]], (err, results) => {
           if (err) {
             imap.end();
             return reject(err);
@@ -157,7 +163,9 @@ function processFolder(name) {
 }
 
 async function fetchAllEmails() {
-  const folders = await getAllFolders();
+  const folders = (await getAllFolders()).filter(
+    f => !EXCLUDED_FOLDERS.includes(f)
+  );
   for (const folder of folders) {
     try {
       await processFolder(folder);

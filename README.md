@@ -122,6 +122,7 @@ While running, a spinner shows progress as each mail is downloaded.
 A log of the operation is appended to `fetchAllEmails.log`.
 
 このスクリプトは IMAP 上のすべてのフォルダーを自動的に巡回し、保存します。各レコードにはフォルダー名およびカテゴリが含まれます。
+`INBOX.Junk` と `INBOX.Trash` は自動的に除外され、2025 年 6 月以降に受信したメールのみが対象となります。
 
 Node.js 18 以上を使用してください。アプリはグローバル `fetch` API に依存します。古い Node.js を利用する場合は `node-fetch` などのポリフィルが必要です。
 Use Node.js 18 or later because the app relies on the global `fetch` API. Older Node versions require a fetch polyfill such as `node-fetch`.
