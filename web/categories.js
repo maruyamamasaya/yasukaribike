@@ -14,13 +14,18 @@
       if (!res.ok) return;
     }
     ul.innerHTML = '';
-    for (const item of list) {
+    const filtered = list.filter(i => {
+      const n = i.name || i;
+      return n !== 'Sent';
+    });
+    for (const item of filtered) {
       const name = item.name || item;
+      const label = name === 'inbox' ? '受信ボックス' : name;
       const count = item.count;
       const li = document.createElement('li');
       const a = document.createElement('a');
       a.href = `goobike_mail.html?cat=${encodeURIComponent(name)}`;
-      a.textContent = name;
+      a.textContent = label;
       li.appendChild(a);
       if (typeof count === 'number') {
         const span = document.createElement('span');

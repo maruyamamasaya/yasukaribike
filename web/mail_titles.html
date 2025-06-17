@@ -12,7 +12,12 @@
   <div class="container">
     <h1 class="mb-3">メールタイトル一覧</h1>
     <div class="mb-3">
-      <button id="load-btn" class="btn btn-primary">読み込み開始</button>
+      <button id="load-btn" class="btn btn-primary me-2">読み込み開始</button>
+      <div class="btn-group me-2" role="group" id="folder-buttons">
+        <button id="inbox-btn" class="btn btn-outline-primary active">受信ボックス</button>
+        <button id="sent-btn" class="btn btn-outline-primary">送信ボックス</button>
+      </div>
+      <div id="category-buttons" class="btn-group" role="group"></div>
     </div>
     <div id="loading" class="spinner mb-3"></div>
     <table id="title-table" class="table table-striped">
@@ -20,6 +25,7 @@
         <tr>
           <th data-key="date">受信日時</th>
           <th data-key="from">送信元</th>
+          <th data-key="subject">タイトル</th>
           <th data-key="body">本文(冒頭)</th>
         </tr>
       </thead>
