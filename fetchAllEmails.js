@@ -36,7 +36,41 @@ const FOLDER_CATEGORIES = {
   'グーバイク/追加連絡': 'additional',
 };
 
-const FOLDERS = Object.keys(FOLDER_CATEGORIES);
+
+function getAllFolders() {
+  return new Promise((resolve, reject) => {
+    const imap = new Imap(getImapConfig());
+
+    imap.once('ready', () => {
+      imap.getBoxes((err, boxes) => {
+        if (err) {
+          imap.end();
+          return reject(err);
+        }
+
+        const folders = [];
+        function traverse(prefix, tree) {
+          for (const [name, info] of Object.entries(tree)) {
+            const path = prefix ? `${prefix}${info.delimiter}${name}` : name;
+            folders.push(path);
+            if (info.children) {
+              traverse(path, info.children);
+            }
+          }
+        }
+        traverse('', boxes);
+        imap.end();
+        resolve(folders);
+      });
+    });
+
+    imap.once('error', err => {
+      reject(err);
+    });
+
+    imap.connect();
+  });
+}
 
 async function saveMail(uid, parsed, folder) {
   const item = {
@@ -123,7 +157,8 @@ function processFolder(name) {
 }
 
 async function fetchAllEmails() {
-  for (const folder of FOLDERS) {
+  const folders = await getAllFolders();
+  for (const folder of folders) {
     try {
       await processFolder(folder);
     } catch (e) {
