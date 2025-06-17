@@ -926,6 +926,38 @@ app.get('/categories', async (req, res) => {
   }
 });
 
+// フォルダツリー構造を返す
+app.get('/folder-tree', async (req, res) => {
+  try {
+    const data = await dynamo
+      .scan({
+        TableName: MAIL_TABLE,
+        ProjectionExpression: '#f, category',
+        ExpressionAttributeNames: { '#f': 'folder' }
+      })
+      .promise();
+    const tree = {};
+    for (const item of data.Items || []) {
+      if (!item.folder) continue;
+      const delimiter = item.folder.includes('/')
+        ? '/'
+        : item.folder.includes('.')
+        ? '.'
+        : null;
+      const parts = delimiter ? item.folder.split(delimiter) : [item.folder];
+      let node = tree;
+      for (const part of parts) {
+        if (!node[part]) node[part] = {};
+        node = node[part];
+      }
+      if (item.category && !node._category) node._category = item.category;
+    }
+    res.json(tree);
+  } catch (err) {
+    respondError(res, 500, 'Failed to build folder tree', err);
+  }
+});
+
 // 個別メールを返す
 app.get('/emails/:id', async (req, res) => {
   const id = req.params.id;
