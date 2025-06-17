@@ -191,6 +191,15 @@ function prevPage() {
   loadCustomers(currentPage - 1);
 }
 
+async function fetchAllEmails() {
+  try {
+    await fetch(API + '/api/fetch-all-emails');
+    loadEmailStats();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 // 初期表示
 const dateHeader = document.getElementById('date-header');
 if (dateHeader) {
@@ -216,4 +225,9 @@ if (summaryBtn) {
       alert('要約の取得に失敗しました');
     }
   });
+}
+
+const loadBtn = document.getElementById('load-btn');
+if (loadBtn) {
+  loadBtn.addEventListener('click', fetchAllEmails);
 }
