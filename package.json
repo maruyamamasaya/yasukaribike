@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node server.js",
     "deploy": "npx serverless deploy",
-    "test": "echo \"No tests configured\" && exit 0",
+    "test": "jest",
     "fetch-all": "node fetchAllEmails.js"
   },
   "dependencies": {
@@ -19,6 +19,7 @@
     "dotenv": "^16.3.1"
   },
   "devDependencies": {
-    "serverless": "^3.38.0"
+    "serverless": "^3.38.0",
+    "jest": "^29.7.0"
   }
 }

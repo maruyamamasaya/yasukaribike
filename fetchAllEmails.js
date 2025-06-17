@@ -78,14 +78,23 @@ function getAllFolders() {
   });
 }
 
-async function saveMail(uid, parsed, folder) {
-  let category = FOLDER_CATEGORIES[folder] || null;
-  if (!category) {
-    const idx = folder.lastIndexOf('..');
-    if (idx !== -1 && idx + 2 < folder.length) {
-      category = folder.substring(idx + 2);
-    }
+function deriveCategory(folder) {
+  if (FOLDER_CATEGORIES[folder]) return FOLDER_CATEGORIES[folder];
+
+  const alt = folder.replace(/\./g, '/');
+  if (FOLDER_CATEGORIES[alt]) return FOLDER_CATEGORIES[alt];
+
+  const parts = alt.split('/');
+  for (let i = 1; i < parts.length; i++) {
+    const sub = parts.slice(i).join('/');
+    if (FOLDER_CATEGORIES[sub]) return FOLDER_CATEGORIES[sub];
   }
+
+  return parts[parts.length - 1] || null;
+}
+
+async function saveMail(uid, parsed, folder) {
+  const category = deriveCategory(folder);
   const item = {
     unique_id: String(uid),
     folder,
@@ -190,4 +199,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { fetchAllEmails };
+module.exports = { fetchAllEmails, saveMail, deriveCategory };
