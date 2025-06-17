@@ -1068,4 +1068,33 @@ app.get('/emails/:id', async (req, res) => {
   }
 });
 
+// Update a mail record
+app.put('/emails/:id', async (req, res) => {
+  const id = req.params.id;
+  if (!id) return res.status(400).json({ error: 'Missing id' });
+  const sets = [];
+  const names = {};
+  const values = {};
+  if (req.body.taskAdded !== undefined) {
+    names['#t'] = 'taskAdded';
+    values[':t'] = !!req.body.taskAdded;
+    sets.push('#t = :t');
+  }
+  if (!sets.length) return res.status(400).json({ error: 'No fields to update' });
+  try {
+    const params = {
+      TableName: MAIL_TABLE,
+      Key: { unique_id: id },
+      UpdateExpression: 'SET ' + sets.join(', '),
+      ExpressionAttributeNames: names,
+      ExpressionAttributeValues: values,
+      ReturnValues: 'ALL_NEW'
+    };
+    const result = await dynamo.update(params).promise();
+    res.json(result.Attributes);
+  } catch (err) {
+    respondError(res, 500, 'Failed to update email', err);
+  }
+});
+
 module.exports = app;

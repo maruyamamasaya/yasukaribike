@@ -92,6 +92,14 @@ async function loadEmails(page = 1) {
       <td>${escapeHtml(item.from || '')}</td>
       <td>${escapeHtml(item.subject || '')}</td>
       <td style="white-space:pre-wrap; width:40%;">${escapeHtml(bodySnippet)}</td>`;
+    const td = document.createElement('td');
+    const btn = document.createElement('button');
+    btn.textContent = 'タスクに追加';
+    btn.className = 'btn btn-sm btn-outline-primary';
+    if (item.taskAdded) btn.disabled = true;
+    btn.addEventListener('click', () => addTaskFromEmail(item, btn));
+    td.appendChild(btn);
+    tr.appendChild(td);
     tbody.appendChild(tr);
   });
 
@@ -109,6 +117,40 @@ function nextPage() {
 
 function prevPage() {
   loadEmails(currentPage - 1);
+}
+
+async function addTaskFromEmail(item, btn) {
+  if (!confirm('このメールをタスクに追加しますか？')) return;
+  const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0]
+    .replace(/-/g, '/');
+  const history = {};
+  history[today] = item.body || '';
+  const body = {
+    email: item.from || '',
+    category: 'メール問い合わせ',
+    date: today,
+    history
+  };
+  try {
+    const res = await fetch(API + '/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error('failed to create task');
+    const res2 = await fetch(API + '/emails/' + encodeURIComponent(item.unique_id), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskAdded: true })
+    });
+    if (!res2.ok) throw new Error('failed to update email');
+    btn.disabled = true;
+  } catch (e) {
+    console.error(e);
+    alert('タスク追加に失敗しました');
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
