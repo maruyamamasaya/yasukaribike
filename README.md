@@ -105,11 +105,10 @@ npm install
 export AWS_REGION=ap-northeast-1
 npm start
 ```
-グーバイクお客様センター (<goobike_reserve@goobike.com>) から届いたメールを
-すべて取得したい場合は次のスクリプトを実行できます。
+グーバイクお客様センター (<goobike_reserve@goobike.com>) から届いたメールをすべて取得したい場合は次のスクリプトを実行できます。
+このコマンドは IMAP 上のすべてのフォルダーを自動的に巡回します。
 You can fetch every message from `goobike_reserve@goobike.com` via IMAP with the
 following command:
-
 
 ```bash
 npm run fetch-all
@@ -119,9 +118,7 @@ While running, a spinner shows progress as each mail is downloaded.
 取得状況は `fetchAllEmails.log` にも記録されます。
 A log of the operation is appended to `fetchAllEmails.log`.
 
-このスクリプトは受信トレイに加え、`グーバイク` フォルダーとその下位フォルダー
-(`予約報告`, `仮予約受付`, `回答依頼`, `見送りのお知らせ`, `追加連絡`) も順に巡回し
-保存します。各レコードにはフォルダー名およびカテゴリが含まれます。
+このスクリプトは IMAP 上のすべてのフォルダーを自動的に巡回し、保存します。各レコードにはフォルダー名およびカテゴリが含まれます。
 
 Node.js 18 以上を使用してください。アプリはグローバル `fetch` API に依存します。古い Node.js を利用する場合は `node-fetch` などのポリフィルが必要です。
 Use Node.js 18 or later because the app relies on the global `fetch` API. Older Node versions require a fetch polyfill such as `node-fetch`.
