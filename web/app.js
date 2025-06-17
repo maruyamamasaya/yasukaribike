@@ -16,6 +16,19 @@ function isScheduled(c) {
   return c.scheduledDate > today;
 }
 
+function isDue(c) {
+  const todayKey = new Date(Date.now() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10)
+    .replace(/-/g, '');
+  const key = c.date
+    ? c.date.replace(/\//g, '')
+    : c.order_id
+    ? c.order_id.slice(0, 8)
+    : '';
+  return key && key <= todayKey;
+}
+
 function formatDateTime(id) {
   if (!id || id.length < 12) return '';
   const y = id.slice(0, 4);
@@ -62,7 +75,7 @@ async function loadDashboard() {
     return isToday && (c.type || c.category) === '訪問対応';
   }).length;
   const unconfirmed = customers.filter(
-    c => (c.status || '') === '未済' && !isScheduled(c)
+    c => (c.status || '') === '未済' && !isScheduled(c) && isDue(c)
   ).length;
   const scheduled = customers.filter(c => (c.status || '') !== '済' && isScheduled(c)).length;
   const completed = customers.filter(c => (c.status || '') === '済').length;

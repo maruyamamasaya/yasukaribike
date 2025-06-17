@@ -14,6 +14,19 @@ function isScheduled(c) {
   return c.scheduledDate > today;
 }
 
+function isDue(c) {
+  const todayKey = new Date(Date.now() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10)
+    .replace(/-/g, '');
+  const key = c.date
+    ? c.date.replace(/\//g, '')
+    : c.order_id
+    ? c.order_id.slice(0, 8)
+    : '';
+  return key && key <= todayKey;
+}
+
 function getKey(c) {
   if (c.order_id) return c.order_id.slice(0, 14);
   if (c.date) return c.date.replace(/\//g, '');
@@ -55,7 +68,8 @@ async function loadPending(page = 1) {
   let customers = (data.Items || data)
     .filter(c => !c.draft)
     .filter(c => (c.status || '') === '未済')
-    .filter(c => !isScheduled(c));
+    .filter(c => !isScheduled(c))
+    .filter(c => isDue(c));
   const qEl = document.getElementById('quick-search');
   const tEl = document.getElementById('text-search');
   const keyword = qEl ? qEl.value.trim() : '';
