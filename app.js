@@ -906,6 +906,26 @@ app.get('/emails', async (req, res) => {
   }
 });
 
+// メールカテゴリ一覧を返す
+app.get('/categories', async (req, res) => {
+  try {
+    const data = await dynamo
+      .scan({
+        TableName: MAIL_TABLE,
+        ProjectionExpression: '#c',
+        ExpressionAttributeNames: { '#c': 'category' }
+      })
+      .promise();
+    const set = new Set();
+    for (const item of data.Items || []) {
+      if (item.category) set.add(item.category);
+    }
+    res.json(Array.from(set).sort());
+  } catch (err) {
+    respondError(res, 500, 'Failed to fetch categories', err);
+  }
+});
+
 // 個別メールを返す
 app.get('/emails/:id', async (req, res) => {
   const id = req.params.id;

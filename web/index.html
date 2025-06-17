@@ -119,25 +119,7 @@
             <div class="mb-2">
               <a href="mail_titles.html" class="btn btn-outline-primary btn-sm">メール全件確認</a>
             </div>
-            <ul class="mb-0">
-              <li class="fw-bold">グーバイク予約サービス
-                <ul class="mb-2">
-                  <li><a href="goobike_mail.html?cat=reserve_notice">ご予約のお知らせ</a></li>
-                  <li><a href="goobike_mail.html?cat=tentative">仮予約受付のお知らせ</a></li>
-                </ul>
-              </li>
-              <li class="fw-bold">グーバイク見積りサービス
-                <ul class="mb-2">
-                  <li><a href="goobike_mail.html?cat=answer_request">ご回答依頼のお知らせ</a></li>
-                  <li><a href="goobike_mail.html?cat=skip">見送りのお知らせ</a></li>
-                </ul>
-              </li>
-              <li class="fw-bold">【グーバイク】
-                <ul class="mb-0">
-                  <li><a href="goobike_mail.html?cat=additional">追加のご連絡</a></li>
-                </ul>
-              </li>
-            </ul>
+            <ul id="category-list" class="mb-0"></ul>
           </div>
           <div class="border flex-fill p-3">受電履歴（アイブリー）</div>
         </div>
@@ -178,6 +160,7 @@
     </footer>
 
     <script src="app.js"></script>
+    <script src="categories.js"></script>
     <script src="split.js"></script>
   </body>
 </html>
