@@ -123,6 +123,7 @@ async function loadScheduled(page = 1) {
         <button class="btn btn-sm btn-outline-secondary ms-2" onclick="event.stopPropagation(); toggleStatus('${c.order_id}', '${c.status || ''}')">${btnLabel}</button>
       </td>
       <td>${formatDateTime(c.order_id)}</td>
+      <td>${c.scheduledDate || ''}</td>
       <td style="width:40%; white-space: pre-wrap; font-size:0.85rem;">${noteSnippet}</td>
       <td><a href="edit.html?id=${c.order_id}" class="btn btn-sm btn-primary" onclick="event.stopPropagation();">編集</a></td>
     `;
