@@ -26,7 +26,12 @@ function hasText(item, keyword) {
 function formatDateJST(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
-  return d.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', hour12: false });
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${y}/${m}/${day} ${hh}時${mm}分`;
 }
 
 async function fetchData() {
@@ -87,11 +92,14 @@ async function loadEmails(page = 1) {
     if (bodySnippet.length > 500) bodySnippet = bodySnippet.slice(0, 500) + '…';
     const link = `mail_detail.html?id=${encodeURIComponent(item.unique_id || '')}`;
     const dateText = formatDateJST(item.date || item.createdAt);
+    const btnLabel = item.task_added ? '追加済み' : 'タスクに追加';
+    const disabled = item.task_added ? 'disabled' : '';
     tr.innerHTML = `
       <td><a href="${link}">${escapeHtml(dateText)}</a></td>
       <td>${escapeHtml(item.from || '')}</td>
       <td>${escapeHtml(item.subject || '')}</td>
-      <td style="white-space:pre-wrap; width:40%;">${escapeHtml(bodySnippet)}</td>`;
+      <td style="white-space:pre-wrap; width:40%;">${escapeHtml(bodySnippet)}</td>
+      <td><button class="btn btn-sm btn-primary" onclick="addTask('${item.unique_id}')" ${disabled}>${btnLabel}</button></td>`;
     tbody.appendChild(tr);
   });
 
@@ -109,6 +117,18 @@ function nextPage() {
 
 function prevPage() {
   loadEmails(currentPage - 1);
+}
+
+async function addTask(id) {
+  if (!id) return;
+  const res = await fetch(API + `/emails/${encodeURIComponent(id)}/add-task`, {
+    method: 'POST'
+  });
+  if (res.ok) {
+    loadEmails(currentPage);
+  } else {
+    alert('タスク追加に失敗しました');
+  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
