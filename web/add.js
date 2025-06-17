@@ -64,8 +64,11 @@ async function saveCustomer(isDraft = false) {
     return;
   }
 
+  let name = document.getElementById('f-name').value.trim();
+  if (!name) name = '名前を入力してください';
+
   const body = {
-    name: document.getElementById('f-name').value,
+    name,
     kana: document.getElementById('f-kana').value,
     email,
     category: document.getElementById('f-category').value,

@@ -167,12 +167,13 @@ async function loadEmails(page = 1, refresh = false) {
     const link = `mail_detail.html?id=${encodeURIComponent(item.unique_id || '')}`;
     const dateText = formatDateJST(item.date || item.createdAt);
     const btnLabel = item.task_added ? '追加済み' : 'タスクに追加';
+    const btnClass = item.task_added ? 'btn btn-sm btn-success' : 'btn btn-sm btn-primary';
     tr.innerHTML = `
       <td><a href="${link}">${dateText}</a></td>
       <td>${escapeHtml(item.from || '')}</td>
       <td>${escapeHtml(item.subject || '')}</td>
       <td style="white-space:pre-wrap; width:40%;">${escapeHtml(bodySnippet)}</td>
-      <td><button class="btn btn-sm btn-primary" onclick="addTask('${item.unique_id}')" data-added="${item.task_added ? '1' : '0'}">${btnLabel}</button></td>`;
+      <td><button class="${btnClass}" onclick="addTask('${item.unique_id}')" data-added="${item.task_added ? '1' : '0'}">${btnLabel}</button></td>`;
     tbody.appendChild(tr);
   });
 
