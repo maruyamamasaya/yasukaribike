@@ -31,7 +31,7 @@ function formatDateJST(dateStr) {
   const day = String(d.getDate()).padStart(2, '0');
   const hh = String(d.getHours()).padStart(2, '0');
   const mm = String(d.getMinutes()).padStart(2, '0');
-  return `${y}/${m}/${day} ${hh}時${mm}分`;
+  return `<span class="date-part">${y}/${m}/${day}</span><br><span class="time-part">${hh}時${mm}分</span>`;
 }
 
 async function fetchData() {
@@ -95,7 +95,7 @@ async function loadEmails(page = 1) {
     const btnLabel = item.task_added ? '追加済み' : 'タスクに追加';
     const disabled = item.task_added ? 'disabled' : '';
     tr.innerHTML = `
-      <td><a href="${link}">${escapeHtml(dateText)}</a></td>
+      <td><a href="${link}">${dateText}</a></td>
       <td>${escapeHtml(item.from || '')}</td>
       <td>${escapeHtml(item.subject || '')}</td>
       <td style="white-space:pre-wrap; width:40%;">${escapeHtml(bodySnippet)}</td>
