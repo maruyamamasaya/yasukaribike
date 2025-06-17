@@ -165,7 +165,17 @@ app.get('/summary', async (req, res) => {
       t => (t.date === today || t.order_id?.startsWith(today.replace(/\//g, '')))
         && (t.status || '') === '未済'
     );
-    const lines = tasks.map(t => `${t.name || '不明'}さん: ${t.details || ''}`);
+    const lines = tasks.map(t => {
+      let note = '';
+      if (t.history) {
+        const keys = Object.keys(t.history).sort();
+        const last = keys[keys.length - 1];
+        if (last) note = t.history[last];
+      }
+      const detailPart = t.details ? `本文: ${t.details}` : '';
+      const memoPart = note ? ` メモ: ${note}` : '';
+      return `${t.name || '不明'}さん: ${detailPart}${memoPart}`.trim();
+    });
     const baseSummary = lines.join('\n');
 
     const key = process.env.OPENAI_API_KEY;
@@ -173,7 +183,7 @@ app.get('/summary', async (req, res) => {
       return res.json({ summary: baseSummary });
     }
 
-    const prompt = `以下は本日未完了のタスク一覧です。箇条書きの内容を要約してください。\n${baseSummary}`;
+    const prompt = `以下は本日未完了のタスク一覧です。各行には本文と最新メモが含まれます。箇条書きの内容を要約してください。\n${baseSummary}`;
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
