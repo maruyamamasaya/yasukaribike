@@ -6,9 +6,12 @@ async function loadCategories() {
   const ul = document.getElementById('category-list');
   if (!ul) return;
   try {
-    const res = await fetch(API + '/categories');
-    const list = await res.json();
-    if (!res.ok) return;
+    let list = window.INIT_CATEGORIES;
+    if (!list) {
+      const res = await fetch(API + '/categories');
+      list = await res.json();
+      if (!res.ok) return;
+    }
     ul.innerHTML = '';
     for (const item of list) {
       const name = item.name || item;

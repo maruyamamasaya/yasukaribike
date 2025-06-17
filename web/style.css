@@ -51,6 +51,12 @@
   cursor: ew-resize;
 }
 
+#mail-divider {
+  height: 5px;
+  background: #eee;
+  cursor: ns-resize;
+}
+
 /* Simple loading spinner */
 .spinner {
   width: 40px;

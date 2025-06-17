@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 const AWS = require('aws-sdk');
@@ -78,6 +79,37 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+
+// Serve index.html with categories embedded
+app.get(['/', '/index.html'], async (req, res, next) => {
+  try {
+    const html = await fs.promises.readFile(
+      path.join(__dirname, 'web', 'index.html'),
+      'utf8'
+    );
+    const data = await dynamo
+      .scan({
+        TableName: MAIL_TABLE,
+        ProjectionExpression: '#c',
+        ExpressionAttributeNames: { '#c': 'category' }
+      })
+      .promise();
+    const counts = {};
+    for (const item of data.Items || []) {
+      if (item.category) {
+        counts[item.category] = (counts[item.category] || 0) + 1;
+      }
+    }
+    const list = Object.keys(counts)
+      .sort()
+      .map(name => ({ name, count: counts[name] }));
+    const script = `<script>window.INIT_CATEGORIES=${JSON.stringify(list)}</script>`;
+    res.type('html').send(html.replace('</body>', `${script}\n</body>`));
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.use(express.static(path.join(__dirname, 'web')));
 
 function extractGoobikeSections(rawText) {
