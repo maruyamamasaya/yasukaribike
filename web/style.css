@@ -98,7 +98,4 @@ th[data-key] {
 
 #page-title {
   font-weight: 700;
-  background: linear-gradient(90deg, #007bff, #6610f2);
-  -webkit-background-clip: text;
-  color: transparent;
 }
