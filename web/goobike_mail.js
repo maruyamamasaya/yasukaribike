@@ -23,11 +23,17 @@ function hasText(item, keyword) {
   return (item.body || '').includes(keyword);
 }
 
+function formatDateJST(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', hour12: false });
+}
+
 async function fetchData() {
   let res;
   let data = {};
   try {
-    res = await fetch(API + '/goobike-emails');
+    res = await fetch(API + '/emails');
     data = await res.json();
   } catch (err) {
     console.error(err);
@@ -53,9 +59,9 @@ async function loadEmails(page = 1) {
   const textKey = tEl ? tEl.value.trim() : '';
   if (keyword) {
     items = items.filter(i =>
-      (i.name || '').includes(keyword) ||
-      (i.phone || '').includes(keyword) ||
-      (i.email || '').includes(keyword)
+      (i.from || '').includes(keyword) ||
+      (i.to || '').includes(keyword) ||
+      (i.subject || '').includes(keyword)
     );
   }
   if (textKey) {
@@ -78,14 +84,15 @@ async function loadEmails(page = 1) {
   slice.forEach(item => {
     const tr = document.createElement('tr');
     let bodySnippet = item.body || '';
-    if (bodySnippet.length > 200) bodySnippet = bodySnippet.slice(0, 200) + '…';
+    if (bodySnippet.length > 500) bodySnippet = bodySnippet.slice(0, 500) + '…';
+    const link = `mail_detail.html?id=${encodeURIComponent(item.unique_id || '')}`;
+    const dateText = formatDateJST(item.date || item.createdAt);
     tr.innerHTML = `
-      <td>${item.inquiry_id || ''}</td>
-      <td>${escapeHtml(item.name || '')}</td>
-      <td>${escapeHtml(item.email || '')}</td>
-      <td>${escapeHtml(item.phone || '')}</td>
-      <td>${escapeHtml(item.createdAt || '')}</td>
-      <td style="white-space:pre-wrap;">${escapeHtml(bodySnippet)}</td>`;
+      <td>${escapeHtml(dateText)}</td>
+      <td>${escapeHtml(item.from || '')}</td>
+      <td>${escapeHtml(item.subject || '')}</td>
+      <td style="white-space:pre-wrap; width:50%;">${escapeHtml(bodySnippet)}</td>
+      <td><a href="${link}">詳細</a></td>`;
     tbody.appendChild(tr);
   });
 
@@ -106,7 +113,6 @@ function prevPage() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('fetch-btn').addEventListener('click', loadEmails);
   document.getElementById('date-header').addEventListener('click', () => {
     sortDescending = !sortDescending;
     loadEmails();
