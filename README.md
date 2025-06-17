@@ -156,7 +156,7 @@ Customer data is stored in the DynamoDB table `kokyakukanri_TBL`.
 | `date`     | Handled date in `yyyy/mm/dd`                  | `2024/01/01`                      |
 | `staff`    | Person in charge                              | `佐藤`                             |
 | `phone`    | Phone number                                  | `090-1234-5678`                   |
-| `history`  | Notes history object (`YYYY-MM-DD`: text)     | `{ "2024-01-01": "First call" }` |
+| `history`  | Notes history object (`YYYY-MM-DD HH:MM:SS`: text) | `{ "2024-01-01 09:00:00": "First call" }` |
 
 
 ---
