@@ -159,3 +159,65 @@ numbers or note history.
 
 
 
+## 📂 ソースコード構成 / Source Code Overview
+
+### Node.js バックエンド / Node.js Backend
+- `app.js` - Express アプリ本体。顧客管理 API やメール取得処理、AI 要約などを提供します。
+  Main Express application providing customer APIs, email fetching and AI summary features.
+- `server.js` - 指定ポートで `app` を起動するエントリポイントです。
+  Entry point that starts the app on the chosen port.
+- `lambda.js` - `serverless-http` を用いて `app` を AWS Lambda から呼び出すためのラッパー。
+  Wrapper that exposes the Express app to AWS Lambda via `serverless-http`.
+- `fetchAllEmails.js` - IMAP の全フォルダーからメールを取得し DynamoDB に保存するスクリプト。ログを `fetchAllEmails.log` に出力します。
+  Script to download every message from IMAP folders and store them in DynamoDB, writing progress to `fetchAllEmails.log`.
+- `simpleFetch.js` - 主要フォルダーのみを巡回してメールを保存する簡易フェッチツール。`categories` オプションで件数一覧も確認できます。
+  Lightweight tool for fetching selected folders; it can also list category counts.
+- `package.json` - 依存パッケージと npm スクリプトを定義します。
+  Defines dependencies and npm scripts.
+- `serverless.yml` - Serverless Framework 用の設定ファイル。DynamoDB テーブルや Lambda 関数を定義します。
+  Configuration for deploying the app with the Serverless Framework.
+
+### フロントエンド (`web` ディレクトリ) / Frontend (web directory)
+- `index.html` & `app.js` - ダッシュボード画面。顧客の一覧や AI 要約ボタンを表示します。
+  Main dashboard page showing customer lists and the AI summary button.
+- `add.html` & `add.js` - 電話・訪問対応の新規登録フォーム。下書き自動保存機能付き。
+  Form for creating new phone/visit records with auto-save drafts.
+- `edit.html` & `edit.js` - 既存データの編集ページ。
+  Page for editing existing customer entries.
+- `all.html` & `all.js` - すべての顧客データを検索・ページネーション付きで表示。
+  Shows all customer entries with search and pagination.
+- `today.html` & `today.js` - 本日対応分の一覧。
+  List of today's records.
+- `phone_today.html` & `phone_today.js` - 本日の電話対応のみを抽出。
+  List of today's phone call records.
+- `visit_today.html` & `visit_today.js` - 本日の訪問対応のみを表示。
+  List of today's visit records.
+- `completed.html` & `completed.js` - 完了済みの問い合わせ一覧。
+  View of resolved entries.
+- `pending.html` & `pending.js` - 未済の問い合わせ一覧。
+  View of unresolved entries.
+- `drafts.html` & `drafts.js` - 保存された下書きの管理画面。
+  Page to manage saved drafts.
+- `search.html` & `search.js` - 詳細条件での検索フォーム。
+  Advanced search page.
+- `detail.html` & `detail.js` - 個別顧客の詳細表示。
+  Shows details for a single customer entry.
+- `goobike_mail.html` & `goobike_mail.js` - DynamoDB から取得したグーバイクメールをカテゴリ別に一覧化。
+  Lists GooBike related mails by category.
+- `mail_titles.html` & `mail_titles.js` - メールのタイトル一覧を表示。
+  Displays mail subjects from DynamoDB.
+- `mail_detail.html` & `mail_detail.js` - 個別メールの本文を参照するページ。
+  Page for viewing the full content of a single mail.
+- `folderTree.js` - メールフォルダーの階層構造をツリー表示します。
+  Renders a tree of mail folders.
+- `mail_split.js` / `split.js` - 画面内の領域をドラッグでリサイズできるようにするスクリプト。
+  Scripts for draggable split panes.
+- `categories.js` - メールカテゴリの件数を取得しトップページに表示。
+  Fetches mail category counts for the top page.
+- `nav.js` - 戻るボタンやパンくず表示などのナビゲーション用。
+  Navigation helpers such as back button and breadcrumb.
+- `style.css` - 共通スタイルシート。
+  Common stylesheet used by all pages.
+- `manual.html` - 操作方法をまとめたマニュアルページ。
+  User manual explaining how to operate the screens.
+
