@@ -40,7 +40,8 @@ async function saveCustomer(isDraft = false) {
   const note = document.getElementById('f-history-note').value.trim();
   const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
     .toISOString()
-    .split('T')[0];
+    .replace('T', ' ')
+    .slice(0, 19);
   let history = {};
   if (currentItem && currentItem.history) {
     history = { ...currentItem.history };

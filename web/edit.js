@@ -53,7 +53,10 @@ async function loadCustomer() {
 async function saveCustomer() {
   const id = document.getElementById('f-order_id').value;
   const note = document.getElementById('f-history-note').value.trim();
-  const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .replace('T', ' ')
+    .slice(0, 19);
   let history = {};
   if (id && currentItem && currentItem.history) {
     history = { ...currentItem.history };
