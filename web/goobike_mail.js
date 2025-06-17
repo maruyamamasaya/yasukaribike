@@ -6,6 +6,7 @@ let sortDescending = true;
 let currentPage = 1;
 const PAGE_SIZE = 20;
 let allEmails = [];
+let currentPageItems = [];
 let dateCounts = {};
 let dateFilter = '';
 
@@ -20,6 +21,11 @@ function escapeHtml(text) {
 
 function getKey(item) {
   return item.createdAt || '';
+}
+
+function getTimeValue(item) {
+  const key = item.date || item.createdAt;
+  return key ? new Date(key).getTime() : 0;
 }
 
 function hasText(item, keyword) {
@@ -141,7 +147,7 @@ async function loadEmails(page = 1, refresh = false) {
   }
 
   items.sort((a, b) =>
-    sortDescending ? getKey(b).localeCompare(getKey(a)) : getKey(a).localeCompare(getKey(b))
+    sortDescending ? getTimeValue(b) - getTimeValue(a) : getTimeValue(a) - getTimeValue(b)
   );
 
   const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
@@ -152,6 +158,7 @@ async function loadEmails(page = 1, refresh = false) {
   tbody.innerHTML = '';
   const start = (currentPage - 1) * PAGE_SIZE;
   const slice = items.slice(start, start + PAGE_SIZE);
+  currentPageItems = slice;
 
   slice.forEach(item => {
     const tr = document.createElement('tr');
@@ -160,13 +167,12 @@ async function loadEmails(page = 1, refresh = false) {
     const link = `mail_detail.html?id=${encodeURIComponent(item.unique_id || '')}`;
     const dateText = formatDateJST(item.date || item.createdAt);
     const btnLabel = item.task_added ? '追加済み' : 'タスクに追加';
-    const disabled = item.task_added ? 'disabled' : '';
     tr.innerHTML = `
       <td><a href="${link}">${dateText}</a></td>
       <td>${escapeHtml(item.from || '')}</td>
       <td>${escapeHtml(item.subject || '')}</td>
       <td style="white-space:pre-wrap; width:40%;">${escapeHtml(bodySnippet)}</td>
-      <td><button class="btn btn-sm btn-primary" onclick="addTask('${item.unique_id}')" ${disabled}>${btnLabel}</button></td>`;
+      <td><button class="btn btn-sm btn-primary" onclick="addTask('${item.unique_id}')" data-added="${item.task_added ? '1' : '0'}">${btnLabel}</button></td>`;
     tbody.appendChild(tr);
   });
 
@@ -188,6 +194,11 @@ function prevPage() {
 
 async function addTask(id) {
   if (!id) return;
+  const item = allEmails.find(e => e.unique_id === id);
+  if (item && item.task_added) {
+    const ok = confirm('再度追加しますか？\n前回追加済みの場合は、タスクが重複する恐れがあります。');
+    if (!ok) return;
+  }
   const res = await fetch(API + `/emails/${encodeURIComponent(id)}/add-task`, {
     method: 'POST'
   });
@@ -198,12 +209,30 @@ async function addTask(id) {
   }
 }
 
+async function addAllTasks() {
+  if (!currentPageItems.length) return;
+  const already = currentPageItems.filter(i => i.task_added).length;
+  let msg = '表示中のメールを一括でタスク追加しますか？';
+  if (already > 0) msg += `\n${already}件は追加済みです。再度追加するとタスクが重複する恐れがあります。`;
+  if (!confirm(msg)) return;
+  for (const item of currentPageItems) {
+    await fetch(API + `/emails/${encodeURIComponent(item.unique_id)}/add-task`, {
+      method: 'POST'
+    });
+  }
+  loadEmails(currentPage, true);
+}
+
 window.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('date-header').addEventListener('click', () => {
-    sortDescending = !sortDescending;
-    loadEmails();
-  });
-  document.getElementById('quick-search').addEventListener('input', () => loadEmails(1));
-  document.getElementById('text-search').addEventListener('input', () => loadEmails(1));
+  const descBtn = document.getElementById('sort-desc');
+  const ascBtn = document.getElementById('sort-asc');
+  if (descBtn) descBtn.addEventListener('click', () => { sortDescending = true; loadEmails(); });
+  if (ascBtn) ascBtn.addEventListener('click', () => { sortDescending = false; loadEmails(); });
+  const bulkBtn = document.getElementById('bulk-add-btn');
+  if (bulkBtn) bulkBtn.addEventListener('click', addAllTasks);
+  const qEl = document.getElementById('quick-search');
+  const tEl = document.getElementById('text-search');
+  if (qEl) qEl.addEventListener('input', () => loadEmails(1));
+  if (tEl) tEl.addEventListener('input', () => loadEmails(1));
   loadEmails(1, true);
 });
