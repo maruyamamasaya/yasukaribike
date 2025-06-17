@@ -99,3 +99,9 @@ th[data-key] {
 #page-title {
   font-weight: 700;
 }
+
+/* Calendar view */
+.month-content {
+  border-left: 3px solid #ddd;
+  padding-left: 1rem;
+}
