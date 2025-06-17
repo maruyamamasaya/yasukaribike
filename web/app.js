@@ -173,7 +173,7 @@ async function loadEmailStats() {
           hour12: false
         })
       : '';
-    let text = `最終更新: ${dateStr} / 全件: ${data.count}`;
+    let text = `最終更新: ${dateStr} / 全件: ${data.count} (2025年6月1日から取得)`;
     if (typeof data.todayCount === 'number') {
       text += ` / 今日: ${data.todayCount}`;
     }
