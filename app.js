@@ -355,7 +355,8 @@ app.post('/customers', async (req, res) => {
     staff: req.body.staff || '',
     phone: req.body.phoneNumber || req.body.phone || '',
     history: req.body.history || {},
-    draft: !!req.body.draft
+    draft: !!req.body.draft,
+    scheduledDate: req.body.scheduledDate || ''
   };
   try {
     await ddb.send(new PutCommand({ TableName: TABLE, Item: item }));
@@ -394,7 +395,8 @@ app.put('/customers/:id', async (req, res) => {
     staff: req.body.staff,
     phone: req.body.phoneNumber || req.body.phone,
     history: req.body.history,
-    draft: req.body.draft
+    draft: req.body.draft,
+    scheduledDate: req.body.scheduledDate
   };
 
   const sets = [];
@@ -1084,7 +1086,8 @@ app.post('/emails/:id/add-task', async (req, res) => {
       staff: '',
       phone: '',
       history: hist,
-      draft: false
+      draft: false,
+      scheduledDate: ''
     };
 
     await ddb.send(new PutCommand({ TableName: TABLE, Item: newItem }));

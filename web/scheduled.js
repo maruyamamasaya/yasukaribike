@@ -6,6 +6,14 @@ let sortDescending = true;
 let currentPage = 1;
 const PAGE_SIZE = 20;
 
+function isScheduled(c) {
+  if (!c.scheduledDate) return false;
+  const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  return c.scheduledDate > today;
+}
+
 function getKey(c) {
   if (c.order_id) return c.order_id.slice(0, 14);
   if (c.date) return c.date.replace(/\//g, '');
@@ -44,18 +52,10 @@ async function loadScheduled(page = 1) {
   currentPage = page;
   const res = await fetch(API + '/customers');
   const data = await res.json();
-  const nowKey = new Date(Date.now() + 9 * 60 * 60 * 1000)
-    .toISOString()
-    .replace(/[-T:Z.]/g, '')
-    .slice(0, 14);
   let customers = (data.Items || data)
     .filter(c => !c.draft)
     .filter(c => (c.status || '') === '未済')
-    .filter(c => {
-      if (c.order_id) return c.order_id.slice(0, 14) > nowKey;
-      if (c.date) return c.date.replace(/\//g, '') > nowKey.slice(0, 8);
-      return false;
-    });
+    .filter(c => isScheduled(c));
   const qEl = document.getElementById('quick-search');
   const tEl = document.getElementById('text-search');
   const keyword = qEl ? qEl.value.trim() : '';

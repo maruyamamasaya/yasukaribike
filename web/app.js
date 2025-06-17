@@ -8,6 +8,14 @@ let currentPage = 1;
 const PAGE_SIZE = 20;
 let sortDescending = true;
 
+function isScheduled(c) {
+  if (!c.scheduledDate) return false;
+  const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  return c.scheduledDate > today;
+}
+
 function formatDateTime(id) {
   if (!id || id.length < 12) return '';
   const y = id.slice(0, 4);
@@ -53,17 +61,10 @@ async function loadDashboard() {
     const isToday = c.date ? c.date === today : c.order_id && c.order_id.slice(0, 8) === todayKey;
     return isToday && (c.type || c.category) === '訪問対応';
   }).length;
-  const nowKey = new Date(Date.now() + 9 * 60 * 60 * 1000)
-    .toISOString()
-    .replace(/[-T:Z.]/g, '')
-    .slice(0, 14);
-  const unconfirmed = customers.filter(c => (c.status || '') === '未済').length;
-  const scheduled = customers.filter(c => {
-    if ((c.status || '') === '済') return false;
-    if (c.order_id) return c.order_id.slice(0, 14) > nowKey;
-    if (c.date) return c.date.replace(/\//g, '') > nowKey.slice(0, 8);
-    return false;
-  }).length;
+  const unconfirmed = customers.filter(
+    c => (c.status || '') === '未済' && !isScheduled(c)
+  ).length;
+  const scheduled = customers.filter(c => (c.status || '') !== '済' && isScheduled(c)).length;
   const completed = customers.filter(c => (c.status || '') === '済').length;
 
   document.getElementById('d-total').textContent = total;
@@ -87,7 +88,9 @@ async function loadCustomers(page = 1) {
   currentPage = page;
   const res = await fetch(API + '/customers');
   const data = await res.json();
-  let customers = (data.Items || data).filter(c => !c.draft);
+  let customers = (data.Items || data)
+    .filter(c => !c.draft)
+    .filter(c => !isScheduled(c));
 
   customers = customers.filter(c => (c.status || '') !== '済');
   customers.sort((a, b) =>

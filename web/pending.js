@@ -6,6 +6,14 @@ let sortDescending = true;
 let currentPage = 1;
 const PAGE_SIZE = 20;
 
+function isScheduled(c) {
+  if (!c.scheduledDate) return false;
+  const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  return c.scheduledDate > today;
+}
+
 function getKey(c) {
   if (c.order_id) return c.order_id.slice(0, 14);
   if (c.date) return c.date.replace(/\//g, '');
@@ -46,7 +54,8 @@ async function loadPending(page = 1) {
   const data = await res.json();
   let customers = (data.Items || data)
     .filter(c => !c.draft)
-    .filter(c => (c.status || '') === '未済');
+    .filter(c => (c.status || '') === '未済')
+    .filter(c => !isScheduled(c));
   const qEl = document.getElementById('quick-search');
   const tEl = document.getElementById('text-search');
   const keyword = qEl ? qEl.value.trim() : '';

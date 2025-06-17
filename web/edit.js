@@ -44,6 +44,10 @@ async function loadCustomer() {
       noteField.value = entries[entries.length - 1][1];
     }
   }
+  const schedDisplay = document.getElementById('schedule-display');
+  const schedInput = document.getElementById('schedule-input');
+  if (schedInput) schedInput.value = item.scheduledDate || '';
+  if (schedDisplay) schedDisplay.textContent = item.scheduledDate ? `先送り日: ${item.scheduledDate}` : '';
 }
 
 async function saveCustomer() {
@@ -81,3 +85,27 @@ async function saveCustomer() {
 }
 
 window.addEventListener('DOMContentLoaded', loadCustomer);
+
+const postponeBtn = document.getElementById('postpone-btn');
+const scheduleInput = document.getElementById('schedule-input');
+
+if (postponeBtn && scheduleInput) {
+  postponeBtn.addEventListener('click', () => {
+    scheduleInput.style.display = 'block';
+    if (scheduleInput.showPicker) scheduleInput.showPicker();
+  });
+
+  scheduleInput.addEventListener('change', async e => {
+    const id = document.getElementById('f-order_id').value;
+    if (!id) return;
+    const date = e.target.value;
+    await fetch(API + '/customers/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scheduledDate: date })
+    });
+    const disp = document.getElementById('schedule-display');
+    if (disp) disp.textContent = date ? `先送り日: ${date}` : '';
+    scheduleInput.style.display = 'none';
+  });
+}
