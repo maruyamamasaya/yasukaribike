@@ -25,14 +25,15 @@ const NAME_MAP = {
   sent: '送信ボックス'
 };
 
-const CATEGORY_ORDER = [
-  'inbox',
+
+const ORDER = [
   'goobike',
   'reserve_notice',
   'tentative',
   'answer_request',
   'skip',
-  'additional',
+  'additional'
+
 ];
 
 async function loadTitles() {
@@ -73,10 +74,10 @@ function renderTable(page = currentPage) {
   const tbody = document.querySelector('#title-table tbody');
   if (!tbody) return;
 
-  let filtered = titles.filter(t => {
-    const cat = (t.category || '').toLowerCase();
-    return filterMode === 'sent' ? cat === 'sent' : cat !== 'sent';
-  });
+  let filtered = titles.filter(t =>
+    filterMode === 'sent' ? t.category === 'sent' : t.category !== 'sent'
+  );
+
   if (filterMode === 'inbox' && categoryFilter !== 'all') {
     filtered = filtered.filter(t => t.category === categoryFilter);
   }
@@ -136,20 +137,7 @@ function createCategoryButtons() {
   const container = document.getElementById('category-filters');
   if (!container) return;
   container.innerHTML = '';
-  const categories = Array.from(
-    new Set(
-      titles
-        .filter(t => t.category && t.category.toLowerCase() !== 'sent')
-        .map(t => t.category)
-    )
-  ).sort((a, b) => {
-    const ai = CATEGORY_ORDER.indexOf(a);
-    const bi = CATEGORY_ORDER.indexOf(b);
-    if (ai === -1 && bi === -1) return a.localeCompare(b);
-    if (ai === -1) return 1;
-    if (bi === -1) return -1;
-    return ai - bi;
-  });
+  const categories = ORDER;
   const allBtn = document.createElement('button');
   allBtn.className = 'btn btn-outline-secondary active';
   allBtn.textContent = '全て';

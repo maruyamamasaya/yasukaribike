@@ -13,6 +13,16 @@
     additional: '追加連絡'
   };
 
+  const ORDER = [
+    'inbox',
+    'goobike',
+    'reserve_notice',
+    'tentative',
+    'answer_request',
+    'skip',
+    'additional'
+  ];
+
   async function loadCategories() {
     const ul = document.getElementById('category-list');
     if (!ul) return;
@@ -23,11 +33,17 @@
         list = await res.json();
         if (!res.ok) return;
       }
-      ul.innerHTML = '';
+
+      const counts = {};
       for (const item of list) {
         const name = item.name || item;
-        if (String(name).toLowerCase() === 'sent') continue;
-        const count = item.count;
+        if (name === 'sent') continue;
+        counts[name] = item.count || 0;
+      }
+
+      ul.innerHTML = '';
+      ORDER.forEach(name => {
+        const count = counts[name] || 0;
         const li = document.createElement('li');
         const a = document.createElement('a');
         a.href = `goobike_mail.html?cat=${encodeURIComponent(name)}`;
@@ -39,7 +55,8 @@
           li.appendChild(span);
         }
         ul.appendChild(li);
-      }
+      });
+
     } catch (err) {
       console.error(err);
     }
