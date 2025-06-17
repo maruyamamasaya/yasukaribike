@@ -292,10 +292,16 @@ app.get('/summary', async (req, res) => {
       .toISOString()
       .split('T')[0]
       .replace(/-/g, '/');
-    const tasks = items.filter(
-      t => (t.date === today || t.order_id?.startsWith(today.replace(/\//g, '')))
-        && (t.status || '') === '未済'
-    );
+    const todayKey = today.replace(/\//g, '');
+    const tasks = items.filter(t => {
+      if ((t.status || '') !== '未済') return false;
+      if (t.scheduledDate) {
+        const s = t.scheduledDate.replace(/\//g, '');
+        if (s > todayKey) return false;
+      }
+      const key = getDateKey(t);
+      return key && key <= todayKey;
+    });
     const lines = tasks.map(t => {
       let memo = '';
       if (t.history) {
@@ -312,7 +318,7 @@ app.get('/summary', async (req, res) => {
       return res.json({ summary: baseSummary });
     }
 
-    const prompt = `以下は本日未完了のタスク一覧です (本文とメモを含みます)。箇条書きの内容を要約してください。\n${baseSummary}`;
+    const prompt = `以下は今日まで未完了のタスク一覧です (本文とメモを含みます)。箇条書きの内容を要約してください。\n${baseSummary}`;
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
