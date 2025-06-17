@@ -159,30 +159,6 @@ async function toggleStatus(id, current) {
   loadDashboard();
 }
 
-async function loadEmailStats() {
-  const el = document.getElementById('email-stats');
-  if (!el) return;
-  try {
-    const res = await fetch(API + '/email-stats');
-    const data = await res.json();
-    if (!res.ok) return;
-    const base = data.fetchTime || data.lastDate;
-    const dateStr = base
-      ? new Date(base).toLocaleString('ja-JP', {
-          timeZone: 'Asia/Tokyo',
-          hour12: false
-        })
-      : '';
-    let text = `最終更新: ${dateStr} / 全件: ${data.count} (2025年6月1日から取得)`;
-    if (typeof data.todayCount === 'number') {
-      text += ` / 今日: ${data.todayCount}`;
-    }
-    el.textContent = text;
-  } catch (err) {
-    console.error(err);
-  }
-}
-
 function nextPage() {
   loadCustomers(currentPage + 1);
 }
@@ -190,20 +166,11 @@ function nextPage() {
 function prevPage() {
   loadCustomers(currentPage - 1);
 }
-
-async function fetchAllEmails() {
-  try {
-    await fetch(API + '/api/fetch-all-emails');
-    loadEmailStats();
-  } catch (err) {
-    console.error(err);
-  }
 }
 
 // 初期表示
 const dateHeader = document.getElementById('date-header');
 if (dateHeader) {
-  dateHeader.addEventListener('click', () => {
     sortDescending = !sortDescending;
     loadCustomers();
   });
@@ -211,7 +178,6 @@ if (dateHeader) {
 
 loadDashboard();
 loadCustomers();
-loadEmailStats();
 
 // AI要約ボタン
 const summaryBtn = document.getElementById('ai-summary-btn');
@@ -227,7 +193,3 @@ if (summaryBtn) {
   });
 }
 
-const loadBtn = document.getElementById('load-btn');
-if (loadBtn) {
-  loadBtn.addEventListener('click', fetchAllEmails);
-}

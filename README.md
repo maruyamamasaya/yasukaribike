@@ -15,8 +15,6 @@ Open `index.html` in a browser to use a searchable table and forms for adding/ed
 Bootstrap を利用しているため、見た目もある程度整っています。
 It uses Bootstrap for basic styling and layout.
 
-メールカテゴリの一覧は `/categories` API から取得し、トップページで自動表示されます。各カテゴリの件数も横に表示されます。
-The category list on the top page is now populated automatically via the `/categories` API, and each category shows its entry count.
 
 新規追加時には履歴メモを入力でき、編集画面では登録済みの履歴を確認できます。  
 You can input notes when adding new entries, and view the saved history in the edit form.
@@ -86,48 +84,13 @@ Set `AWS_REGION` for the AWS SDK (e.g., `ap-northeast-1`).
 
 ### 必要な環境変数 / Required Environment Variables
 - **BASIC_USER / BASIC_PASS**: ベーシック認証のユーザー名とパスワード / Basic auth credentials
-- **EMAIL_USER / EMAIL_PASS**: メール取得用 IMAP アカウント / IMAP login for email
-- **IMAP_HOST / IMAP_PORT**: IMAP サーバーのホスト名とポート / IMAP server host and port
- - **TABLE_NAME**, **GOOBIKE_TABLE**, **MAIL_TABLE**: 利用する DynamoDB テーブル名 / DynamoDB table names
 - **AWS_REGION**: AWS SDK が利用するリージョン / AWS region used by the SDK
 
 これらは `.env` ファイルまたは環境変数として設定してください。 / Add these values in a `.env` file or export them.
 `.env.example` に典型的な値のサンプルを用意しています。 / See `.env.example` for typical values.
-値が不足していると `/api/fetch-email` などのエンドポイントは 500 エラーを返します。
-Missing values will cause endpoints such as `/api/fetch-email` to return 500 errors.
-
-`/api/fetch-email` will read all matching messages from the last two months and
-save them in DynamoDB. If an email with the same inquiry number already exists,
-the record is updated with the latest details instead of creating a suffixed
-duplicate. The endpoint now searches for the pattern `[UB` in the subject line so that
-replies and forwarded messages with the same inquiry ID are also captured.
-
-
-```bash
-npm install
-export AWS_REGION=ap-northeast-1
-npm start
-```
-グーバイクお客様センター (<goobike_reserve@goobike.com>) から届いたメールをすべて取得したい場合は次のスクリプトを実行できます。
-このコマンドは IMAP 上のすべてのフォルダーを自動的に巡回します。
-You can fetch every message from `goobike_reserve@goobike.com` via IMAP with the
-following command:
-
-```bash
-npm run fetch-all
-```
-実行中はスピナーと件数表示で進捗が確認できます。
-While running, a spinner shows progress as each mail is downloaded.
-取得状況は `fetchAllEmails.log` にも記録されます。
-A log of the operation is appended to `fetchAllEmails.log`.
-
-このスクリプトは IMAP 上のすべてのフォルダーを自動的に巡回し、保存します。各レコードにはフォルダー名およびカテゴリが含まれます。
-`INBOX.Junk` と `INBOX.Trash` は自動的に除外され、2025 年 6 月以降に受信したメールのみが対象となります。
 
 Node.js 18 以上を使用してください。アプリはグローバル `fetch` API に依存します。古い Node.js を利用する場合は `node-fetch` などのポリフィルが必要です。
 Use Node.js 18 or later because the app relies on the global `fetch` API. Older Node versions require a fetch polyfill such as `node-fetch`.
-アプリは起動時に `EMAIL_USER`、`EMAIL_PASS`、`IMAP_HOST` を確認し、不足しているとエラーで停止します。
-The application checks `EMAIL_USER`, `EMAIL_PASS`, and `IMAP_HOST` on startup. Missing values throw an error and stop the server.
 サーバーは `server.js` で `process.env.PORT || 3000` を使用して起動します。
 The server starts on `process.env.PORT || 3000` in `server.js`.
 
