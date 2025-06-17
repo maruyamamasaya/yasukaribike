@@ -1045,4 +1045,55 @@ app.get('/emails/:id', async (req, res) => {
   }
 });
 
+// メールからタスクを生成
+app.post('/emails/:id/add-task', async (req, res) => {
+  const id = req.params.id;
+  if (!id) return res.status(400).json({ error: 'Missing id' });
+  try {
+    const data = await dynamo
+      .get({ TableName: MAIL_TABLE, Key: { unique_id: id } })
+      .promise();
+    if (!data || !data.Item) return res.status(404).json({ error: 'Not found' });
+
+    const mail = data.Item;
+    const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0]
+      .replace(/-/g, '/');
+
+    const hist = {};
+    hist[today] = mail.body || '';
+
+    const newItem = {
+      order_id: genOrderId(),
+      status: '未済',
+      email: mail.from || '',
+      name: '',
+      kana: '',
+      type: 'メール問い合わせ',
+      details: mail.subject || '',
+      date: today,
+      staff: '',
+      phone: '',
+      history: hist,
+      draft: false
+    };
+
+    await ddb.send(new PutCommand({ TableName: TABLE, Item: newItem }));
+
+    await dynamo
+      .update({
+        TableName: MAIL_TABLE,
+        Key: { unique_id: id },
+        UpdateExpression: 'SET task_added = :t',
+        ExpressionAttributeValues: { ':t': true }
+      })
+      .promise();
+
+    res.status(201).json(newItem);
+  } catch (err) {
+    respondError(res, 500, 'Failed to create task', err);
+  }
+});
+
 module.exports = app;
