@@ -59,11 +59,22 @@ async function searchCustomers(page = 1) {
   const slice = searchResults.slice(start, start + PAGE_SIZE);
   slice.forEach(c => {
     const tr = document.createElement('tr');
+    let noteSnippet = '';
+    if (c.history) {
+      const keys = Object.keys(c.history).sort();
+      const last = keys[keys.length - 1];
+      if (last) noteSnippet = c.history[last] || '';
+    }
+    if (noteSnippet.length > 30) noteSnippet = noteSnippet.slice(0, 30) + '…';
+    noteSnippet = noteSnippet.replace(/\n/g, '<br>');
+
     tr.innerHTML = `
       <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
       <td>${c.email || ''}</td>
       <td>${c.category || c.type || ''}</td>
+      <td>${c.request_car || ''}</td>
       <td>${c.status || ''}</td>
+      <td style="white-space: pre-wrap;">${noteSnippet}</td>
       <td><a href="detail.html?id=${c.order_id}">詳細</a></td>`;
     tbody.appendChild(tr);
   });
