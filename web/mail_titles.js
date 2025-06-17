@@ -25,6 +25,7 @@ const NAME_MAP = {
   sent: '送信ボックス'
 };
 
+
 const ORDER = [
   'goobike',
   'reserve_notice',
@@ -32,6 +33,7 @@ const ORDER = [
   'answer_request',
   'skip',
   'additional'
+
 ];
 
 async function loadTitles() {
@@ -75,6 +77,7 @@ function renderTable(page = currentPage) {
   let filtered = titles.filter(t =>
     filterMode === 'sent' ? t.category === 'sent' : t.category !== 'sent'
   );
+
   if (filterMode === 'inbox' && categoryFilter !== 'all') {
     filtered = filtered.filter(t => t.category === categoryFilter);
   }
@@ -99,9 +102,11 @@ function renderTable(page = currentPage) {
     const link = `mail_detail.html?id=${encodeURIComponent(m.unique_id || '')}`;
     const bodyShort = (m.body || '').split('\n')[0].slice(0, 60);
     const dateText = formatDateJST(m.date);
+    const subject = m.subject || '';
     tr.innerHTML = `
       <td><a href="${link}">${escapeHtml(dateText)}</a></td>
       <td>${escapeHtml(m.from || '')}</td>
+      <td>${escapeHtml(subject)}</td>
       <td>${escapeHtml(bodyShort)}</td>`;
     tbody.appendChild(tr);
   });

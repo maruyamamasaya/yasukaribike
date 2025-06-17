@@ -56,6 +56,7 @@
         }
         ul.appendChild(li);
       });
+
     } catch (err) {
       console.error(err);
     }
