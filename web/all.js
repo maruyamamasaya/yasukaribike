@@ -6,6 +6,14 @@ let sortDescending = true;
 let currentPage = 1;
 const PAGE_SIZE = 20;
 
+function isScheduled(c) {
+  if (!c.scheduledDate) return false;
+  const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
+  return c.scheduledDate > today;
+}
+
 function formatDateTime(id) {
   if (!id || id.length < 12) return '';
   const y = id.slice(0, 4);
@@ -44,7 +52,9 @@ async function loadAll(page = 1) {
   currentPage = page;
   const res = await fetch(API + '/customers');
   const data = await res.json();
-  let customers = (data.Items || data).filter(c => !c.draft);
+  let customers = (data.Items || data)
+    .filter(c => !c.draft)
+    .filter(c => !isScheduled(c));
   const qEl = document.getElementById('quick-search');
   const tEl = document.getElementById('text-search');
   const keyword = qEl ? qEl.value.trim() : '';
