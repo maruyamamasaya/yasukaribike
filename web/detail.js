@@ -87,17 +87,51 @@ async function loadDetail() {
     hist.innerHTML = '';
     if (item.history) {
       hist.innerHTML = '<h4>メモ</h4>';
-      const ul = document.createElement('ul');
       const entries = Object.entries(item.history).sort(([a], [b]) =>
         a.localeCompare(b)
       );
-      entries.forEach(([d, note]) => {
-        const li = document.createElement('li');
-        li.style.whiteSpace = 'pre-wrap';
-        li.textContent = note;
-        ul.appendChild(li);
-      });
-      hist.appendChild(ul);
+      if (entries.length) {
+        const [latestDate, latestNote] = entries[entries.length - 1];
+        const latestDiv = document.createElement('div');
+        latestDiv.className = 'mb-2';
+        latestDiv.innerHTML = `<div class="fw-bold">${latestDate}</div>`;
+        const p = document.createElement('p');
+        p.style.whiteSpace = 'pre-wrap';
+        p.textContent = latestNote;
+        latestDiv.appendChild(p);
+        hist.appendChild(latestDiv);
+
+        if (entries.length > 1) {
+          const histHeader = document.createElement('h5');
+          histHeader.textContent = '編集履歴';
+          hist.appendChild(histHeader);
+        }
+
+        for (let i = entries.length - 2; i >= 0; i--) {
+          const [d, note] = entries[i];
+          const div = document.createElement('div');
+          div.className = 'mb-2';
+          const label = document.createElement('span');
+          label.textContent = d;
+          const btn = document.createElement('button');
+          btn.className = 'btn btn-sm btn-outline-secondary ms-2';
+          btn.textContent = '表示';
+          const noteEl = document.createElement('p');
+          noteEl.style.whiteSpace = 'pre-wrap';
+          noteEl.style.display = 'none';
+          noteEl.className = 'mt-2';
+          noteEl.textContent = note;
+          btn.addEventListener('click', () => {
+            const hidden = noteEl.style.display === 'none';
+            noteEl.style.display = hidden ? 'block' : 'none';
+            btn.textContent = hidden ? '非表示' : '表示';
+          });
+          div.appendChild(label);
+          div.appendChild(btn);
+          div.appendChild(noteEl);
+          hist.appendChild(div);
+        }
+      }
     }
 
     // fetch past records
