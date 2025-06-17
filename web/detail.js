@@ -55,7 +55,7 @@ async function loadDetail() {
       if (val) {
         const tr = document.createElement('tr');
         if (key === 'status') {
-          const btnLabel = val === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す';
+          const btnLabel = statusButtonLabel(val || '未着手');
           tr.innerHTML = `<th>${label}</th><td>${val} <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${item.order_id}', '${val}')">${btnLabel}</button></td>`;
         } else {
           tr.innerHTML = `<th>${label}</th><td>${val}</td>`;
@@ -166,7 +166,7 @@ async function loadDetail() {
         ellipsis = '...';
       }
       const noteHtml = (truncated + ellipsis).replace(/\n/g, '<br>');
-      const btnLabel = (r.status || '') === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す';
+      const btnLabel = statusButtonLabel(r.status || '未着手');
       tr.innerHTML = `
         <td><a href="detail.html?id=${r.order_id}">${dt}</a></td>
         <td>
@@ -182,7 +182,7 @@ async function loadDetail() {
 }
 
 async function toggleStatus(id, current) {
-  const newStatus = current === '済' ? '未済' : '済';
+  const newStatus = nextStatus(current);
   await fetch(API + '/customers/' + id, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },

@@ -60,7 +60,7 @@ but now it uses `window.location.origin` so the host is detected automatically.
 - **本日の件数 / Today’s Count**: Entries where `date` equals today
 - **本日の電話対応 / Today’s Phone Calls**: Today's entries with `category` = "電話" (`phone_today.html`)
 - **訪問対応一覧 / Today’s Visits**: Today's entries with `category` = "訪問対応" (`visit_today.html`)
-- **未済 / Pending**: Entries with `status` = "未済" (unresolved)
+- **未完了 / Pending**: Entries with `status` not equal to `完了`
 
 ### 🔁 ページネーション / Pagination  
 一覧下部の「前へ」「次へ」ボタンでページ移動ができます。  
@@ -148,7 +148,7 @@ Customer data is stored in the DynamoDB table `kokyakukanri_TBL`.
 | Field      | Description                                  | Example                           |
 |------------|----------------------------------------------|-----------------------------------|
 | `order_id` | Partition key, format `YYYYMMDDHHMMSS-XXXX`   | `20240101123000-abcd`             |
-| `status`   | Inquiry status ("済" or "未済" etc.)        | `未済`                            |
+| `status`   | Inquiry status (`未着手`, `進行中`, `完了`) | `未着手`                            |
 | `email`    | Customer email address                        | `user@example.com`                |
 | `name`     | Customer name                                 | `Yamada Taro`                     |
 | `type`     | Inquiry source (バイク王, 電話, 訪問受付 など) | `電話`                            |
@@ -177,7 +177,7 @@ API Gateway triggers the `handler` exported from `lambda.js`.
 
 ## 🧠 AI要約サンプル / AI Summary Sample
 
-`/summary` エンドポイントで本日の未済タスクを取得し、OpenAI API を用いて要約文を返します。
+`/summary` エンドポイントで本日の未完了タスクを取得し、OpenAI API を用いて要約文を返します。
 環境変数 `OPENAI_API_KEY` に API キーを設定してください。
 このサンプルでは最も低コストな `gpt-3.5-turbo-0125` モデルを使用します。
 トップページの「AI要約」ボタンから呼び出し、結果をダイアログ表示します。

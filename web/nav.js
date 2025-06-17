@@ -26,3 +26,15 @@ function showBreadcrumb() {
 }
 
 document.addEventListener('DOMContentLoaded', showBreadcrumb);
+
+function nextStatus(status) {
+  if (status === '未着手') return '進行中';
+  if (status === '進行中') return '完了';
+  return '未着手';
+}
+
+function statusButtonLabel(status) {
+  if (status === '未着手') return 'タスクを進行中にする';
+  if (status === '進行中') return 'タスクを完了にする';
+  return 'タスクを未着手に戻す';
+}

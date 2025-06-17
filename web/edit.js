@@ -34,7 +34,7 @@ async function loadCustomer() {
   document.getElementById('f-category').value = item.category || item.type || '電話';
   document.getElementById('f-phone').value = item.phoneNumber || item.phone || '';
   document.getElementById('f-details').value = item.details || '';
-  document.getElementById('f-status').value = item.status || '未済';
+  document.getElementById('f-status').value = item.status || '未着手';
   document.getElementById('f-staff').value = item.staff || '';
   const noteField = document.getElementById('f-history-note');
   noteField.value = '';
@@ -70,7 +70,7 @@ async function saveCustomer() {
     phoneNumber: document.getElementById('f-phone').value,
     details: document.getElementById('f-details').value,
     staff: document.getElementById('f-staff').value,
-    status: document.getElementById('f-status').value || '未済',
+    status: document.getElementById('f-status').value || '未着手',
     history,
     bikes: []
   };

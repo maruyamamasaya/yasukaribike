@@ -54,7 +54,7 @@ async function loadScheduled(page = 1) {
   const data = await res.json();
   let customers = (data.Items || data)
     .filter(c => !c.draft)
-    .filter(c => (c.status || '') === '未済')
+    .filter(c => (c.status || '') !== '完了')
     .filter(c => isScheduled(c));
   const qEl = document.getElementById('quick-search');
   const tEl = document.getElementById('text-search');
@@ -114,7 +114,7 @@ async function loadScheduled(page = 1) {
     if (noteSnippet.length > 50) noteSnippet = noteSnippet.slice(0, 50) + '…';
     noteSnippet = noteSnippet.replace(/\n/g, '<br>');
 
-    const btnLabel = (c.status || '') === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す';
+    const btnLabel = statusButtonLabel(c.status || '未着手');
     tr.innerHTML = `
       <td>${c.name || ''}</td>
       <td>${formatDateTime(c.order_id)}</td>
@@ -147,7 +147,7 @@ function prevPage() {
 }
 
 async function toggleStatus(id, current) {
-  const newStatus = current === '済' ? '未済' : '済';
+  const newStatus = nextStatus(current);
   await fetch(API + '/customers/' + id, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },

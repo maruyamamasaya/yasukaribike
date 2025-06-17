@@ -19,7 +19,7 @@ function groupByMonth(data) {
     if (!map[month]) map[month] = {};
     if (!map[month][day]) map[month][day] = { total:0, done:0 };
     map[month][day].total++;
-    if ((c.status || '') === '済') map[month][day].done++;
+    if ((c.status || '') === '完了') map[month][day].done++;
   });
   return map;
 }
