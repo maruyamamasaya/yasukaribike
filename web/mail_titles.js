@@ -15,7 +15,7 @@ let filterMode = 'inbox';
 let categoryFilter = 'all';
 
 const NAME_MAP = {
-  inbox: '受信ボックス',
+  inbox: '受信トレイ',
   goobike: 'グーバイク',
   reserve_notice: '予約報告',
   tentative: '仮予約受付',
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderTable();
     });
   });
-  loadTitles();
+  fetchAndLoad();
 });
 
 function nextPage() {
