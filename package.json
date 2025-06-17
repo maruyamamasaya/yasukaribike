@@ -6,7 +6,9 @@
     "start": "node server.js",
     "deploy": "npx serverless deploy",
     "test": "echo \"No tests configured\" && exit 0",
-    "fetch-all": "node fetchAllEmails.js"
+    "fetch-all": "node fetchAllEmails.js",
+    "fetch-simple": "node simpleFetch.js",
+    "list-categories": "node simpleFetch.js categories"
   },
   "dependencies": {
     "express": "^4.18.2",
