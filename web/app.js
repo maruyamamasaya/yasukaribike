@@ -146,10 +146,8 @@ async function loadCustomers(page = 1) {
     if (c.history) {
       const keys = Object.keys(c.history).sort();
       const last = keys[keys.length - 1];
-      if (last) noteSnippet = c.history[last] || '';
+      if (last) noteSnippet = last;
     }
-    if (noteSnippet.length > 50) noteSnippet = noteSnippet.slice(0, 50) + '…';
-    noteSnippet = noteSnippet.replace(/\n/g, '<br>');
 
     tr.innerHTML = `
       <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
