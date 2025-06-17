@@ -17,7 +17,9 @@
         <li><a href="#top">トップページ</a></li>
         <li><a href="#search">検索</a></li>
         <li><a href="#add-edit">登録・編集</a></li>
+        <li><a href="#drafts">一時保存一覧</a></li>
         <li><a href="#list">一覧ページ</a></li>
+        <li><a href="#ai">AI要約</a></li>
       </ul>
     </nav>
     <h2 id="top" class="h4 mt-4">トップページ</h2>
@@ -38,6 +40,15 @@
       <li>履歴メモを時系列で追加して保存できます。</li>
       <li>入力途中の内容は「一時保存一覧」で確認可能です。</li>
     </ul>
+
+    <h2 id="drafts" class="h4 mt-4">一時保存一覧</h2>
+    <p><code>drafts.html</code> では入力途中で保存したデータを確認・編集できます。</p>
+    <ul>
+      <li>名前リンクから編集画面に戻れます。</li>
+      <li>削除ボタンで下書きを破棄します。</li>
+      <li>上部の検索ボックスで名前や本文を検索できます。</li>
+      <li>日付ヘッダーをクリックすると並び替えができます。</li>
+    </ul>
     <h2 id="list" class="h4 mt-4">一覧ページ</h2>
     <p>「本日の問い合わせ」「電話対応」「訪問対応」「未済」「完了済み」などのページでは問い合わせを一覧表示します。ページ下部の「前へ」「次へ」でページ移動できます。</p>
     <p>各行の「詳細」リンクから <code>detail.html</code> を開き、メモや編集リンクを確認できます。</p>
@@ -46,12 +57,21 @@
       <li>並び替えや検索条件を保持したまま移動できます。</li>
     </ul>
 
+    <h2 id="ai" class="h4 mt-4">AI要約</h2>
+    <p>トップページのボタンから、未済タスクを自動でまとめた要約を表示できます。</p>
+    <ul>
+      <li>要約結果はダイアログに表示され、そのままコピー可能です。</li>
+      <li>AIキーが未設定の場合はリストのみ表示されます。</li>
+    </ul>
+
     <h2 id="index" class="h4 mt-4">インデックス</h2>
     <ul>
       <li><a href="#top">トップページ</a> - ダッシュボード、AI要約</li>
       <li><a href="#search">検索</a> - 絞り込み機能</li>
       <li><a href="#add-edit">登録・編集</a> - メモ管理</li>
+      <li><a href="#drafts">一時保存一覧</a> - 下書き管理</li>
       <li><a href="#list">一覧ページ</a> - ページネーション</li>
+      <li><a href="#ai">AI要約</a> - 未済タスクの要約</li>
     </ul>
     <div id="breadcrumb" class="text-muted small mb-2"></div>
     <a href="#" class="btn btn-secondary" onclick="goBack(event)">戻る</a>
