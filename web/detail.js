@@ -4,6 +4,8 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   (typeof process !== 'undefined' && process.env && process.env.API_URL) ||
   window.location.origin;
 
+let currentId = null;
+
 function formatDateTime(id) {
   if (!id || id.length < 12) return '';
   const y = id.slice(0, 4);
@@ -24,6 +26,7 @@ async function loadDetail() {
   const params = new URLSearchParams(location.search);
   const id = params.get('id');
   if (!id) return;
+  currentId = id;
 
   const editLink = document.getElementById('edit-link');
   if (editLink) editLink.href = `edit.html?id=${encodeURIComponent(id)}`;
@@ -60,6 +63,24 @@ async function loadDetail() {
         tbody.appendChild(tr);
       }
     });
+
+    const schedTr = document.createElement('tr');
+    const schedVal = item.scheduledDate || '特になし';
+    schedTr.innerHTML = `<th>タスク先送り状況</th><td>${schedVal} <button class="btn btn-sm btn-outline-warning ms-2" onclick="showScheduleInput()">先送り設定</button> <input id="schedule-input" type="date" class="form-control mt-2" style="display:none; width:auto;" /></td>`;
+    tbody.appendChild(schedTr);
+    const schedInput = document.getElementById('schedule-input');
+    if (schedInput) {
+      schedInput.value = item.scheduledDate || '';
+      schedInput.addEventListener('change', async e => {
+        const date = e.target.value;
+        await fetch(API + '/customers/' + id, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scheduledDate: date })
+        });
+        loadDetail();
+      });
+    }
 
     // Display note history
     const hist = document.getElementById('history');
@@ -134,6 +155,14 @@ async function toggleStatus(id, current) {
     body: JSON.stringify({ status: newStatus })
   });
   loadDetail();
+}
+
+function showScheduleInput() {
+  const input = document.getElementById('schedule-input');
+  if (input) {
+    input.style.display = 'block';
+    if (input.showPicker) input.showPicker();
+  }
 }
 
 window.addEventListener('DOMContentLoaded', loadDetail);
