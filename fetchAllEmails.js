@@ -80,10 +80,28 @@ function getAllFolders() {
 
 async function saveMail(uid, parsed, folder) {
   let category = FOLDER_CATEGORIES[folder] || null;
+
   if (!category) {
-    const idx = folder.lastIndexOf('..');
-    if (idx !== -1 && idx + 2 < folder.length) {
-      category = folder.substring(idx + 2);
+    // Try matching by converting the delimiter (e.g. '.' <-> '/')
+    if (folder.includes('/') && FOLDER_CATEGORIES[folder.replace(/\//g, '.')]) {
+      category = FOLDER_CATEGORIES[folder.replace(/\//g, '.')];
+    } else if (
+      folder.includes('.') &&
+      FOLDER_CATEGORIES[folder.replace(/\./g, '/')]
+    ) {
+      category = FOLDER_CATEGORIES[folder.replace(/\./g, '/')];
+    }
+  }
+
+  if (!category) {
+    const delimiter = folder.includes('/')
+      ? '/'
+      : folder.includes('.')
+      ? '.'
+      : null;
+    if (delimiter) {
+      const parts = folder.split(delimiter);
+      category = parts[parts.length - 1];
     }
   }
   const item = {
