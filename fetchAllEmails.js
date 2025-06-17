@@ -104,8 +104,9 @@ async function saveMail(uid, parsed, folder) {
       category = parts[parts.length - 1];
     }
   }
+  const uniqueId = `${folder}:${uid}`;
   const item = {
-    unique_id: String(uid),
+    unique_id: uniqueId,
     folder,
     category,
     subject: parsed.subject || '',
@@ -114,7 +115,18 @@ async function saveMail(uid, parsed, folder) {
     date: parsed.date ? parsed.date.toISOString() : null,
     body: parsed.text || '',
   };
-  await dynamo.put({ TableName: MAIL_TABLE, Item: item }).promise();
+  try {
+    await dynamo
+      .put({
+        TableName: MAIL_TABLE,
+        Item: item,
+        ConditionExpression: 'attribute_not_exists(unique_id)',
+      })
+      .promise();
+  } catch (e) {
+    if (e.code !== 'ConditionalCheckFailedException') throw e;
+    // Existing record is kept as-is to preserve flags
+  }
 }
 
 function processFolder(name) {
