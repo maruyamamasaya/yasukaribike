@@ -5,6 +5,9 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
 let sortDescending = true;
 let currentPage = 1;
 const PAGE_SIZE = 20;
+let allEmails = [];
+let dateCounts = {};
+let dateFilter = '';
 
 function getCategory() {
   const params = new URLSearchParams(window.location.search);
@@ -34,6 +37,53 @@ function formatDateJST(dateStr) {
   return `<span class="date-part">${y}/${m}/${day}</span><br><span class="time-part">${hh}時${mm}分</span>`;
 }
 
+function formatYMD(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
+}
+
+function buildDateCounts(items) {
+  dateCounts = {};
+  items.forEach(i => {
+    const key = formatYMD(i.date || i.createdAt);
+    if (key) {
+      dateCounts[key] = (dateCounts[key] || 0) + 1;
+    }
+  });
+}
+
+function renderDateButtons() {
+  const container = document.getElementById('date-buttons');
+  if (!container) return;
+  container.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'btn btn-outline-secondary btn-sm me-1';
+  if (!dateFilter) allBtn.classList.add('active');
+  allBtn.textContent = 'すべて';
+  allBtn.addEventListener('click', () => {
+    dateFilter = '';
+    renderDateButtons();
+    loadEmails(1);
+  });
+  container.appendChild(allBtn);
+  Object.keys(dateCounts)
+    .sort()
+    .reverse()
+    .forEach(d => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-outline-secondary btn-sm me-1';
+      if (dateFilter === d) btn.classList.add('active');
+      btn.textContent = `${d} (${dateCounts[d]})`;
+      btn.addEventListener('click', () => {
+        dateFilter = d;
+        renderDateButtons();
+        loadEmails(1);
+      });
+      container.appendChild(btn);
+    });
+}
+
 async function fetchData() {
   let res;
   let data = {};
@@ -49,12 +99,19 @@ async function fetchData() {
   return items;
 }
 
-async function loadEmails(page = 1) {
+async function loadEmails(page = 1, refresh = false) {
   currentPage = page;
   const spinner = document.getElementById('loading');
-  if (spinner) spinner.style.display = 'block';
-  let items = await fetchData();
-  if (spinner) spinner.style.display = 'none';
+  if (refresh || allEmails.length === 0) {
+    if (spinner) spinner.style.display = 'block';
+    allEmails = await fetchData();
+    if (spinner) spinner.style.display = 'none';
+    buildDateCounts(allEmails);
+    renderDateButtons();
+  } else if (spinner) {
+    spinner.style.display = 'none';
+  }
+  let items = [...allEmails];
   const cat = getCategory();
   if (cat) items = items.filter(i => i.category === cat);
 
@@ -71,6 +128,9 @@ async function loadEmails(page = 1) {
   }
   if (textKey) {
     items = items.filter(i => hasText(i, textKey));
+  }
+  if (dateFilter) {
+    items = items.filter(i => formatYMD(i.date || i.createdAt) === dateFilter);
   }
 
   items.sort((a, b) =>
@@ -125,7 +185,7 @@ async function addTask(id) {
     method: 'POST'
   });
   if (res.ok) {
-    loadEmails(currentPage);
+    loadEmails(currentPage, true);
   } else {
     alert('タスク追加に失敗しました');
   }
@@ -138,5 +198,5 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('quick-search').addEventListener('input', () => loadEmails(1));
   document.getElementById('text-search').addEventListener('input', () => loadEmails(1));
-  loadEmails();
+  loadEmails(1, true);
 });
