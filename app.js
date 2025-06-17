@@ -34,8 +34,19 @@ const CATEGORY_ORDER = [
   'tentative',
   'answer_request',
   'skip',
-  'additional',
+  'additional'
 ];
+
+function sortCategoryNames(names) {
+  return names.sort((a, b) => {
+    const ai = CATEGORY_ORDER.indexOf(a);
+    const bi = CATEGORY_ORDER.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+}
 let lastEmailFetchTime = null;
 
 function respondError(res, status, label, err) {
@@ -110,15 +121,7 @@ app.get(['/', '/index.html'], async (req, res, next) => {
         counts[item.category] = (counts[item.category] || 0) + 1;
       }
     }
-    const list = Object.keys(counts)
-      .sort((a, b) => {
-        const ai = CATEGORY_ORDER.indexOf(a);
-        const bi = CATEGORY_ORDER.indexOf(b);
-        if (ai === -1 && bi === -1) return a.localeCompare(b);
-        if (ai === -1) return 1;
-        if (bi === -1) return -1;
-        return ai - bi;
-      })
+    const list = sortCategoryNames(Object.keys(counts))
       .map(name => ({ name, count: counts[name] }));
     const script = `<script>window.INIT_CATEGORIES=${JSON.stringify(list)}</script>`;
     res.type('html').send(html.replace('</body>', `${script}\n</body>`));
@@ -1005,15 +1008,7 @@ app.get('/categories', async (req, res) => {
         counts[item.category] = (counts[item.category] || 0) + 1;
       }
     }
-    const list = Object.keys(counts)
-      .sort((a, b) => {
-        const ai = CATEGORY_ORDER.indexOf(a);
-        const bi = CATEGORY_ORDER.indexOf(b);
-        if (ai === -1 && bi === -1) return a.localeCompare(b);
-        if (ai === -1) return 1;
-        if (bi === -1) return -1;
-        return ai - bi;
-      })
+    const list = sortCategoryNames(Object.keys(counts))
       .map(name => ({ name, count: counts[name] }));
     res.json(list);
   } catch (err) {

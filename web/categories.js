@@ -13,6 +13,25 @@
     additional: '追加連絡'
   };
 
+  const CATEGORY_ORDER = [
+    'inbox',
+    'goobike',
+    'reserve_notice',
+    'tentative',
+    'answer_request',
+    'skip',
+    'additional'
+  ];
+
+  function compareCategoryNames(a, b) {
+    const ai = CATEGORY_ORDER.indexOf(a);
+    const bi = CATEGORY_ORDER.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  }
+
   async function loadCategories() {
     const ul = document.getElementById('category-list');
     if (!ul) return;
@@ -23,6 +42,8 @@
         list = await res.json();
         if (!res.ok) return;
       }
+      list.sort((a, b) => compareCategoryNames(a.name || a, b.name || b));
+
       ul.innerHTML = '';
       for (const item of list) {
         const name = item.name || item;
