@@ -56,14 +56,12 @@ function renderTable() {
   sorted.forEach(m => {
     const tr = document.createElement('tr');
     const link = `mail_detail.html?id=${encodeURIComponent(m.unique_id || '')}`;
-    const bodyShort = (m.body || '').split('\n')[0].slice(0, 30);
+    const bodyShort = (m.body || '').split('\n')[0].slice(0, 60);
     const dateText = formatDateJST(m.date);
     tr.innerHTML = `
-      <td><a href="${link}">${escapeHtml(m.unique_id || '')}</a></td>
+      <td><a href="${link}">${escapeHtml(dateText)}</a></td>
       <td>${escapeHtml(m.from || '')}</td>
-      <td>${escapeHtml(m.to || '')}</td>
-      <td>${escapeHtml(bodyShort)}</td>
-      <td>${escapeHtml(dateText)}</td>`;
+      <td>${escapeHtml(bodyShort)}</td>`;
     tbody.appendChild(tr);
   });
 
