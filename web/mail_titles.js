@@ -7,10 +7,60 @@ function escapeHtml(text) {
 }
 
 let titles = [];
+let folderFilter = 'inbox';
+let categoryFilter = 'all';
+let categories = [];
 let sortKey = 'date';
 let sortAsc = false;
 let currentPage = 1;
 const PAGE_SIZE = 20;
+
+async function loadCategories() {
+  try {
+    const res = await fetch(API + '/categories');
+    const list = await res.json();
+    if (!res.ok) return;
+    categories = (Array.isArray(list) ? list : []).filter(c => (c.name || c) !== 'Sent');
+    renderCategoryButtons();
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderCategoryButtons() {
+  const container = document.getElementById('category-buttons');
+  if (!container) return;
+  container.innerHTML = '';
+  if (folderFilter === 'sent') {
+    container.style.display = 'none';
+    return;
+  }
+  container.style.display = 'inline-flex';
+  const allBtn = document.createElement('button');
+  allBtn.className = 'btn btn-outline-secondary btn-sm';
+  if (categoryFilter === 'all') allBtn.classList.add('active');
+  allBtn.textContent = 'すべて';
+  allBtn.addEventListener('click', () => {
+    categoryFilter = 'all';
+    renderCategoryButtons();
+    renderTable(1);
+  });
+  container.appendChild(allBtn);
+  categories.forEach(cat => {
+    const name = cat.name || cat;
+    const label = name === 'inbox' ? '受信ボックス' : name;
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-outline-secondary btn-sm';
+    if (categoryFilter === name) btn.classList.add('active');
+    btn.textContent = label;
+    btn.addEventListener('click', () => {
+      categoryFilter = name;
+      renderCategoryButtons();
+      renderTable(1);
+    });
+    container.appendChild(btn);
+  });
+}
 
 async function loadTitles() {
   let res;
@@ -48,7 +98,13 @@ function formatDateJST(dateStr) {
 function renderTable(page = currentPage) {
   const tbody = document.querySelector('#title-table tbody');
   if (!tbody) return;
-  const sorted = [...titles].sort((a, b) => {
+  let filtered = titles.filter(m => {
+    if (folderFilter === 'sent') return m.category === 'Sent';
+    if (m.category === 'Sent') return false;
+    if (categoryFilter !== 'all' && m.category !== categoryFilter) return false;
+    return true;
+  });
+  const sorted = [...filtered].sort((a, b) => {
     const av = a[sortKey] || '';
     const bv = b[sortKey] || '';
     if (av === bv) return 0;
@@ -67,10 +123,12 @@ function renderTable(page = currentPage) {
     const tr = document.createElement('tr');
     const link = `mail_detail.html?id=${encodeURIComponent(m.unique_id || '')}`;
     const bodyShort = (m.body || '').split('\n')[0].slice(0, 60);
+    const subjectShort = (m.subject || '').slice(0, 60);
     const dateText = formatDateJST(m.date);
     tr.innerHTML = `
       <td><a href="${link}">${escapeHtml(dateText)}</a></td>
       <td>${escapeHtml(m.from || '')}</td>
+      <td>${escapeHtml(subjectShort)}</td>
       <td>${escapeHtml(bodyShort)}</td>`;
     tbody.appendChild(tr);
   });
@@ -99,6 +157,18 @@ async function fetchAndLoad() {
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('load-btn').addEventListener('click', fetchAndLoad);
+  document.getElementById('inbox-btn').addEventListener('click', () => {
+    folderFilter = 'inbox';
+    categoryFilter = 'all';
+    renderCategoryButtons();
+    renderTable(1);
+  });
+  document.getElementById('sent-btn').addEventListener('click', () => {
+    folderFilter = 'sent';
+    categoryFilter = 'all';
+    renderCategoryButtons();
+    renderTable(1);
+  });
   document.querySelectorAll('th[data-key]').forEach(th => {
     const span = document.createElement('span');
     span.className = 'sort-icon';
@@ -114,6 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderTable();
     });
   });
+  loadCategories();
   loadTitles();
 });
 
