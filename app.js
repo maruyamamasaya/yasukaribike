@@ -918,7 +918,12 @@ app.get('/email-stats', async (req, res) => {
         lastDate = item.date;
       }
     }
-    res.json({ count, lastDate });
+    const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0]
+      .replace(/-/g, '/');
+    const todayCount = items.filter(i => i.date === today).length;
+    res.json({ count, lastDate, todayCount });
   } catch (err) {
     respondError(res, 500, 'Failed to fetch email stats', err);
   }
@@ -934,11 +939,16 @@ app.get('/categories', async (req, res) => {
         ExpressionAttributeNames: { '#c': 'category' }
       })
       .promise();
-    const set = new Set();
+    const counts = {};
     for (const item of data.Items || []) {
-      if (item.category) set.add(item.category);
+      if (item.category) {
+        counts[item.category] = (counts[item.category] || 0) + 1;
+      }
     }
-    res.json(Array.from(set).sort());
+    const list = Object.keys(counts)
+      .sort()
+      .map(name => ({ name, count: counts[name] }));
+    res.json(list);
   } catch (err) {
     respondError(res, 500, 'Failed to fetch categories', err);
   }
