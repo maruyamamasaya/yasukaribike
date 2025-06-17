@@ -12,7 +12,7 @@ async function loadTitles() {
   const spinner = document.getElementById('loading');
   if (spinner) spinner.style.display = 'block';
   try {
-    res = await fetch(API + '/goobike-emails');
+    res = await fetch(API + '/emails');
     data = await res.json();
   } catch (err) {
     console.error(err);
@@ -25,31 +25,21 @@ async function loadTitles() {
   tbody.innerHTML = '';
   items.forEach(m => {
     const tr = document.createElement('tr');
-    const link = `mail_detail.html?id=${encodeURIComponent(m.inquiry_id || '')}`;
+    const link = `mail_detail.html?id=${encodeURIComponent(m.unique_id || '')}`;
     tr.innerHTML = `
-      <td><a href="${link}">${escapeHtml(m.inquiry_id || '')}</a></td>
-      <td>${escapeHtml(m.name || '')}</td>
-      <td>${escapeHtml(m.email || '')}</td>
-      <td>${escapeHtml(m.subject || '')}</td>
-      <td>${escapeHtml(m.createdAt || '')}</td>`;
+      <td><a href="${link}">${escapeHtml(m.unique_id || '')}</a></td>
+      <td>${escapeHtml(m.to || '')}</td>
+      <td>${escapeHtml(m.date || '')}</td>`;
     tbody.appendChild(tr);
   });
   if (spinner) spinner.style.display = 'none';
 }
 
 async function fetchEmails() {
-  const endpoints = [
-    '/api/fetch-email',
-    '/api/fetch-skip-email',
-    '/api/fetch-answer-request-email',
-    '/api/fetch-reserve-email'
-  ];
-  for (const ep of endpoints) {
-    try {
-      await fetch(API + ep);
-    } catch (err) {
-      console.error(err);
-    }
+  try {
+    await fetch(API + '/api/fetch-all-emails', { method: 'POST' });
+  } catch (err) {
+    console.error(err);
   }
 }
 

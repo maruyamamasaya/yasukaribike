@@ -16,7 +16,7 @@ function escapeHtml(text) {
 }
 
 function getKey(item) {
-  return item.createdAt || '';
+  return item.date || '';
 }
 
 function hasText(item, keyword) {
@@ -27,7 +27,7 @@ async function fetchData() {
   let res;
   let data = {};
   try {
-    res = await fetch(API + '/goobike-emails');
+    res = await fetch(API + '/emails');
     data = await res.json();
   } catch (err) {
     console.error(err);
@@ -80,11 +80,9 @@ async function loadEmails(page = 1) {
     let bodySnippet = item.body || '';
     if (bodySnippet.length > 200) bodySnippet = bodySnippet.slice(0, 200) + '…';
     tr.innerHTML = `
-      <td>${item.inquiry_id || ''}</td>
-      <td>${escapeHtml(item.name || '')}</td>
-      <td>${escapeHtml(item.email || '')}</td>
-      <td>${escapeHtml(item.phone || '')}</td>
-      <td>${escapeHtml(item.createdAt || '')}</td>
+      <td>${item.unique_id || ''}</td>
+      <td>${escapeHtml(item.to || '')}</td>
+      <td>${escapeHtml(item.date || '')}</td>
       <td style="white-space:pre-wrap;">${escapeHtml(bodySnippet)}</td>`;
     tbody.appendChild(tr);
   });
