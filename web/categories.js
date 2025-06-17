@@ -26,7 +26,7 @@
       ul.innerHTML = '';
       for (const item of list) {
         const name = item.name || item;
-        if (name === 'sent') continue;
+        if (String(name).toLowerCase() === 'sent') continue;
         const count = item.count;
         const li = document.createElement('li');
         const a = document.createElement('a');

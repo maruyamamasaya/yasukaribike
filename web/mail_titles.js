@@ -63,9 +63,10 @@ function renderTable(page = currentPage) {
   const tbody = document.querySelector('#title-table tbody');
   if (!tbody) return;
 
-  let filtered = titles.filter(t =>
-    filterMode === 'sent' ? t.category === 'sent' : t.category !== 'sent'
-  );
+  let filtered = titles.filter(t => {
+    const cat = (t.category || '').toLowerCase();
+    return filterMode === 'sent' ? cat === 'sent' : cat !== 'sent';
+  });
   if (filterMode === 'inbox' && categoryFilter !== 'all') {
     filtered = filtered.filter(t => t.category === categoryFilter);
   }
@@ -90,9 +91,11 @@ function renderTable(page = currentPage) {
     const link = `mail_detail.html?id=${encodeURIComponent(m.unique_id || '')}`;
     const bodyShort = (m.body || '').split('\n')[0].slice(0, 60);
     const dateText = formatDateJST(m.date);
+    const subject = m.subject || '';
     tr.innerHTML = `
       <td><a href="${link}">${escapeHtml(dateText)}</a></td>
       <td>${escapeHtml(m.from || '')}</td>
+      <td>${escapeHtml(subject)}</td>
       <td>${escapeHtml(bodyShort)}</td>`;
     tbody.appendChild(tr);
   });
@@ -126,7 +129,7 @@ function createCategoryButtons() {
   const categories = Array.from(
     new Set(
       titles
-        .filter(t => t.category && t.category !== 'sent')
+        .filter(t => t.category && t.category.toLowerCase() !== 'sent')
         .map(t => t.category)
     )
   ).sort();
