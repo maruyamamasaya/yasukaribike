@@ -88,11 +88,10 @@ async function loadEmails(page = 1) {
     const link = `mail_detail.html?id=${encodeURIComponent(item.unique_id || '')}`;
     const dateText = formatDateJST(item.date || item.createdAt);
     tr.innerHTML = `
-      <td>${escapeHtml(dateText)}</td>
+      <td><a href="${link}">${escapeHtml(dateText)}</a></td>
       <td>${escapeHtml(item.from || '')}</td>
       <td>${escapeHtml(item.subject || '')}</td>
-      <td style="white-space:pre-wrap; width:40%;">${escapeHtml(bodySnippet)}</td>
-      <td><a href="${link}">詳細</a></td>`;
+      <td style="white-space:pre-wrap; width:40%;">${escapeHtml(bodySnippet)}</td>`;
     tbody.appendChild(tr);
   });
 
