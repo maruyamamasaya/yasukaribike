@@ -74,6 +74,10 @@ async function loadDashboard() {
     const isToday = c.date ? c.date === today : c.order_id && c.order_id.slice(0, 8) === todayKey;
     return isToday && (c.type || c.category) === '訪問対応';
   }).length;
+  const webInputToday = customers.filter(c => {
+    const isToday = c.date ? c.date === today : c.order_id && c.order_id.slice(0, 8) === todayKey;
+    return isToday && (c.type || c.category) === '顧客WEB入力';
+  }).length;
   const unconfirmed = customers.filter(
     c => (c.status || '') === '未済' && !isScheduled(c) && isDue(c)
   ).length;
@@ -86,6 +90,8 @@ async function loadDashboard() {
   if (phoneEl) phoneEl.textContent = phoneToday;
   const visitEl = document.getElementById('d-visit-today');
   if (visitEl) visitEl.textContent = visitToday;
+  const webEl = document.getElementById('d-web-today');
+  if (webEl) webEl.textContent = webInputToday;
   const mailAutoEl = document.getElementById('d-mail-auto');
   if (mailAutoEl) mailAutoEl.textContent = 0;
   const callLogEl = document.getElementById('d-call-log');
