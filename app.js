@@ -522,8 +522,8 @@ app.get('/api/fetch-email', async (req, res) => {
                           TableName: GOOBIKE_TABLE,
                           Key: key,
                           UpdateExpression:
-                            'SET #n = :n, email = :e, from_email = :f, body = :b, inquiry_method = :m, inquiry_content = :c, request_car = :r, updatedAt = :u',
-                          ExpressionAttributeNames: { '#n': 'name' },
+                            'SET #n = :n, email = :e, from_email = :f, body = :b, inquiry_method = :m, inquiry_content = :c, request_car = :r, #cat = :cat, updatedAt = :u',
+                          ExpressionAttributeNames: { '#n': 'name', '#cat': 'category' },
                           ExpressionAttributeValues: {
                             ':n': customerName,
                             ':e': info.customer_email || customerEmail,
@@ -532,6 +532,7 @@ app.get('/api/fetch-email', async (req, res) => {
                             ':m': info.inquiry_method || null,
                             ':c': info.inquiry_content || null,
                             ':r': info.request_car || null,
+                            ':cat': 'goobike',
                             ':u': now
                           },
                           ReturnValues: 'ALL_NEW'
@@ -549,6 +550,7 @@ app.get('/api/fetch-email', async (req, res) => {
                         inquiry_method: info.inquiry_method,
                         inquiry_content: info.inquiry_content,
                         request_car: info.request_car,
+                        category: 'goobike',
                         createdAt: now
                       };
                       await dynamo
@@ -648,12 +650,13 @@ app.get('/api/fetch-skip-email', async (req, res) => {
                         TableName: GOOBIKE_TABLE,
                         Key: { inquiry_id: inquiryId },
                         UpdateExpression:
-                          'SET #s = :s, inquiry_method = if_not_exists(inquiry_method, :m), request_car = if_not_exists(request_car, :c), updatedAt = :u',
-                        ExpressionAttributeNames: { '#s': 'status' },
+                          'SET #s = :s, inquiry_method = if_not_exists(inquiry_method, :m), request_car = if_not_exists(request_car, :c), #cat = :cat, updatedAt = :u',
+                        ExpressionAttributeNames: { '#s': 'status', '#cat': 'category' },
                         ExpressionAttributeValues: {
                           ':s': '見送り',
                           ':m': info.inquiry_method || null,
                           ':c': info.request_car || null,
+                          ':cat': 'skip',
                           ':u': now
                         },
                         ReturnValues: 'ALL_NEW'
@@ -666,6 +669,7 @@ app.get('/api/fetch-skip-email', async (req, res) => {
                         status: '見送り',
                         inquiry_method: info.inquiry_method,
                         request_car: info.request_car,
+                        category: 'skip',
                         createdAt: now
                       };
                       await dynamo
@@ -753,13 +757,15 @@ app.get('/api/fetch-answer-request-email', async (req, res) => {
                         TableName: GOOBIKE_TABLE,
                         Key: { inquiry_id: inquiryId },
                         UpdateExpression:
-                          'SET answer_request = :r, answer_request_date = :d, inquiry_method = if_not_exists(inquiry_method, :m), inquiry_content = if_not_exists(inquiry_content, :c), request_car = if_not_exists(request_car, :car), updatedAt = :u',
+                          'SET answer_request = :r, answer_request_date = :d, inquiry_method = if_not_exists(inquiry_method, :m), inquiry_content = if_not_exists(inquiry_content, :c), request_car = if_not_exists(request_car, :car), #cat = :cat, updatedAt = :u',
+                        ExpressionAttributeNames: { '#cat': 'category' },
                         ExpressionAttributeValues: {
                           ':r': true,
                           ':d': now,
                           ':m': info.inquiry_method || null,
                           ':c': info.inquiry_content || null,
                           ':car': info.request_car || null,
+                          ':cat': 'answer_request',
                           ':u': now
                         },
                         ReturnValues: 'ALL_NEW'
@@ -774,6 +780,7 @@ app.get('/api/fetch-answer-request-email', async (req, res) => {
                         inquiry_method: info.inquiry_method,
                         inquiry_content: info.inquiry_content,
                         request_car: info.request_car,
+                        category: 'answer_request',
                         createdAt: now
                       };
                       await dynamo
@@ -861,10 +868,12 @@ app.get('/api/fetch-reserve-email', async (req, res) => {
                         TableName: GOOBIKE_TABLE,
                         Key: { inquiry_id: inquiryId },
                         UpdateExpression:
-                          'SET reserve_notice = :r, reserve_datetime = if_not_exists(reserve_datetime, :dt), updatedAt = :u',
+                          'SET reserve_notice = :r, reserve_datetime = if_not_exists(reserve_datetime, :dt), #cat = :cat, updatedAt = :u',
+                        ExpressionAttributeNames: { '#cat': 'category' },
                         ExpressionAttributeValues: {
                           ':r': true,
                           ':dt': info.reserve_datetime || null,
+                          ':cat': 'tentative',
                           ':u': now
                         },
                         ReturnValues: 'ALL_NEW'
@@ -876,6 +885,7 @@ app.get('/api/fetch-reserve-email', async (req, res) => {
                         inquiry_id: inquiryId,
                         reserve_notice: true,
                         reserve_datetime: info.reserve_datetime,
+                        category: 'tentative',
                         createdAt: now
                       };
                       await dynamo
