@@ -26,18 +26,24 @@ function getImapConfig() {
   };
 }
 
-const FOLDERS = [
-  'INBOX',
-  'グーバイク/予約報告',
-  'グーバイク/仮予約受付',
-  'グーバイク/回答依頼',
-  'グーバイク/見送りのお知らせ',
-  'グーバイク/追加連絡',
-];
+const FOLDER_CATEGORIES = {
+  INBOX: 'inbox',
+  'グーバイク': 'goobike',
+  'グーバイク/予約報告': 'reserve_notice',
+  'グーバイク/仮予約受付': 'tentative',
+  'グーバイク/回答依頼': 'answer_request',
+  'グーバイク/見送りのお知らせ': 'skip',
+  'グーバイク/追加連絡': 'additional',
+};
 
-async function saveMail(uid, parsed) {
+const FOLDERS = Object.keys(FOLDER_CATEGORIES);
+
+async function saveMail(uid, parsed, folder) {
   const item = {
     unique_id: String(uid),
+    folder,
+    category: FOLDER_CATEGORIES[folder] || null,
+    subject: parsed.subject || '',
     to: parsed.to ? parsed.to.text : '',
     date: parsed.date ? parsed.date.toISOString() : null,
     body: parsed.text || '',
@@ -86,7 +92,7 @@ function processFolder(name) {
             msg.once('end', async () => {
               try {
                 const parsed = await simpleParser(raw);
-                await saveMail(uid, parsed);
+                await saveMail(uid, parsed, name);
                 log(`Saved mail UID ${uid} from ${name}`);
               } catch (e) {
                 log(`Error processing UID ${uid}: ${e.message}`);
