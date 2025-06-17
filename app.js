@@ -27,6 +27,15 @@ AWS.config.update({ region });
 const dynamo = new AWS.DynamoDB.DocumentClient();
 const MAIL_TABLE = process.env.MAIL_TABLE || 'Rebikele_goobikemail01_TBL';
 const GOOBIKE_TABLE = process.env.GOOBIKE_TABLE || MAIL_TABLE;
+const CATEGORY_ORDER = [
+  'inbox',
+  'goobike',
+  'reserve_notice',
+  'tentative',
+  'answer_request',
+  'skip',
+  'additional',
+];
 let lastEmailFetchTime = null;
 
 function respondError(res, status, label, err) {
@@ -102,7 +111,14 @@ app.get(['/', '/index.html'], async (req, res, next) => {
       }
     }
     const list = Object.keys(counts)
-      .sort()
+      .sort((a, b) => {
+        const ai = CATEGORY_ORDER.indexOf(a);
+        const bi = CATEGORY_ORDER.indexOf(b);
+        if (ai === -1 && bi === -1) return a.localeCompare(b);
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      })
       .map(name => ({ name, count: counts[name] }));
     const script = `<script>window.INIT_CATEGORIES=${JSON.stringify(list)}</script>`;
     res.type('html').send(html.replace('</body>', `${script}\n</body>`));
@@ -990,7 +1006,14 @@ app.get('/categories', async (req, res) => {
       }
     }
     const list = Object.keys(counts)
-      .sort()
+      .sort((a, b) => {
+        const ai = CATEGORY_ORDER.indexOf(a);
+        const bi = CATEGORY_ORDER.indexOf(b);
+        if (ai === -1 && bi === -1) return a.localeCompare(b);
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      })
       .map(name => ({ name, count: counts[name] }));
     res.json(list);
   } catch (err) {
