@@ -182,6 +182,5 @@ API Gateway triggers the `handler` exported from `lambda.js`.
 このサンプルでは最も低コストな `gpt-3.5-turbo-0125` モデルを使用します。
 トップページの「AI要約」ボタンから呼び出し、結果をダイアログ表示します。
 
-
-
-
+要約には各タスクの本文と直近のメモが含まれ、AI へのプロンプトでもその旨を明記しています。
+The summary now includes each task's main text and latest note, and the AI prompt explicitly states this.
