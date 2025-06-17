@@ -115,7 +115,7 @@ function processFolder(name) {
   });
 }
 
-async function main() {
+async function fetchAllEmails() {
   for (const folder of FOLDERS) {
     try {
       await processFolder(folder);
@@ -126,7 +126,11 @@ async function main() {
   log('All folders processed');
 }
 
-main().catch(err => {
-  log(`Fatal error: ${err.message}`);
-  process.exit(1);
-});
+if (require.main === module) {
+  fetchAllEmails().catch(err => {
+    log(`Fatal error: ${err.message}`);
+    process.exit(1);
+  });
+}
+
+module.exports = { fetchAllEmails };
