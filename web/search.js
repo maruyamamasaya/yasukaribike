@@ -72,7 +72,7 @@ async function searchCustomers(page = 1) {
       <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
       <td>${c.email || ''}</td>
       <td>${c.category || c.type || ''}</td>
-      <td>${c.request_car || ''}</td>
+      <td>${c.details || ''}</td>
       <td>${c.status || ''}</td>
       <td style="white-space: pre-wrap;">${noteSnippet}</td>
       <td><a href="detail.html?id=${c.order_id}">詳細</a></td>`;
