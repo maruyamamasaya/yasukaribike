@@ -91,7 +91,7 @@ async function loadEmails(page = 1) {
       <td>${escapeHtml(dateText)}</td>
       <td>${escapeHtml(item.from || '')}</td>
       <td>${escapeHtml(item.subject || '')}</td>
-      <td style="white-space:pre-wrap; width:50%;">${escapeHtml(bodySnippet)}</td>
+      <td style="white-space:pre-wrap; width:40%;">${escapeHtml(bodySnippet)}</td>
       <td><a href="${link}">詳細</a></td>`;
     tbody.appendChild(tr);
   });
