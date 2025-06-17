@@ -1,8 +1,9 @@
-const API = (typeof window !== 'undefined' && window.API_URL) ||
-  (typeof process !== 'undefined' && process.env && process.env.API_URL) ||
-  window.location.origin;
+(() => {
+  const API = (typeof window !== 'undefined' && window.API_URL) ||
+    (typeof process !== 'undefined' && process.env && process.env.API_URL) ||
+    window.location.origin;
 
-async function loadCategories() {
+  async function loadCategories() {
   const ul = document.getElementById('category-list');
   if (!ul) return;
   try {
@@ -31,6 +32,7 @@ async function loadCategories() {
   } catch (err) {
     console.error(err);
   }
-}
+  }
 
-document.addEventListener('DOMContentLoaded', loadCategories);
+  document.addEventListener('DOMContentLoaded', loadCategories);
+})();
