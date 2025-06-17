@@ -68,8 +68,7 @@ function renderDateButtons() {
   });
   container.appendChild(allBtn);
   Object.keys(dateCounts)
-    .sort()
-    .reverse()
+    .sort((a, b) => (sortDescending ? b.localeCompare(a) : a.localeCompare(b)))
     .forEach(d => {
       const btn = document.createElement('button');
       btn.className = 'btn btn-outline-secondary btn-sm me-1';
@@ -129,6 +128,11 @@ async function loadEmails(page = 1, refresh = false) {
   if (textKey) {
     items = items.filter(i => hasText(i, textKey));
   }
+
+  // rebuild date counts based on current filters (without dateFilter)
+  buildDateCounts(items);
+  renderDateButtons();
+
   if (dateFilter) {
     items = items.filter(i => formatYMD(i.date || i.createdAt) === dateFilter);
   }

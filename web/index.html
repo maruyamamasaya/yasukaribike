@@ -22,6 +22,7 @@
         <button id="ai-summary-btn" class="btn btn-info btn-lg">AI要約</button>
         <button class="btn btn-warning btn-lg">メール取得</button>
         <button class="btn btn-primary btn-lg">受電履歴取得</button>
+        <button id="call-history-btn" class="btn btn-secondary btn-lg">着信履歴の確認</button>
         <a class="btn btn-outline-info btn-lg" href="drafts.html">一時保存一覧</a>
       </div>
     </div>
@@ -91,6 +92,7 @@
               <div class="card text-center">
                 <div class="card-body">
                   <div>今日時点までの未済</div>
+                  <div class="small text-muted">今日期限もしくは過ぎたものが表示されます。</div>
                   <div id="d-unconfirmed" class="fs-3">0</div>
                 </div>
               </div>
@@ -172,7 +174,7 @@
 
     </div>
     <footer class="text-center mt-4">
-      <small style="color:#7ac142;">©2025 JIMUSURU All rights reserved.</small>
+      <small style="color: var(--bs-link-color);">©2025 JIMUSURU All rights reserved.</small>
     </footer>
 
     <script src="app.js"></script>

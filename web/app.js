@@ -246,3 +246,10 @@ const loadBtn = document.getElementById('load-btn');
 if (loadBtn) {
   loadBtn.addEventListener('click', fetchAllEmails);
 }
+
+const callHistoryBtn = document.getElementById('call-history-btn');
+if (callHistoryBtn) {
+  callHistoryBtn.addEventListener('click', () => {
+    alert('着信履歴の確認はダミーです');
+  });
+}
