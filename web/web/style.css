@@ -1,0 +1,86 @@
+/* Custom styles for responsive design */
+.container {
+  width: 95% !important;
+  max-width: 95% !important;
+}
+
+@media (max-width: 576px) {
+  body {
+    font-size: 1.2rem;
+  }
+}
+
+/* Styling for date/time display */
+.date-part {
+  font-weight: bold;
+}
+
+.time-part {
+  color: #555;
+  font-size: 0.9em;
+}
+
+#save-status {
+  min-height: 1.5em;
+}
+
+/* Styling for customer detail table */
+#detail-table th,
+#detail-table td {
+  width: 50%;
+}
+
+#detail-table th {
+  background-color: #f8f9fa;
+}
+
+/* Split container for dashboard and mail */
+#split-container {
+  width: 100%;
+}
+
+#dashboard,
+#mail {
+  width: 50%;
+  flex-shrink: 0;
+}
+
+#divider {
+  width: 5px;
+  background: #eee;
+  cursor: ew-resize;
+}
+
+#mail-divider {
+  height: 5px;
+  background: #eee;
+  cursor: ns-resize;
+}
+
+/* Simple loading spinner */
+.spinner {
+  width: 40px;
+  height: 40px;
+  margin: 20px auto;
+  border: 4px solid #ccc;
+  border-top-color: #2196F3;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: none;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+th[data-key] {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sort-icon {
+  font-size: 0.8em;
+  margin-left: 4px;
+}

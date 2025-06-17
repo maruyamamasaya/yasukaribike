@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>顧客詳細</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/flatly/bootstrap.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="https://rebikele.s3.ap-northeast-1.amazonaws.com/kokyaku_kanri/rogo.jpg" />
+</head>
+<body class="p-4">
+  <div class="container">
+    <h1 class="mb-3">顧客詳細</h1>
+    <table id="detail-table" class="table table-bordered">
+      <tbody></tbody>
+    </table>
+    <div class="d-flex mb-3">
+      <div id="history" class="me-3 flex-grow-1"></div>
+      <a id="edit-link" class="btn btn-primary align-self-start" href="#">編集</a>
+    </div>
+    <div id="past" class="mb-3">
+      <h4>過去の対応記録</h4>
+      <p class="text-muted small">この顧客の方の対応記録が以下に表示されます。名前、電話番号、メールアドレスのいずれかが同一の場合にここに表示されております。過去の対応記録を編集される際は、該当の日付リンクをクリックしてください。</p>
+      <table id="past-table" class="table table-striped">
+        <thead>
+          <tr><th>日時</th><th>タスクステータス</th><th style="width:50%;">メモ</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="breadcrumb" class="text-muted small mb-2"></div>
+    <div class="mb-3">
+      <a href="#" class="btn btn-secondary" onclick="goBack(event)">戻る</a>
+    </div>
+  </div>
+
+  <footer class="text-center mt-4">
+    <small style="color:#7ac142;">©2025 JIMUSURU All rights reserved.</small>
+  </footer>
+
+  <script src="detail.js"></script>
+  <script src="nav.js"></script>
+</body>
+</html>

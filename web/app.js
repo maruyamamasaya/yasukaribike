@@ -1,195 +1,1048 @@
-// APIエンドポイント
-// API は環境変数(API_URL)または現在のオリジンを利用する
-const API = (typeof window !== 'undefined' && window.API_URL) ||
-  (typeof process !== 'undefined' && process.env && process.env.API_URL) ||
-  window.location.origin;
+require('dotenv').config();
+const express = require('express');
+const path = require('path');
+const fs = require('fs');
+const Imap = require('imap');
+const { simpleParser } = require('mailparser');
+const AWS = require('aws-sdk');
+const {
+  DynamoDBClient
+} = require('@aws-sdk/client-dynamodb');
+const {
+  DynamoDBDocumentClient,
+  ScanCommand,
+  GetCommand,
+  PutCommand,
+  UpdateCommand,
+  DeleteCommand
+} = require('@aws-sdk/lib-dynamodb');
+const { fetchAllEmails } = require('./fetchAllEmails');
 
-let currentPage = 1;
-const PAGE_SIZE = 20;
-let sortDescending = true;
+const TABLE = process.env.TABLE_NAME || 'kokyakukanri_TBL';
 
-function formatDateTime(id) {
-  if (!id || id.length < 12) return '';
-  const y = id.slice(0, 4);
-  const m = id.slice(4, 6);
-  const d = id.slice(6, 8);
-  const hh = id.slice(8, 10);
-  const mm = id.slice(10, 12);
-  return `<span class="date-part">${y}/${m}/${d}</span><br><span class="time-part">${hh}時${mm}分</span>`;
+const region = process.env.AWS_REGION || 'ap-northeast-1';
+const client = new DynamoDBClient({ region });
+const ddb = DynamoDBDocumentClient.from(client);
+AWS.config.update({ region });
+const dynamo = new AWS.DynamoDB.DocumentClient();
+const MAIL_TABLE = process.env.MAIL_TABLE || 'Rebikele_goobikemail01_TBL';
+const GOOBIKE_TABLE = process.env.GOOBIKE_TABLE || MAIL_TABLE;
+let lastEmailFetchTime = null;
+
+function respondError(res, status, label, err) {
+  console.error(err);
+  const body = { error: label };
+  if (process.env.NODE_ENV !== 'production' && err) {
+    body.message = err.message || String(err);
+  }
+  res.status(status).json(body);
 }
 
-function getDateStr(item) {
-  let key = '';
-  if (item.order_id) key = item.order_id.slice(0, 8);
-  else if (item.date) key = item.date.replace(/\//g, '').slice(0, 8);
-  if (!key) return '';
-  return `${key.slice(0, 4)}/${key.slice(4, 6)}/${key.slice(6, 8)}`;
+function verifyEmailConfig() {
+  const required = ['EMAIL_USER', 'EMAIL_PASS', 'IMAP_HOST'];
+  for (const key of required) {
+    if (!process.env[key]) {
+      console.error(`Missing ${key}`);
+      throw new Error(`Missing ${key}`);
+    }
+  }
 }
 
-function getKey(c) {
-  if (c.order_id) return c.order_id.slice(0, 14);
-  if (c.date) return c.date.replace(/\//g, '');
-  return 0;
+const app = express();
+verifyEmailConfig();
+
+// Health check endpoint without authentication
+app.get('/health', (req, res) => {
+  res.sendStatus(200);
+});
+
+// Basic Authentication middleware
+const AUTH_USER = process.env.BASIC_USER || 'user';
+const AUTH_PASS = process.env.BASIC_PASS || '0000';
+app.use((req, res, next) => {
+  const header = req.headers['authorization'];
+  if (!header) {
+    res.set('WWW-Authenticate', 'Basic realm="Restricted"');
+    return res.status(401).send('Authentication required');
+  }
+  const [scheme, encoded] = header.split(' ');
+  if (scheme !== 'Basic' || !encoded) {
+    res.set('WWW-Authenticate', 'Basic realm="Restricted"');
+    return res.status(401).send('Invalid authorization header');
+  }
+  const decoded = Buffer.from(encoded, 'base64').toString('utf8');
+  const [user, pass] = decoded.split(':');
+  if (user === AUTH_USER && pass === AUTH_PASS) {
+    return next();
+  }
+  res.set('WWW-Authenticate', 'Basic realm="Restricted"');
+  res.status(401).send('Access denied');
+});
+
+app.use(express.json());
+
+// Serve index.html with categories embedded
+app.get(['/', '/index.html'], async (req, res, next) => {
+  try {
+    const html = await fs.promises.readFile(
+      path.join(__dirname, 'web', 'index.html'),
+      'utf8'
+    );
+    const data = await dynamo
+      .scan({
+        TableName: MAIL_TABLE,
+        ProjectionExpression: '#c',
+        ExpressionAttributeNames: { '#c': 'category' }
+      })
+      .promise();
+    const counts = {};
+    for (const item of data.Items || []) {
+      if (item.category) {
+        counts[item.category] = (counts[item.category] || 0) + 1;
+      }
+    }
+    const list = Object.keys(counts)
+      .sort()
+      .map(name => ({ name, count: counts[name] }));
+    const script = `<script>window.INIT_CATEGORIES=${JSON.stringify(list)}</script>`;
+    res.type('html').send(html.replace('</body>', `${script}\n</body>`));
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.use(express.static(path.join(__dirname, 'web')));
+
+function extractGoobikeSections(rawText) {
+  const key = '様からのご返信内容：';
+  const start = rawText.indexOf(key);
+  if (start === -1) return { body: '', info: {} };
+
+  const normalized = rawText.slice(start + key.length).replace(/\r\n/g, '\n');
+  const lines = normalized.split('\n');
+
+  let endIdx = lines.length;
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (
+      l.includes('差出人') ||
+      l.includes('お客様のメールアドレスは') ||
+      /20\d{2}\/\d{2}\/\d{2}/.test(l) ||
+      /━━━━/.test(l) ||
+      /^[-=]{3,}/.test(l)
+    ) {
+      endIdx = i;
+      break;
+    }
+  }
+
+  const bodyPart = lines.slice(0, endIdx)
+    .map(s => s.trim().replace(/^[?？]+/, ''))
+    .filter(Boolean);
+  const body = bodyPart.join('\n');
+
+  const tail = lines.slice(endIdx).join('\n');
+  const info = {};
+  const emailMatch = tail.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/);
+  if (emailMatch) info.customer_email = emailMatch[0];
+  const methodMatch = tail.match(/問合せ方法：(.+)/);
+  if (methodMatch) info.inquiry_method = methodMatch[1].trim();
+  const contentMatch = tail.match(/問合せ内容：(.+)/);
+  if (contentMatch) info.inquiry_content = contentMatch[1].trim();
+  const carMatch = tail.match(/依頼車種：(.+)/);
+  if (carMatch) info.request_car = carMatch[1].trim();
+
+  return { body, info };
 }
 
-async function loadDashboard() {
-  const res = await fetch(API + '/customers');
-  const data = await res.json();
-  const customers = (data.Items || data).filter(c => !c.draft);
-
-  const total = customers.length;
-  const today = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0].replace(/-/g, '/');
-  const todayKey = today.replace(/\//g, '');
-  const todayCount = customers.filter(c => {
-    if (c.date) return c.date === today;
-    if (c.order_id) return c.order_id.slice(0, 8) === todayKey;
-    return false;
-  }).length;
-  const phoneToday = customers.filter(c => {
-    const isToday = c.date ? c.date === today : c.order_id && c.order_id.slice(0, 8) === todayKey;
-    return isToday && (c.type || c.category) === '電話';
-  }).length;
-  const visitToday = customers.filter(c => {
-    const isToday = c.date ? c.date === today : c.order_id && c.order_id.slice(0, 8) === todayKey;
-    return isToday && (c.type || c.category) === '訪問対応';
-  }).length;
-  const unconfirmed = customers.filter(c => (c.status || '') === '未済').length;
-  const completed = customers.filter(c => (c.status || '') === '済').length;
-
-  document.getElementById('d-total').textContent = total;
-  document.getElementById('d-today').textContent = todayCount;
-  const phoneEl = document.getElementById('d-phone-today');
-  if (phoneEl) phoneEl.textContent = phoneToday;
-  const visitEl = document.getElementById('d-visit-today');
-  if (visitEl) visitEl.textContent = visitToday;
-  const mailAutoEl = document.getElementById('d-mail-auto');
-  if (mailAutoEl) mailAutoEl.textContent = 0;
-  const callLogEl = document.getElementById('d-call-log');
-  if (callLogEl) callLogEl.textContent = 0;
-  document.getElementById('d-unconfirmed').textContent = unconfirmed;
-  const compEl = document.getElementById('d-completed');
-  if (compEl) compEl.textContent = completed;
+function parseGoobikeSkipEmail(text) {
+  const idMatch = text.match(/問合せ番号：([^\]\n]+)/);
+  const methodMatch = text.match(/問合せ方法：([^\]\n]+)/);
+  const carMatch = text.match(/依頼車種：([^\]\n]+)/);
+  return {
+    inquiry_id: idMatch ? idMatch[1].trim() : undefined,
+    inquiry_method: methodMatch ? methodMatch[1].trim() : undefined,
+    request_car: carMatch ? carMatch[1].trim() : undefined
+  };
 }
 
-async function loadCustomers(page = 1) {
-  currentPage = page;
-  const res = await fetch(API + '/customers');
-  const data = await res.json();
-  let customers = (data.Items || data).filter(c => !c.draft);
+function parseGoobikeAnswerRequestEmail(text) {
+  const idMatch = text.match(/問合せ番号：([^\]\n]+)/);
+  const methodMatch = text.match(/問合せ方法：([^\]\n]+)/);
+  const contentMatch = text.match(/問合せ内容：([^\]\n]+)/);
+  const carMatch = text.match(/依頼車種：([^\]\n]+)/);
+  return {
+    inquiry_id: idMatch ? idMatch[1].trim() : undefined,
+    inquiry_method: methodMatch ? methodMatch[1].trim() : undefined,
+    inquiry_content: contentMatch ? contentMatch[1].trim() : undefined,
+    request_car: carMatch ? carMatch[1].trim() : undefined
+  };
+}
 
-  customers = customers.filter(c => (c.status || '') !== '済');
-  customers.sort((a, b) =>
-    sortDescending ? getKey(b) - getKey(a) : getKey(a) - getKey(b)
-  );
+function parseGoobikeReserveEmail(text) {
+  const idMatch = text.match(/受付番号[^\d]*(\d+)/);
+  const dateMatch = text.match(/予約日時[^\d]*(\d{4}\/\d{2}\/\d{2}\s*\d{2}:\d{2})/);
+  return {
+    inquiry_id: idMatch ? idMatch[1].trim() : undefined,
+    reserve_datetime: dateMatch ? dateMatch[1].trim() : undefined
+  };
+}
 
-  const totalPages = Math.max(1, Math.ceil(customers.length / PAGE_SIZE));
-  if (currentPage > totalPages) currentPage = totalPages;
-  if (currentPage < 1) currentPage = 1;
 
-  const tbody = document.querySelector('#customer-table tbody');
-  tbody.innerHTML = '';
+function getImapConfig() {
+  return {
+    user: process.env.EMAIL_USER,
+    password: process.env.EMAIL_PASS,
+    host: process.env.IMAP_HOST,
+    port: parseInt(process.env.IMAP_PORT || '993'),
+    tls: true
+  };
+}
 
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const slice = customers.slice(start, start + PAGE_SIZE);
-  const colspan = document.querySelector('#customer-table thead tr').children.length;
-  let lastDate = '';
+function getDateKey(item) {
+  if (item.date) return item.date.replace(/\//g, '');
+  if (item.order_id) return item.order_id.slice(0, 8);
+  return '';
+}
 
-  slice.forEach(c => {
-    const dateStr = getDateStr(c);
-    if (dateStr && dateStr !== lastDate) {
-      const gr = document.createElement('tr');
-      const td = document.createElement('td');
-      td.colSpan = colspan;
-      td.className = 'table-secondary fw-bold';
-      td.textContent = dateStr;
-      gr.appendChild(td);
-      tbody.appendChild(gr);
-      lastDate = dateStr;
+// 注文IDを生成する関数（日時＋ランダム文字列）
+function genOrderId() {
+  const now = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  const ymdhms = now.toISOString().replace(/[-T:Z.]/g, '').slice(0, 14);
+  const rand = Math.random().toString(36).substring(2, 6);
+  return `${ymdhms}-${rand}`;
+}
+
+// 顧客一覧を取得
+app.get('/customers', async (req, res) => {
+  try {
+    const data = await ddb.send(new ScanCommand({ TableName: TABLE }));
+    res.json(data.Items || []);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch' });
+  }
+});
+
+// 条件に一致する顧客を検索
+app.get('/customers/search', async (req, res) => {
+  const { name, phone, email, id } = req.query;
+  if (!name && !phone && !email && !id) {
+    return res.status(400).json({ error: 'Missing query' });
+  }
+  try {
+    let base = { name, phone, email };
+    if (id && (!name || !phone || !email)) {
+      const cur = await ddb.send(new GetCommand({ TableName: TABLE, Key: { order_id: id } }));
+      if (cur.Item) {
+        if (!base.name) base.name = cur.Item.name;
+        if (!base.phone) base.phone = cur.Item.phone || cur.Item.phoneNumber;
+        if (!base.email) base.email = cur.Item.email;
+      }
     }
 
-    const tr = document.createElement('tr');
-    let noteSnippet = '';
-    if (c.history) {
-      const keys = Object.keys(c.history).sort();
-      const last = keys[keys.length - 1];
-      if (last) noteSnippet = c.history[last] || '';
+    const values = {};
+    const conditions = [];
+
+    if (base.name) {
+      conditions.push('#n = :name');
+      values[':name'] = base.name;
     }
-    if (noteSnippet.length > 50) noteSnippet = noteSnippet.slice(0, 50) + '…';
-    noteSnippet = noteSnippet.replace(/\n/g, '<br>');
-
-    tr.innerHTML = `
-      <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
-      <td>${c.phoneNumber || c.phone || ''}</td>
-      <td>
-        ${c.status || ''}
-        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${c.order_id}', '${c.status || ''}')">
-          ${c.status === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す'}
-        </button>
-      </td>
-      <td>${formatDateTime(c.order_id)}</td>
-      <td style="width:40%; white-space: pre-wrap; font-size:0.85rem;">${noteSnippet}</td>
-      <td>
-        <a href="edit.html?id=${c.order_id}" class="btn btn-sm btn-primary">編集</a>
-      </td>`;
-    tbody.appendChild(tr);
-  });
-
-  const info = document.getElementById('page-info');
-  if (info) info.textContent = `${currentPage} / ${totalPages}`;
-  const prev = document.getElementById('prev-btn');
-  const next = document.getElementById('next-btn');
-  if (prev) prev.disabled = currentPage === 1;
-  if (next) next.disabled = currentPage === totalPages || customers.length === 0;
-}
-
-async function deleteCustomer(id) {
-  if (!confirm('削除してよろしいですか？')) return;
-  await fetch(API + '/customers/' + id, { method: 'DELETE' });
-  loadCustomers();
-}
-
-async function toggleStatus(id, current) {
-  const newStatus = current === '済' ? '未済' : '済';
-  await fetch(API + '/customers/' + id, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: newStatus })
-  });
-  loadCustomers();
-  loadDashboard();
-}
-
-function nextPage() {
-  loadCustomers(currentPage + 1);
-}
-
-function prevPage() {
-  loadCustomers(currentPage - 1);
-}
-}
-
-// 初期表示
-const dateHeader = document.getElementById('date-header');
-if (dateHeader) {
-    sortDescending = !sortDescending;
-    loadCustomers();
-  });
-}
-
-loadDashboard();
-loadCustomers();
-
-// AI要約ボタン
-const summaryBtn = document.getElementById('ai-summary-btn');
-if (summaryBtn) {
-  summaryBtn.addEventListener('click', async () => {
-    try {
-      const res = await fetch(API + '/summary');
-      const data = await res.json();
-      alert(data.summary || data.error || 'No summary available');
-    } catch (err) {
-      alert('要約の取得に失敗しました');
+    if (base.phone) {
+      conditions.push('(phone = :phone OR phoneNumber = :phone)');
+      values[':phone'] = base.phone;
     }
-  });
-}
+    if (base.email) {
+      conditions.push('email = :email');
+      values[':email'] = base.email;
+    }
 
+    let filterExpression = conditions.length ? conditions.join(' OR ') : '';
+    if (id) {
+      values[':id'] = id;
+      filterExpression = filterExpression
+        ? `(${filterExpression}) AND order_id <> :id`
+        : 'order_id <> :id';
+    }
+
+    const params = {
+      TableName: TABLE,
+      FilterExpression: filterExpression,
+      ExpressionAttributeValues: values,
+      ExpressionAttributeNames: { '#n': 'name' }
+    };
+
+    const data = await ddb.send(new ScanCommand(params));
+    const items = (data.Items || []).sort((a, b) =>
+      getDateKey(b).localeCompare(getDateKey(a))
+    );
+    res.json(items);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to search' });
+  }
+});
+
+// 本日の未済タスクを要約
+app.get('/summary', async (req, res) => {
+  try {
+    const data = await ddb.send(new ScanCommand({ TableName: TABLE }));
+    const items = data.Items || [];
+    const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0]
+      .replace(/-/g, '/');
+    const tasks = items.filter(
+      t => (t.date === today || t.order_id?.startsWith(today.replace(/\//g, '')))
+        && (t.status || '') === '未済'
+    );
+    const lines = tasks.map(t => `${t.name || '不明'}さん: ${t.details || ''}`);
+    const baseSummary = lines.join('\n');
+
+    const key = process.env.OPENAI_API_KEY;
+    if (!key) {
+      return res.json({ summary: baseSummary });
+    }
+
+    const prompt = `以下は本日未完了のタスク一覧です。箇条書きの内容を要約してください。\n${baseSummary}`;
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${key}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-3.5-turbo-0125',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7
+      })
+    });
+    const json = await response.json();
+    if (!response.ok) {
+      console.error(json.error);
+      return res
+        .status(500)
+        .json({ error: 'OpenAI API request failed' });
+    }
+    const summary =
+      json.choices && json.choices[0] && json.choices[0].message.content;
+    res.json({ summary: summary || baseSummary });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to summarize' });
+  }
+});
+
+// 顧客を新規追加
+app.post('/customers', async (req, res) => {
+  const item = {
+    order_id: genOrderId(),
+    status: req.body.status || '未済',
+    email: req.body.email || '',
+    name: req.body.name || '',
+    kana: req.body.kana || '',
+    type: req.body.category || req.body.type || '',
+    details: req.body.details || '',
+    date: req.body.date || new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split('T')[0].replace(/-/g, '/'),
+    staff: req.body.staff || '',
+    phone: req.body.phoneNumber || req.body.phone || '',
+    history: req.body.history || {},
+    draft: !!req.body.draft
+  };
+  try {
+    await ddb.send(new PutCommand({ TableName: TABLE, Item: item }));
+    res.status(201).json(item);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to create' });
+  }
+});
+
+// 特定顧客を取得
+app.get('/customers/:id', async (req, res) => {
+  try {
+    const data = await ddb.send(new GetCommand({
+      TableName: TABLE,
+      Key: { order_id: req.params.id }
+    }));
+    if (!data.Item) return res.sendStatus(404);
+    res.json(data.Item);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch' });
+  }
+});
+
+// 顧客を更新
+app.put('/customers/:id', async (req, res) => {
+  const fields = {
+    status: req.body.status,
+    email: req.body.email,
+    name: req.body.name,
+    kana: req.body.kana,
+    type: req.body.category || req.body.type,
+    details: req.body.details,
+    date: req.body.date,
+    staff: req.body.staff,
+    phone: req.body.phoneNumber || req.body.phone,
+    history: req.body.history,
+    draft: req.body.draft
+  };
+
+  const sets = [];
+  const values = {};
+  const names = {};
+  for (const [key, value] of Object.entries(fields)) {
+    if (value !== undefined) {
+      names[`#${key}`] = key;
+      values[`:${key}`] = value;
+      sets.push(`#${key} = :${key}`);
+    }
+  }
+
+  if (!sets.length) {
+    return res.status(400).json({ error: 'No fields to update' });
+  }
+
+  const params = {
+    TableName: TABLE,
+    Key: { order_id: req.params.id },
+    UpdateExpression: 'SET ' + sets.join(', '),
+    ExpressionAttributeNames: names,
+    ExpressionAttributeValues: values,
+    ReturnValues: 'ALL_NEW'
+  };
+
+  try {
+    const result = await ddb.send(new UpdateCommand(params));
+    res.json(result.Attributes);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update' });
+  }
+});
+
+// 顧客を削除
+app.delete('/customers/:id', async (req, res) => {
+  try {
+    await ddb.send(new DeleteCommand({
+      TableName: TABLE,
+      Key: { order_id: req.params.id }
+    }));
+    res.sendStatus(204);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete' });
+  }
+});
+
+// グーバイク追加連絡メールを取得して保存
+app.get('/api/fetch-email', async (req, res) => {
+  const imap = new Imap(getImapConfig());
+  // Capture replies as well as original GooBike notices by
+  // searching for the inquiry ID pattern "[UB" in the subject.
+  const targetSubject = '[UB';
+
+  imap.once('ready', () => {
+    imap.openBox('INBOX', false, (err, box) => {
+      if (err) {
+        imap.end();
+        return respondError(res, 500, 'Failed to open mailbox', err);
+      }
+
+      const since = new Date();
+      since.setMonth(since.getMonth() - 2);
+
+      imap.search(
+        [
+          ['HEADER', 'SUBJECT', targetSubject],
+          ['SINCE', since.toUTCString()]
+        ],
+        (err, results) => {
+          if (err) {
+            imap.end();
+            return respondError(res, 500, 'Failed to search mailbox', err);
+          }
+          if (!results.length) {
+            imap.end();
+            return res.json({ message: 'No matching emails.' });
+          }
+
+          const f = imap.fetch(results, { bodies: '' });
+          const tasks = [];
+
+          f.on('message', msg => {
+            tasks.push(
+              new Promise(resolve => {
+                const handleError = err => resolve({ status: 'error', message: err.message });
+                msg.once('error', handleError);
+                msg.on('body', stream => {
+                  simpleParser(stream, async (err, mail) => {
+                    if (err) {
+                      return handleError(err);
+                    }
+
+                    const match = mail.subject.match(/\[(UB\d+)\]/);
+                    const baseId = match ? match[1] : 'UNKNOWN';
+                    const customerEmail =
+                      mail.from && mail.from.value && mail.from.value[0]
+                        ? mail.from.value[0].address
+                        : '';
+                    const nameMatch = mail.subject.match(/([^\s]+)\s*様/);
+                    const customerName = nameMatch ? nameMatch[1] : 'UNKNOWN';
+                    const { body: cleanBody, info } = extractGoobikeSections(
+                      mail.text || ''
+                    );
+                    const now = new Date().toISOString();
+
+                    const key = { inquiry_id: baseId };
+                    try {
+                      const existing = await dynamo
+                        .get({ TableName: GOOBIKE_TABLE, Key: key })
+                        .promise();
+
+                      if (existing && existing.Item) {
+                        const updateParams = {
+                          TableName: GOOBIKE_TABLE,
+                          Key: key,
+                          UpdateExpression:
+                            'SET #n = :n, email = :e, from_email = :f, body = :b, inquiry_method = :m, inquiry_content = :c, request_car = :r, updatedAt = :u',
+                          ExpressionAttributeNames: { '#n': 'name' },
+                          ExpressionAttributeValues: {
+                            ':n': customerName,
+                            ':e': info.customer_email || customerEmail,
+                            ':f': customerEmail,
+                            ':b': cleanBody,
+                            ':m': info.inquiry_method || null,
+                            ':c': info.inquiry_content || null,
+                            ':r': info.request_car || null,
+                            ':u': now
+                          },
+                          ReturnValues: 'ALL_NEW'
+                        };
+                        await dynamo.update(updateParams).promise();
+                        return resolve({ status: 'updated', inquiry_id: baseId });
+                      }
+
+                      const item = {
+                        inquiry_id: baseId,
+                        name: customerName,
+                        email: info.customer_email || customerEmail,
+                        from_email: customerEmail,
+                        body: cleanBody,
+                        inquiry_method: info.inquiry_method,
+                        inquiry_content: info.inquiry_content,
+                        request_car: info.request_car,
+                        createdAt: now
+                      };
+                      await dynamo
+                        .put({ TableName: GOOBIKE_TABLE, Item: item })
+                        .promise();
+                      return resolve({ status: 'saved', inquiry_id: baseId });
+                    } catch (e) {
+                      return resolve({ status: 'error', message: e.message });
+                    }
+                  });
+                });
+              })
+            );
+          });
+
+          f.once('error', err => {
+            imap.end();
+            respondError(res, 500, 'Failed to fetch emails', err);
+          });
+
+          f.once('end', async () => {
+            imap.end();
+            const results = await Promise.all(tasks);
+            res.json({ results });
+          });
+        }
+      );
+    });
+  });
+
+  imap.once('error', err => {
+    respondError(res, 500, 'IMAP connection error', err);
+  });
+
+  imap.connect();
+});
+
+
+// 全メールを取得して保存
+app.get('/api/fetch-all-emails', async (req, res) => {
+  try {
+    lastEmailFetchTime = new Date().toISOString();
+    await fetchAllEmails();
+    res.json({ message: 'Fetched all emails' });
+  } catch (err) {
+    respondError(res, 500, 'Failed to fetch all emails', err);
+  }
+});
+
+// グーバイク見積りサービス 見送りメールを取得して保存/更新
+app.get('/api/fetch-skip-email', async (req, res) => {
+  const imap = new Imap(getImapConfig());
+  const targetSubject = '見送りのお知らせ';
+
+  imap.once('ready', () => {
+    imap.openBox('INBOX', false, (err, box) => {
+      if (err) {
+        imap.end();
+        return respondError(res, 500, 'Failed to open mailbox', err);
+      }
+      imap.search([['HEADER', 'SUBJECT', targetSubject]], (err, results) => {
+        if (err) {
+          imap.end();
+          return respondError(res, 500, 'Failed to search mailbox', err);
+        }
+        if (!results.length) {
+          imap.end();
+          return res.json({ message: 'No matching emails.' });
+        }
+        const f = imap.fetch(results, { bodies: '' });
+        const tasks = [];
+        f.on('message', msg => {
+          tasks.push(
+            new Promise(resolve => {
+              const handleError = err => resolve({ status: 'error', message: err.message });
+              msg.once('error', handleError);
+              msg.on('body', stream => {
+                simpleParser(stream, async (err, mail) => {
+                  if (err) {
+                    return handleError(err);
+                  }
+
+                  const info = parseGoobikeSkipEmail(mail.text || '');
+                  if (!info.inquiry_id) {
+                    return resolve({ status: 'error', message: 'Inquiry ID not found.' });
+                  }
+
+                  const inquiryId = info.inquiry_id;
+                  const now = new Date().toISOString();
+                  try {
+                    const existing = await dynamo
+                      .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: inquiryId } })
+                      .promise();
+
+                    if (existing && existing.Item) {
+                      const updateParams = {
+                        TableName: GOOBIKE_TABLE,
+                        Key: { inquiry_id: inquiryId },
+                        UpdateExpression:
+                          'SET #s = :s, inquiry_method = if_not_exists(inquiry_method, :m), request_car = if_not_exists(request_car, :c), updatedAt = :u',
+                        ExpressionAttributeNames: { '#s': 'status' },
+                        ExpressionAttributeValues: {
+                          ':s': '見送り',
+                          ':m': info.inquiry_method || null,
+                          ':c': info.request_car || null,
+                          ':u': now
+                        },
+                        ReturnValues: 'ALL_NEW'
+                      };
+                      await dynamo.update(updateParams).promise();
+                      resolve({ status: 'updated', inquiry_id: inquiryId });
+                    } else {
+                      const item = {
+                        inquiry_id: inquiryId,
+                        status: '見送り',
+                        inquiry_method: info.inquiry_method,
+                        request_car: info.request_car,
+                        createdAt: now
+                      };
+                      await dynamo
+                        .put({ TableName: GOOBIKE_TABLE, Item: item })
+                        .promise();
+                      resolve({ status: 'saved', inquiry_id: inquiryId });
+                    }
+                  } catch (e) {
+                    resolve({ status: 'error', message: e.message });
+                  }
+                });
+              });
+            })
+          );
+        });
+
+        f.once('error', err => {
+          imap.end();
+          respondError(res, 500, 'Failed to fetch emails', err);
+        });
+
+        f.once('end', async () => {
+          imap.end();
+          const results = await Promise.all(tasks);
+          res.json({ results });
+        });
+      });
+    });
+  });
+
+  imap.once('error', err => {
+    respondError(res, 500, 'IMAP connection error', err);
+  });
+
+  imap.connect();
+});
+
+// グーバイク見積りサービス ご回答依頼メールを取得して保存/更新
+app.get('/api/fetch-answer-request-email', async (req, res) => {
+  const imap = new Imap(getImapConfig());
+  const targetSubject = 'ご回答依頼';
+
+  imap.once('ready', () => {
+    imap.openBox('INBOX', false, (err, box) => {
+      if (err) {
+        imap.end();
+        return respondError(res, 500, 'Failed to open mailbox', err);
+      }
+      imap.search([['HEADER', 'SUBJECT', targetSubject]], (err, results) => {
+        if (err) {
+          imap.end();
+          return respondError(res, 500, 'Failed to search mailbox', err);
+        }
+        if (!results.length) {
+          imap.end();
+          return res.json({ message: 'No matching emails.' });
+        }
+        const f = imap.fetch(results, { bodies: '' });
+        const tasks = [];
+        f.on('message', msg => {
+          tasks.push(
+            new Promise(resolve => {
+              const handleError = err => resolve({ status: 'error', message: err.message });
+              msg.once('error', handleError);
+              msg.on('body', stream => {
+                simpleParser(stream, async (err, mail) => {
+                  if (err) {
+                    return handleError(err);
+                  }
+
+                  const info = parseGoobikeAnswerRequestEmail(mail.text || '');
+                  if (!info.inquiry_id) {
+                    return resolve({ status: 'error', message: 'Inquiry ID not found.' });
+                  }
+
+                  const inquiryId = info.inquiry_id;
+                  const now = new Date().toISOString();
+                  try {
+                    const existing = await dynamo
+                      .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: inquiryId } })
+                      .promise();
+
+                    if (existing && existing.Item) {
+                      const updateParams = {
+                        TableName: GOOBIKE_TABLE,
+                        Key: { inquiry_id: inquiryId },
+                        UpdateExpression:
+                          'SET answer_request = :r, answer_request_date = :d, inquiry_method = if_not_exists(inquiry_method, :m), inquiry_content = if_not_exists(inquiry_content, :c), request_car = if_not_exists(request_car, :car), updatedAt = :u',
+                        ExpressionAttributeValues: {
+                          ':r': true,
+                          ':d': now,
+                          ':m': info.inquiry_method || null,
+                          ':c': info.inquiry_content || null,
+                          ':car': info.request_car || null,
+                          ':u': now
+                        },
+                        ReturnValues: 'ALL_NEW'
+                      };
+                      await dynamo.update(updateParams).promise();
+                      resolve({ status: 'updated', inquiry_id: inquiryId });
+                    } else {
+                      const item = {
+                        inquiry_id: inquiryId,
+                        answer_request: true,
+                        answer_request_date: now,
+                        inquiry_method: info.inquiry_method,
+                        inquiry_content: info.inquiry_content,
+                        request_car: info.request_car,
+                        createdAt: now
+                      };
+                      await dynamo
+                        .put({ TableName: GOOBIKE_TABLE, Item: item })
+                        .promise();
+                      resolve({ status: 'saved', inquiry_id: inquiryId });
+                    }
+                  } catch (e) {
+                    resolve({ status: 'error', message: e.message });
+                  }
+                });
+              });
+            })
+          );
+        });
+
+        f.once('error', err => {
+          imap.end();
+          respondError(res, 500, 'Failed to fetch emails', err);
+        });
+
+        f.once('end', async () => {
+          imap.end();
+          const results = await Promise.all(tasks);
+          res.json({ results });
+        });
+      });
+    });
+  });
+
+  imap.once('error', err => {
+    respondError(res, 500, 'IMAP connection error', err);
+  });
+
+  imap.connect();
+});
+
+// グーバイク予約サービス 仮予約受付メールを取得して保存
+app.get('/api/fetch-reserve-email', async (req, res) => {
+  const imap = new Imap(getImapConfig());
+  const targetSubject = '仮予約受付';
+
+  imap.once('ready', () => {
+    imap.openBox('INBOX', false, (err, box) => {
+      if (err) {
+        imap.end();
+        return respondError(res, 500, 'Failed to open mailbox', err);
+      }
+      imap.search([['HEADER', 'SUBJECT', targetSubject]], (err, results) => {
+        if (err) {
+          imap.end();
+          return respondError(res, 500, 'Failed to search mailbox', err);
+        }
+        if (!results.length) {
+          imap.end();
+          return res.json({ message: 'No matching emails.' });
+        }
+        const f = imap.fetch(results, { bodies: '' });
+        const tasks = [];
+        f.on('message', msg => {
+          tasks.push(
+            new Promise(resolve => {
+              const handleError = err => resolve({ status: 'error', message: err.message });
+              msg.once('error', handleError);
+              msg.on('body', stream => {
+                simpleParser(stream, async (err, mail) => {
+                  if (err) {
+                    return handleError(err);
+                  }
+
+                  const info = parseGoobikeReserveEmail(mail.text || '');
+                  if (!info.inquiry_id) {
+                    return resolve({ status: 'error', message: 'Inquiry ID not found.' });
+                  }
+
+                  const inquiryId = info.inquiry_id;
+                  const now = new Date().toISOString();
+                  try {
+                    const existing = await dynamo
+                      .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: inquiryId } })
+                      .promise();
+
+                    if (existing && existing.Item) {
+                      const updateParams = {
+                        TableName: GOOBIKE_TABLE,
+                        Key: { inquiry_id: inquiryId },
+                        UpdateExpression:
+                          'SET reserve_notice = :r, reserve_datetime = if_not_exists(reserve_datetime, :dt), updatedAt = :u',
+                        ExpressionAttributeValues: {
+                          ':r': true,
+                          ':dt': info.reserve_datetime || null,
+                          ':u': now
+                        },
+                        ReturnValues: 'ALL_NEW'
+                      };
+                      await dynamo.update(updateParams).promise();
+                      resolve({ status: 'updated', inquiry_id: inquiryId });
+                    } else {
+                      const item = {
+                        inquiry_id: inquiryId,
+                        reserve_notice: true,
+                        reserve_datetime: info.reserve_datetime,
+                        createdAt: now
+                      };
+                      await dynamo
+                        .put({ TableName: GOOBIKE_TABLE, Item: item })
+                        .promise();
+                      resolve({ status: 'saved', inquiry_id: inquiryId });
+                    }
+                  } catch (e) {
+                    resolve({ status: 'error', message: e.message });
+                  }
+                });
+              });
+            })
+          );
+        });
+
+        f.once('error', err => {
+          imap.end();
+          respondError(res, 500, 'Failed to fetch emails', err);
+        });
+
+        f.once('end', async () => {
+          imap.end();
+          const results = await Promise.all(tasks);
+          res.json({ results });
+        });
+      });
+    });
+  });
+
+  imap.once('error', err => {
+    respondError(res, 500, 'IMAP connection error', err);
+  });
+
+  imap.connect();
+});
+
+
+
+
+// グーバイク追加連絡データ取得
+app.get('/goobike-emails', async (req, res) => {
+  try {
+    const data = await dynamo
+      .scan({ TableName: GOOBIKE_TABLE })
+      .promise();
+    const items = (data.Items || []).sort((a, b) =>
+      (b.createdAt || '').localeCompare(a.createdAt || '')
+    );
+    res.json(items);
+  } catch (err) {
+    respondError(res, 500, 'Failed to fetch emails from DynamoDB', err);
+  }
+});
+
+// 単一のグーバイクメールを取得
+app.get('/goobike-emails/:id', async (req, res) => {
+  const id = req.params.id;
+  if (!id) return res.status(400).json({ error: 'Missing id' });
+  try {
+    const data = await dynamo
+      .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: id } })
+      .promise();
+    if (!data || !data.Item) return res.status(404).json({ error: 'Not found' });
+    res.json(data.Item);
+  } catch (err) {
+    respondError(res, 500, 'Failed to fetch email', err);
+  }
+});
+
+// 取得済みメール一覧を返す
+app.get('/emails', async (req, res) => {
+  try {
+    const data = await dynamo.scan({ TableName: MAIL_TABLE }).promise();
+    res.json(data.Items || []);
+  } catch (err) {
+    respondError(res, 500, 'Failed to fetch emails', err);
+  }
+});
+
+// メール件数と最終更新日時を返す
+app.get('/email-stats', async (req, res) => {
+  try {
+    const data = await dynamo.scan({ TableName: MAIL_TABLE }).promise();
+    const items = data.Items || [];
+    const count = items.length;
+    let lastDate = '';
+    for (const item of items) {
+      if (item.date && (!lastDate || item.date > lastDate)) {
+        lastDate = item.date;
+      }
+    }
+    const today = new Date().toLocaleDateString('ja-JP', {
+      timeZone: 'Asia/Tokyo'
+    });
+    const todayCount = items.filter(i => {
+      if (!i.date) return false;
+      const d = new Date(i.date).toLocaleDateString('ja-JP', {
+        timeZone: 'Asia/Tokyo'
+      });
+      return d === today;
+    }).length;
+    res.json({
+      count,
+      lastDate,
+      todayCount,
+      fetchTime: lastEmailFetchTime
+    });
+  } catch (err) {
+    respondError(res, 500, 'Failed to fetch email stats', err);
+  }
+});
+
+// メールカテゴリ一覧を返す
+app.get('/categories', async (req, res) => {
+  try {
+    const data = await dynamo
+      .scan({
+        TableName: MAIL_TABLE,
+        ProjectionExpression: '#c',
+        ExpressionAttributeNames: { '#c': 'category' }
+      })
+      .promise();
+    const counts = {};
+    for (const item of data.Items || []) {
+      if (item.category) {
+        counts[item.category] = (counts[item.category] || 0) + 1;
+      }
+    }
+    const list = Object.keys(counts)
+      .sort()
+      .map(name => ({ name, count: counts[name] }));
+    res.json(list);
+  } catch (err) {
+    respondError(res, 500, 'Failed to fetch categories', err);
+  }
+});
+
+// フォルダツリー構造を返す
+app.get('/folder-tree', async (req, res) => {
+  try {
+    const data = await dynamo
+      .scan({
+        TableName: MAIL_TABLE,
+        ProjectionExpression: '#f, category',
+        ExpressionAttributeNames: { '#f': 'folder' }
+      })
+      .promise();
+    const tree = {};
+    for (const item of data.Items || []) {
+      if (!item.folder) continue;
+      const delimiter = item.folder.includes('/')
+        ? '/'
+        : item.folder.includes('.')
+        ? '.'
+        : null;
+      const parts = delimiter ? item.folder.split(delimiter) : [item.folder];
+      let node = tree;
+      for (const part of parts) {
+        if (!node[part]) node[part] = {};
+        node = node[part];
+      }
+      if (item.category && !node._category) node._category = item.category;
+    }
+    res.json(tree);
+  } catch (err) {
+    respondError(res, 500, 'Failed to build folder tree', err);
+  }
+});
+
+// 個別メールを返す
+app.get('/emails/:id', async (req, res) => {
+  const id = req.params.id;
+  if (!id) return res.status(400).json({ error: 'Missing id' });
+  try {
+    const data = await dynamo
+      .get({ TableName: MAIL_TABLE, Key: { unique_id: id } })
+      .promise();
+    if (!data || !data.Item) return res.status(404).json({ error: 'Not found' });
+    res.json(data.Item);
+  } catch (err) {
+    respondError(res, 500, 'Failed to fetch email', err);
+  }
+});
+
+module.exports = app;

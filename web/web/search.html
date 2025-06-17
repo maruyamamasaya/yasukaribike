@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>詳細検索</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/flatly/bootstrap.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="https://rebikele.s3.ap-northeast-1.amazonaws.com/kokyaku_kanri/rogo.jpg" />
+</head>
+<body class="p-4">
+  <div class="container">
+    <h1 class="mb-3">詳細検索</h1>
+    <div id="search-form" class="d-flex flex-wrap gap-2 mb-3">
+      <details>
+        <summary class="btn btn-outline-secondary">日付</summary>
+        <input id="s-date" type="date" class="form-control mt-2" />
+      </details>
+      <details>
+        <summary class="btn btn-outline-secondary">名前</summary>
+        <input id="s-name" class="form-control mt-2" />
+      </details>
+      <details>
+        <summary class="btn btn-outline-secondary">電話番号</summary>
+        <input id="s-phone" class="form-control mt-2" />
+      </details>
+      <details>
+        <summary class="btn btn-outline-secondary">メール</summary>
+        <input id="s-email" class="form-control mt-2" />
+      </details>
+      <details>
+        <summary class="btn btn-outline-secondary">状態</summary>
+        <select id="s-status" class="form-select mt-2">
+          <option value="">--</option>
+          <option value="未済">未済</option>
+          <option value="済">済</option>
+        </select>
+      </details>
+      <details>
+        <summary class="btn btn-outline-secondary">種別</summary>
+        <select id="s-category" class="form-select mt-2">
+          <option value="">--</option>
+          <option value="電話">電話</option>
+          <option value="訪問対応">訪問対応</option>
+          <option value="メール問い合わせ">メール問い合わせ</option>
+          <option value="その他">その他</option>
+        </select>
+      </details>
+      <details>
+        <summary class="btn btn-outline-secondary">バイク機種名</summary>
+        <input id="s-details" class="form-control mt-2" />
+      </details>
+      <details>
+        <summary class="btn btn-outline-secondary">本文検索</summary>
+        <input id="s-text" class="form-control mt-2" />
+      </details>
+      <div class="align-self-end mt-2">
+        <button class="btn btn-primary me-2" onclick="searchCustomers()">検索</button>
+        <a class="btn btn-secondary" href="#" onclick="goBack(event)">戻る</a>
+      </div>
+    </div>
+    <div id="breadcrumb" class="text-muted small mb-2"></div>
+    <table id="result-table" class="table table-striped">
+      <thead>
+        <tr>
+          <th>名前</th>
+          <th>メール</th>
+          <th>種別</th>
+          <th>バイク種別</th>
+          <th>状態</th>
+          <th>本文</th>
+          <th>詳細</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+      <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+          <button id="prev-btn" class="btn btn-outline-primary btn-sm" onclick="prevPage()">前へ</button>
+          <span id="page-info">1 / 1</span>
+          <button id="next-btn" class="btn btn-outline-primary btn-sm" onclick="nextPage()">次へ</button>
+        </div>
+      </div>
+      <div class="d-flex align-items-center mb-3">
+        <a href="#" class="btn btn-secondary" onclick="goBack(event)">戻る</a>
+        <a href="index.html" class="btn btn-primary mx-auto">ホーム</a>
+      </div>
+    </div>
+  <footer class="text-center mt-4">
+    <small style="color:#7ac142;">©2025 JIMUSURU All rights reserved.</small>
+  </footer>
+  <script src="search.js"></script>
+  <script src="nav.js"></script>
+</body>
+</html>
