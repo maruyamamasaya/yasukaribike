@@ -53,7 +53,17 @@ async function loadDashboard() {
     const isToday = c.date ? c.date === today : c.order_id && c.order_id.slice(0, 8) === todayKey;
     return isToday && (c.type || c.category) === '訪問対応';
   }).length;
+  const nowKey = new Date(Date.now() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .replace(/[-T:Z.]/g, '')
+    .slice(0, 14);
   const unconfirmed = customers.filter(c => (c.status || '') === '未済').length;
+  const scheduled = customers.filter(c => {
+    if ((c.status || '') === '済') return false;
+    if (c.order_id) return c.order_id.slice(0, 14) > nowKey;
+    if (c.date) return c.date.replace(/\//g, '') > nowKey.slice(0, 8);
+    return false;
+  }).length;
   const completed = customers.filter(c => (c.status || '') === '済').length;
 
   document.getElementById('d-total').textContent = total;
@@ -67,6 +77,8 @@ async function loadDashboard() {
   const callLogEl = document.getElementById('d-call-log');
   if (callLogEl) callLogEl.textContent = 0;
   document.getElementById('d-unconfirmed').textContent = unconfirmed;
+  const schedEl = document.getElementById('d-scheduled');
+  if (schedEl) schedEl.textContent = scheduled;
   const compEl = document.getElementById('d-completed');
   if (compEl) compEl.textContent = completed;
 }
