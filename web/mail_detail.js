@@ -24,6 +24,7 @@ async function loadMailDetail() {
   tbody.innerHTML = '';
   const fields = [
     ['unique_id', 'UID'],
+    ['from', '送信元'],
     ['to', '宛先'],
     ['date', '受信日時'],
     ['body', '本文']
@@ -31,8 +32,14 @@ async function loadMailDetail() {
   fields.forEach(([key, label]) => {
     if (!item[key]) return;
     const tr = document.createElement('tr');
-    const val = String(item[key]).replace(/\n/g, '<br>');
-    tr.innerHTML = `<th>${label}</th><td style="white-space:pre-wrap;">${escapeHtml(val)}</td>`;
+    let val = String(item[key]);
+    if (key === 'date') {
+      val = new Date(val).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', hour12: false });
+    } else if (key === 'body') {
+      val = val.replace(/<br\s*\/?>/gi, '\n');
+    }
+    tr.innerHTML = `<th>${label}</th><td style="white-space:pre-wrap;"></td>`;
+    tr.querySelector('td').textContent = val;
     tbody.appendChild(tr);
   });
 }

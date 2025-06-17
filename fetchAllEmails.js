@@ -44,6 +44,7 @@ async function saveMail(uid, parsed, folder) {
     folder,
     category: FOLDER_CATEGORIES[folder] || null,
     subject: parsed.subject || '',
+    from: parsed.from ? parsed.from.text : '',
     to: parsed.to ? parsed.to.text : '',
     date: parsed.date ? parsed.date.toISOString() : null,
     body: parsed.text || '',
