@@ -177,10 +177,21 @@ API Gateway triggers the `handler` exported from `lambda.js`.
 
 ## 🧠 AI要約サンプル / AI Summary Sample
 
-`/summary` エンドポイントで本日の未済タスクを取得し、OpenAI API を用いて要約文を返します。
-環境変数 `OPENAI_API_KEY` に API キーを設定してください。
-このサンプルでは最も低コストな `gpt-3.5-turbo-0125` モデルを使用します。
-トップページの「AI要約」ボタンから呼び出し、結果をダイアログ表示します。
+`/summary` エンドポイントは DynamoDB から本日分の未済レコードを収集し、
+"名前さん: 詳細" という形式のリストを生成します。環境変数
+`OPENAI_API_KEY` にキーを設定すると、このリストを OpenAI API (`gpt-3.5-turbo-0125`)
+に送信して要約結果を受け取ります。キーがない場合は生成したリストそのものを返します。
+トップページの「AI要約」ボタンがこの API を呼び出し、返ってきたテキストを
+`alert()` ダイアログに表示します。必要に応じて `app.js` 内の `prompt` を変更すれば、
+電話番号や履歴メモなど他の項目も要約対象に含められます。
+
+The `/summary` endpoint collects today's unresolved entries from DynamoDB and
+creates a list like `name: details`. When `OPENAI_API_KEY` is set, the list is
+sent to the OpenAI `gpt-3.5-turbo-0125` model and the summarized text is
+returned. Without the key, the raw list is returned. The "AI Summary" button on
+`index.html` calls this endpoint and displays the result in an `alert()` dialog.
+You can adjust the prompt in `app.js` to include additional fields such as phone
+numbers or note history.
 
 
 
