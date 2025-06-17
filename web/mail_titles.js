@@ -25,6 +25,16 @@ const NAME_MAP = {
   sent: '送信ボックス'
 };
 
+const CATEGORY_ORDER = [
+  'inbox',
+  'goobike',
+  'reserve_notice',
+  'tentative',
+  'answer_request',
+  'skip',
+  'additional',
+];
+
 async function loadTitles() {
   let res;
   let data = {};
@@ -132,7 +142,14 @@ function createCategoryButtons() {
         .filter(t => t.category && t.category.toLowerCase() !== 'sent')
         .map(t => t.category)
     )
-  ).sort();
+  ).sort((a, b) => {
+    const ai = CATEGORY_ORDER.indexOf(a);
+    const bi = CATEGORY_ORDER.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
   const allBtn = document.createElement('button');
   allBtn.className = 'btn btn-outline-secondary active';
   allBtn.textContent = '全て';
