@@ -116,14 +116,13 @@ async function loadToday(page = 1) {
     snippet = snippet.replace(/\n/g, '<br>');
     tr.innerHTML = `
       <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
-      <td>${c.phoneNumber || c.phone || ''}</td>
+      <td>${formatDateTime(c.order_id)}</td>
       <td>
         ${c.status || ''}
         <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${c.order_id}', '${c.status || ''}')">
           ${c.status === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す'}
         </button>
       </td>
-      <td>${formatDateTime(c.order_id)}</td>
       <td style="width:40%; white-space: pre-wrap; font-size:0.85rem;">${snippet}</td>`;
     tbody.appendChild(tr);
   });

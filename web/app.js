@@ -147,7 +147,6 @@ async function loadCustomers(page = 1) {
 
     tr.innerHTML = `
       <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
-      <td>${c.phoneNumber || c.phone || ''}</td>
       <td>
         ${c.status || ''}
         <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${c.order_id}', '${c.status || ''}')">

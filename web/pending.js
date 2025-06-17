@@ -131,12 +131,11 @@ async function loadPending(page = 1) {
     const btnLabel = (c.status || '') === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す';
     tr.innerHTML = `
       <td>${c.name || ''}</td>
-      <td>${c.phoneNumber || c.phone || ''}</td>
+      <td>${formatDateTime(c.order_id)}</td>
       <td>
         ${c.status || ''}
         <button class="btn btn-sm btn-outline-secondary ms-2" onclick="event.stopPropagation(); toggleStatus('${c.order_id}', '${c.status || ''}')">${btnLabel}</button>
       </td>
-      <td>${formatDateTime(c.order_id)}</td>
       <td style="width:40%; white-space: pre-wrap; font-size:0.85rem;">${noteSnippet}</td>
       <td><a href="edit.html?id=${c.order_id}" class="btn btn-sm btn-primary" onclick="event.stopPropagation();">編集</a></td>
     `;
