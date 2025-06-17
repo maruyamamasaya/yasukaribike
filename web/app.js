@@ -79,10 +79,10 @@ async function loadDashboard() {
     return isToday && (c.type || c.category) === '顧客WEB入力';
   }).length;
   const unconfirmed = customers.filter(
-    c => (c.status || '') === '未済' && !isScheduled(c) && isDue(c)
+    c => (c.status || '') !== '完了' && !isScheduled(c) && isDue(c)
   ).length;
-  const scheduled = customers.filter(c => (c.status || '') !== '済' && isScheduled(c)).length;
-  const completed = customers.filter(c => (c.status || '') === '済').length;
+  const scheduled = customers.filter(c => (c.status || '') !== '完了' && isScheduled(c)).length;
+  const completed = customers.filter(c => (c.status || '') === '完了').length;
 
   document.getElementById('d-total').textContent = total;
   document.getElementById('d-today').textContent = todayCount;
@@ -111,7 +111,7 @@ async function loadCustomers(page = 1) {
     .filter(c => !c.draft)
     .filter(c => !isScheduled(c));
 
-  customers = customers.filter(c => (c.status || '') !== '済');
+  customers = customers.filter(c => (c.status || '') !== '完了');
   customers.sort((a, b) =>
     sortDescending ? getKey(b) - getKey(a) : getKey(a) - getKey(b)
   );
@@ -154,7 +154,7 @@ async function loadCustomers(page = 1) {
       <td>
         ${c.status || ''}
         <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${c.order_id}', '${c.status || ''}')">
-          ${c.status === '未済' ? 'タスクを完了させる' : 'タスクを未済に戻す'}
+          ${statusButtonLabel(c.status || '未着手')}
         </button>
       </td>
       <td>${formatDateTime(c.order_id)}</td>
@@ -180,7 +180,7 @@ async function deleteCustomer(id) {
 }
 
 async function toggleStatus(id, current) {
-  const newStatus = current === '済' ? '未済' : '済';
+  const newStatus = nextStatus(current);
   await fetch(API + '/customers/' + id, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },

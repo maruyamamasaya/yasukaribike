@@ -75,7 +75,7 @@ async function saveCustomer(isDraft = false) {
     phoneNumber: phone,
     details: document.getElementById('f-details').value,
     staff: document.getElementById('f-staff').value,
-    status: currentItem ? currentItem.status || '未済' : '未済',
+    status: currentItem ? currentItem.status || '未着手' : '未着手',
     history,
     bikes: [],
     draft: isDraft

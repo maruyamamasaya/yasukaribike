@@ -283,7 +283,7 @@ app.get('/customers/search', async (req, res) => {
   }
 });
 
-// 本日の未済タスクを要約
+// 本日の未完了タスクを要約
 app.get('/summary', async (req, res) => {
   try {
     const data = await ddb.send(new ScanCommand({ TableName: TABLE }));
@@ -294,7 +294,7 @@ app.get('/summary', async (req, res) => {
       .replace(/-/g, '/');
     const todayKey = today.replace(/\//g, '');
     const tasks = items.filter(t => {
-      if ((t.status || '') !== '未済') return false;
+      if ((t.status || '') === '完了') return false;
       if (t.scheduledDate) {
         const s = t.scheduledDate.replace(/\//g, '');
         if (s > todayKey) return false;
@@ -352,7 +352,7 @@ app.post('/customers', async (req, res) => {
   const name = (req.body.name || '').trim() || '名前を入力してください';
   const item = {
     order_id: genOrderId(),
-    status: req.body.status || '未済',
+    status: req.body.status || '未着手',
     email: req.body.email || '',
     name,
     kana: req.body.kana || '',
@@ -1083,7 +1083,7 @@ app.post('/emails/:id/add-task', async (req, res) => {
 
     const newItem = {
       order_id: genOrderId(),
-      status: '未済',
+      status: '未着手',
       email: mail.from || '',
       name: '名前を入力してください',
       kana: '',
