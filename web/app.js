@@ -166,8 +166,9 @@ async function loadEmailStats() {
     const res = await fetch(API + '/email-stats');
     const data = await res.json();
     if (!res.ok) return;
-    const dateStr = data.lastDate
-      ? new Date(data.lastDate).toLocaleString('ja-JP', {
+    const base = data.fetchTime || data.lastDate;
+    const dateStr = base
+      ? new Date(base).toLocaleString('ja-JP', {
           timeZone: 'Asia/Tokyo',
           hour12: false
         })
