@@ -12,7 +12,7 @@ async function loadMailDetail() {
   if (!id) return;
   let res;
   try {
-    res = await fetch(API + '/goobike-emails/' + encodeURIComponent(id));
+    res = await fetch(API + '/emails/' + encodeURIComponent(id));
   } catch (err) {
     console.error(err);
     return;
@@ -23,17 +23,9 @@ async function loadMailDetail() {
   if (!tbody) return;
   tbody.innerHTML = '';
   const fields = [
-    ['inquiry_id', '問い合わせ番号'],
-    ['name', '名前'],
-    ['email', 'メールアドレス'],
-    ['from_email', '送信元'],
-    ['inquiry_method', '問合せ方法'],
-    ['inquiry_content', '問合せ内容'],
-    ['request_car', '依頼車種'],
-    ['status', 'ステータス'],
-    ['createdAt', '受信日時'],
-    ['updatedAt', '更新日時'],
-    ['subject', 'タイトル'],
+    ['unique_id', 'UID'],
+    ['to', '宛先'],
+    ['date', '受信日時'],
     ['body', '本文']
   ];
   fields.forEach(([key, label]) => {

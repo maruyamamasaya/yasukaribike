@@ -15,6 +15,7 @@ const {
   UpdateCommand,
   DeleteCommand
 } = require('@aws-sdk/lib-dynamodb');
+const { fetchAllEmails } = require('./fetchAllEmails');
 
 const TABLE = process.env.TABLE_NAME || 'kokyakukanri_TBL';
 
@@ -23,7 +24,8 @@ const client = new DynamoDBClient({ region });
 const ddb = DynamoDBDocumentClient.from(client);
 AWS.config.update({ region });
 const dynamo = new AWS.DynamoDB.DocumentClient();
-const GOOBIKE_TABLE = process.env.GOOBIKE_TABLE || 'Rebikele_goobikemail03_TBL';
+const MAIL_TABLE = process.env.MAIL_TABLE || 'Rebikele_goobikemail01_TBL';
+const GOOBIKE_TABLE = process.env.GOOBIKE_TABLE || MAIL_TABLE;
 
 function respondError(res, status, label, err) {
   console.error(err);
@@ -530,6 +532,17 @@ app.get('/api/fetch-email', async (req, res) => {
   imap.connect();
 });
 
+
+// 全メールを取得して保存
+app.get('/api/fetch-all-emails', async (req, res) => {
+  try {
+    await fetchAllEmails();
+    res.json({ message: 'Fetched all emails' });
+  } catch (err) {
+    respondError(res, 500, 'Failed to fetch all emails', err);
+  }
+});
+
 // グーバイク見積りサービス 見送りメールを取得して保存/更新
 app.get('/api/fetch-skip-email', async (req, res) => {
   const imap = new Imap(getImapConfig());
@@ -870,6 +883,31 @@ app.get('/goobike-emails/:id', async (req, res) => {
   try {
     const data = await dynamo
       .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: id } })
+      .promise();
+    if (!data || !data.Item) return res.status(404).json({ error: 'Not found' });
+    res.json(data.Item);
+  } catch (err) {
+    respondError(res, 500, 'Failed to fetch email', err);
+  }
+});
+
+// 取得済みメール一覧を返す
+app.get('/emails', async (req, res) => {
+  try {
+    const data = await dynamo.scan({ TableName: MAIL_TABLE }).promise();
+    res.json(data.Items || []);
+  } catch (err) {
+    respondError(res, 500, 'Failed to fetch emails', err);
+  }
+});
+
+// 個別メールを返す
+app.get('/emails/:id', async (req, res) => {
+  const id = req.params.id;
+  if (!id) return res.status(400).json({ error: 'Missing id' });
+  try {
+    const data = await dynamo
+      .get({ TableName: MAIL_TABLE, Key: { unique_id: id } })
       .promise();
     if (!data || !data.Item) return res.status(404).json({ error: 'Not found' });
     res.json(data.Item);

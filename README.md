@@ -85,7 +85,7 @@ Set `AWS_REGION` for the AWS SDK (e.g., `ap-northeast-1`).
 - **BASIC_USER / BASIC_PASS**: ベーシック認証のユーザー名とパスワード / Basic auth credentials
 - **EMAIL_USER / EMAIL_PASS**: メール取得用 IMAP アカウント / IMAP login for email
 - **IMAP_HOST / IMAP_PORT**: IMAP サーバーのホスト名とポート / IMAP server host and port
- - **TABLE_NAME**, **GOOBIKE_TABLE**: 利用する DynamoDB テーブル名 / DynamoDB table names
+ - **TABLE_NAME**, **GOOBIKE_TABLE**, **MAIL_TABLE**: 利用する DynamoDB テーブル名 / DynamoDB table names
 - **AWS_REGION**: AWS SDK が利用するリージョン / AWS region used by the SDK
 
 これらは `.env` ファイルまたは環境変数として設定してください。 / Add these values in a `.env` file or export them.
