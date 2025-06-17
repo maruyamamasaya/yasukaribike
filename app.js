@@ -27,6 +27,7 @@ AWS.config.update({ region });
 const dynamo = new AWS.DynamoDB.DocumentClient();
 const MAIL_TABLE = process.env.MAIL_TABLE || 'Rebikele_goobikemail01_TBL';
 const GOOBIKE_TABLE = process.env.GOOBIKE_TABLE || MAIL_TABLE;
+let lastEmailFetchTime = null;
 
 function respondError(res, status, label, err) {
   console.error(err);
@@ -573,6 +574,7 @@ app.get('/api/fetch-email', async (req, res) => {
 // 全メールを取得して保存
 app.get('/api/fetch-all-emails', async (req, res) => {
   try {
+    lastEmailFetchTime = new Date().toISOString();
     await fetchAllEmails();
     res.json({ message: 'Fetched all emails' });
   } catch (err) {
@@ -950,12 +952,22 @@ app.get('/email-stats', async (req, res) => {
         lastDate = item.date;
       }
     }
-    const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
-      .toISOString()
-      .split('T')[0]
-      .replace(/-/g, '/');
-    const todayCount = items.filter(i => i.date === today).length;
-    res.json({ count, lastDate, todayCount });
+    const today = new Date().toLocaleDateString('ja-JP', {
+      timeZone: 'Asia/Tokyo'
+    });
+    const todayCount = items.filter(i => {
+      if (!i.date) return false;
+      const d = new Date(i.date).toLocaleDateString('ja-JP', {
+        timeZone: 'Asia/Tokyo'
+      });
+      return d === today;
+    }).length;
+    res.json({
+      count,
+      lastDate,
+      todayCount,
+      fetchTime: lastEmailFetchTime
+    });
   } catch (err) {
     respondError(res, 500, 'Failed to fetch email stats', err);
   }
