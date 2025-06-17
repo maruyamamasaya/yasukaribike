@@ -49,6 +49,11 @@ function verifyEmailConfig() {
 const app = express();
 verifyEmailConfig();
 
+// Health check endpoint without authentication
+app.get('/health', (req, res) => {
+  res.sendStatus(200);
+});
+
 // Basic Authentication middleware
 const AUTH_USER = process.env.BASIC_USER || 'user';
 const AUTH_PASS = process.env.BASIC_PASS || '0000';
