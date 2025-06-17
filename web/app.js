@@ -159,6 +159,25 @@ async function toggleStatus(id, current) {
   loadDashboard();
 }
 
+async function loadEmailStats() {
+  const el = document.getElementById('email-stats');
+  if (!el) return;
+  try {
+    const res = await fetch(API + '/email-stats');
+    const data = await res.json();
+    if (!res.ok) return;
+    const dateStr = data.lastDate
+      ? new Date(data.lastDate).toLocaleString('ja-JP', {
+          timeZone: 'Asia/Tokyo',
+          hour12: false
+        })
+      : '';
+    el.textContent = `最終更新: ${dateStr} / 件数: ${data.count}`;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 function nextPage() {
   loadCustomers(currentPage + 1);
 }
@@ -178,6 +197,7 @@ if (dateHeader) {
 
 loadDashboard();
 loadCustomers();
+loadEmailStats();
 
 // AI要約ボタン
 const summaryBtn = document.getElementById('ai-summary-btn');

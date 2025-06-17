@@ -906,6 +906,24 @@ app.get('/emails', async (req, res) => {
   }
 });
 
+// メール件数と最終更新日時を返す
+app.get('/email-stats', async (req, res) => {
+  try {
+    const data = await dynamo.scan({ TableName: MAIL_TABLE }).promise();
+    const items = data.Items || [];
+    const count = items.length;
+    let lastDate = '';
+    for (const item of items) {
+      if (item.date && (!lastDate || item.date > lastDate)) {
+        lastDate = item.date;
+      }
+    }
+    res.json({ count, lastDate });
+  } catch (err) {
+    respondError(res, 500, 'Failed to fetch email stats', err);
+  }
+});
+
 // メールカテゴリ一覧を返す
 app.get('/categories', async (req, res) => {
   try {
