@@ -92,7 +92,12 @@ async function fetchEmails() {
 function formatDateJST(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
-  return d.toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', hour12: false });
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `<span class="date-part">${y}/${m}/${day}</span><br><span class="time-part">${hh}時${mm}分</span>`;
 }
 
 function renderTable(page = currentPage) {
@@ -126,7 +131,7 @@ function renderTable(page = currentPage) {
     const subjectShort = (m.subject || '').slice(0, 60);
     const dateText = formatDateJST(m.date);
     tr.innerHTML = `
-      <td><a href="${link}">${escapeHtml(dateText)}</a></td>
+      <td><a href="${link}">${dateText}</a></td>
       <td>${escapeHtml(m.from || '')}</td>
       <td>${escapeHtml(subjectShort)}</td>
       <td>${escapeHtml(bodyShort)}</td>`;
