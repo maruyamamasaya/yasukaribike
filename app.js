@@ -1073,13 +1073,11 @@ app.post('/emails/:id/add-task', async (req, res) => {
     if (!data || !data.Item) return res.status(404).json({ error: 'Not found' });
 
     const mail = data.Item;
-    const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
-      .toISOString()
-      .split('T')[0]
-      .replace(/-/g, '/');
+    const now = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString();
+    const today = now.split('T')[0].replace(/-/g, '/');
 
     const hist = {};
-    hist[today] = mail.body || '';
+    hist[now.replace('T', ' ').slice(0, 19)] = mail.body || '';
 
     const newItem = {
       order_id: genOrderId(),
