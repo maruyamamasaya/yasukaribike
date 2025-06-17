@@ -349,11 +349,12 @@ app.get('/summary', async (req, res) => {
 
 // 顧客を新規追加
 app.post('/customers', async (req, res) => {
+  const name = (req.body.name || '').trim() || '名前を入力してください';
   const item = {
     order_id: genOrderId(),
     status: req.body.status || '未済',
     email: req.body.email || '',
-    name: req.body.name || '',
+    name,
     kana: req.body.kana || '',
     type: req.body.category || req.body.type || '',
     details: req.body.details || '',
@@ -1084,7 +1085,7 @@ app.post('/emails/:id/add-task', async (req, res) => {
       order_id: genOrderId(),
       status: '未済',
       email: mail.from || '',
-      name: '',
+      name: '名前を入力してください',
       kana: '',
       type: 'メール問い合わせ',
       details: mail.subject || '',
