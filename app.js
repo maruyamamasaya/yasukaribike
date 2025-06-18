@@ -302,14 +302,14 @@ app.get('/summary', async (req, res) => {
       const key = getDateKey(t);
       return key && key <= todayKey;
     });
-    const lines = tasks.map(t => {
+    const lines = tasks.map((t, i) => {
       let memo = '';
       if (t.history) {
         const keys = Object.keys(t.history).sort();
         const last = keys[keys.length - 1];
         if (last) memo = t.history[last] || '';
       }
-      return `${t.name || '不明'}さん: 本文 ${t.details || ''} メモ ${memo}`;
+      return `${i + 1}. ${t.name || '不明'}さん: 本文 ${t.details || ''} メモ ${memo}`;
     });
     const baseSummary = lines.join('\n');
 
@@ -318,7 +318,9 @@ app.get('/summary', async (req, res) => {
       return res.json({ summary: baseSummary });
     }
 
-    const prompt = `以下は今日まで未完了のタスク一覧です (本文とメモを含みます)。箇条書きの内容を要約してください。\n${baseSummary}`;
+    const prompt = `AI要約について、
+以下は今日まで未完了のタスク一覧です (本文とメモを含みます)。
+箇条書きではなく、要約を200文字以内で番号の方ごとにお願いします。\n${baseSummary}`;
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
