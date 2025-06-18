@@ -112,7 +112,6 @@ app.get(['/', '/index.html'], async (req, res, next) => {
   }
 });
 
-app.use('/form', express.static(path.join(__dirname, 'web')));
 app.use(express.static(path.join(__dirname, 'web')));
 
 function extractGoobikeSections(rawText) {
