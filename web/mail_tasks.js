@@ -111,7 +111,7 @@ async function loadMailTasks(page = 1) {
       <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
       <td>${formatDateTime(c.order_id)}</td>
       <td>
-        ${c.status || ''}
+        ${statusBadge(c.status || '未着手')}
         <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${c.order_id}', '${c.status || ''}')">
           ${statusButtonLabel(c.status || '未着手')}
         </button>

@@ -100,7 +100,7 @@ async function loadDrafts(page = 1) {
     tr.innerHTML = `
       <td><a href="add.html?id=${c.order_id}">${c.name}</a></td>
       <td>${c.phoneNumber || c.phone || ''}</td>
-      <td>${c.status || ''}</td>
+      <td>${statusBadge(c.status || '未着手')}</td>
       <td>${formatDateTime(c.order_id)}</td>
       <td style="width:40%; white-space: pre-wrap; font-size:0.85rem;">${noteSnippet}</td>
       <td>
