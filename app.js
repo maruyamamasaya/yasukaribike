@@ -60,6 +60,7 @@ app.get('/health', (req, res) => {
 const AUTH_USER = process.env.BASIC_USER || 'user';
 const AUTH_PASS = process.env.BASIC_PASS || '0000';
 app.use((req, res, next) => {
+  if (req.path.startsWith('/form')) return next();
   const header = req.headers['authorization'];
   if (!header) {
     res.set('WWW-Authenticate', 'Basic realm="Restricted"');
@@ -373,6 +374,36 @@ app.post('/customers', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to create' });
+  }
+});
+
+// Public endpoint for customer form submissions
+app.post('/form/submit', async (req, res) => {
+  const name = (req.body.name || '').trim() || '名前を入力してください';
+  const item = {
+    order_id: genOrderId(),
+    status: '未着手',
+    email: req.body.email || '',
+    name,
+    kana: req.body.kana || '',
+    type: req.body.category || req.body.type || '',
+    details: req.body.details || '',
+    date: new Date(Date.now() + 9 * 60 * 60 * 1000)
+      .toISOString()
+      .split('T')[0]
+      .replace(/-/g, '/'),
+    staff: '',
+    phone: req.body.phoneNumber || req.body.phone || '',
+    history: req.body.history || {},
+    draft: false,
+    scheduledDate: ''
+  };
+  try {
+    await ddb.send(new PutCommand({ TableName: TABLE, Item: item }));
+    res.status(201).json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to submit' });
   }
 });
 

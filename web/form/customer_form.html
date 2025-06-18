@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>お客様ご入力フォーム</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/flatly/bootstrap.min.css" />
+  <link rel="stylesheet" href="../style.css" />
+  <link rel="icon" href="https://rebikele.s3.ap-northeast-1.amazonaws.com/kokyaku_kanri/rogo.jpg" />
+</head>
+<body class="p-3">
+  <div class="container">
+    <h1 class="mb-3 text-center">お客様ご入力フォーム</h1>
+    <form id="customer-form" class="card p-3">
+      <input id="f-category" type="hidden" value="顧客WEB入力" />
+      <h4>お客様情報</h4>
+      <div class="mb-2">ご氏名: <input id="f-name" class="form-control" /></div>
+      <div class="mb-2">氏名カナ: <input id="f-kana" class="form-control" /></div>
+      <div class="mb-2">ご連絡先（TEL）: <input id="f-phone" class="form-control" /></div>
+      <div class="mb-2">E-mail: <input id="f-email" class="form-control" /></div>
+      <div class="mb-2">免許種別:
+        <select id="f-license" class="form-select">
+          <option value="原付">原付</option>
+          <option value="普通二輪（小型限定）">普通二輪（小型限定）</option>
+          <option value="普通二輪（限定なし）">普通二輪（限定なし）</option>
+          <option value="大型">大型</option>
+          <option value="AT限定">AT限定</option>
+        </select>
+      </div>
+
+      <h4 class="mt-4">アンケート</h4>
+      <div class="mb-2">現在所有のバイク車種:
+        <select id="q-bike" class="form-select">
+          <option value="なし">なし</option>
+          <option value="あり">あり</option>
+        </select>
+        <input id="q-bike-model" class="form-control mt-2" placeholder="車種を入力" style="display:none;" />
+      </div>
+      <div class="mb-2">購入時期予定: <input id="q-date" type="month" class="form-control" /></div>
+      <div class="mb-2">購入予算: <input id="q-budget" class="form-control" /></div>
+      <div class="mb-2">ローン希望確認:
+        <select id="q-loan" class="form-select">
+          <option value="現金">現金</option>
+          <option value="ローン検討">ローン検討</option>
+        </select>
+      </div>
+      <div class="mb-2">主な用途:
+        <select id="q-use" class="form-select">
+          <option value="通勤">通勤</option>
+          <option value="通学">通学</option>
+          <option value="ツーリング">ツーリング</option>
+          <option value="配達">配達</option>
+          <option value="その他">その他</option>
+        </select>
+        <input id="q-use-other" class="form-control mt-2" placeholder="その他を入力" style="display:none;" />
+      </div>
+
+      <h4 class="mt-4">ご要望・ご質問</h4>
+      <div class="mb-3"><textarea id="f-request" class="form-control" rows="4"></textarea></div>
+      <div class="text-center">
+        <button type="button" class="btn btn-primary" onclick="submitForm()">送信</button>
+      </div>
+    </form>
+    <p class="mt-4 text-muted small">
+      ※個人情報の取り扱いについて※<br />
+      本フォームで取得した情報は、車両提案・保険見積もり・アフターサービスのご案内に限り使用し、第三者に提供することはありません。
+    </p>
+  </div>
+  <script src="customer_form.js"></script>
+</body>
+</html>
