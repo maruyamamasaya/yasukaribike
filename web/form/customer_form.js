@@ -13,6 +13,12 @@ function sanitizePhoneInput(e) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  const qDate = document.getElementById('q-date');
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  qDate.min = `${yyyy}-${mm}-${dd}`;
   document.getElementById('q-bike').addEventListener('change', e => {
     document.getElementById('q-bike-model').style.display = e.target.value === 'あり' ? '' : 'none';
   });
