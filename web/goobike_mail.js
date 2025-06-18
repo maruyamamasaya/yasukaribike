@@ -52,6 +52,13 @@ function formatYMD(dateStr) {
   return `${y}/${m}/${day}`;
 }
 
+function getWeekday(dateStr) {
+  const days = ['日', '月', '火', '水', '木', '金', '土'];
+  const d = new Date(dateStr.replace(/\//g, '-'));
+  if (isNaN(d)) return '';
+  return days[d.getDay()];
+}
+
 function buildDateCounts(items) {
   dateCounts = {};
   items.forEach(i => {
@@ -82,7 +89,8 @@ function renderDateButtons() {
       const btn = document.createElement('button');
       btn.className = 'btn btn-outline-secondary btn-sm me-1';
       if (dateFilter === d) btn.classList.add('active');
-      btn.textContent = `${d} (${dateCounts[d]})`;
+      const day = getWeekday(d);
+      btn.textContent = `${d}${day ? `(${day})` : ''}(${dateCounts[d]})`;
       btn.addEventListener('click', () => {
         dateFilter = d;
         renderDateButtons();
