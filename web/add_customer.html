@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>顧客WEB入力フォーム</title>
+  <title>顧客WEB入力フォーム（従業員入力用）</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/flatly/bootstrap.min.css" />
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="https://rebikele.s3.ap-northeast-1.amazonaws.com/kokyaku_kanri/rogo.jpg" />
 </head>
 <body class="p-4">
   <div class="container">
-    <h1 class="mb-2">顧客WEB入力フォーム</h1>
+    <h1 class="mb-2">顧客WEB入力フォーム（従業員入力用）</h1>
     <p class="text-muted">問い合わせ内容を登録するフォームです。必要事項を入力して保存してください。</p>
     <p class="text-muted">一定時間操作がなかった場合も、自動で一時保存されます。</p>
     <p class="text-muted">※すべて必須項目ではありません。必要な箇所のみ入力してください。</p>
@@ -67,6 +67,8 @@
 
       <div>
         <button class="btn btn-primary" onclick="saveCustomer()">送信</button>
+        <button class="btn btn-outline-primary" onclick="saveCustomer(true)">一時保存</button>
+        <a class="btn btn-outline-info" href="drafts.html">一時保存一覧</a>
         <a class="btn btn-secondary" href="#" onclick="goBack(event)">キャンセル</a>
       </div>
       <div id="save-status" class="mt-2 text-success"></div>
