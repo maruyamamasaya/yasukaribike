@@ -15,7 +15,7 @@ function isScheduled(c) {
 }
 
 function isDue(c) {
-  const todayKey = new Date(Date.now() + 9 * 60 * 60 * 1000)
+  const yesterdayKey = new Date(Date.now() + 9 * 60 * 60 * 1000 - 24 * 60 * 60 * 1000)
     .toISOString()
     .slice(0, 10)
     .replace(/-/g, '');
@@ -24,7 +24,7 @@ function isDue(c) {
     : c.order_id
     ? c.order_id.slice(0, 8)
     : '';
-  return key && key <= todayKey;
+  return key && key <= yesterdayKey;
 }
 
 function getKey(c) {
