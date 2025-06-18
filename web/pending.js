@@ -133,7 +133,7 @@ async function loadPending(page = 1) {
       <td>${c.name || ''}</td>
       <td>${formatDateTime(c.order_id)}</td>
       <td>
-        ${c.status || ''}
+        ${statusBadge(c.status || '未着手')}
         <button class="btn btn-sm btn-outline-secondary ms-2" onclick="event.stopPropagation(); toggleStatus('${c.order_id}', '${c.status || ''}')">${btnLabel}</button>
       </td>
       <td style="width:40%; white-space: pre-wrap; font-size:0.85rem;">${noteSnippet}</td>

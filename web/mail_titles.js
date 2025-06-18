@@ -161,7 +161,18 @@ async function fetchAndLoad() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('load-btn').addEventListener('click', fetchAndLoad);
+  const loadBtn = document.getElementById('load-btn');
+  loadBtn.addEventListener('click', async () => {
+    const original = loadBtn.textContent;
+    loadBtn.disabled = true;
+    loadBtn.textContent = '読み込み中...';
+    await fetchAndLoad();
+    loadBtn.textContent = '完了';
+    setTimeout(() => {
+      loadBtn.textContent = original;
+      loadBtn.disabled = false;
+    }, 1000);
+  });
   document.getElementById('inbox-btn').addEventListener('click', () => {
     folderFilter = 'inbox';
     categoryFilter = 'all';

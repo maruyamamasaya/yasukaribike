@@ -149,13 +149,13 @@ async function loadCustomers(page = 1) {
     if (c.history) {
       const keys = Object.keys(c.history).sort();
       const last = keys[keys.length - 1];
-      if (last) noteSnippet = last;
+      if (last) noteSnippet = c.history[last] || '';
     }
 
     tr.innerHTML = `
       <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
       <td>
-        ${c.status || ''}
+        ${statusBadge(c.status || '未着手')}
         <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${c.order_id}', '${c.status || ''}')">
           ${statusButtonLabel(c.status || '未着手')}
         </button>
@@ -263,7 +263,17 @@ if (summaryBtn) {
 
 const loadBtn = document.getElementById('load-btn');
 if (loadBtn) {
-  loadBtn.addEventListener('click', fetchAllEmails);
+  loadBtn.addEventListener('click', async () => {
+    const original = loadBtn.textContent;
+    loadBtn.disabled = true;
+    loadBtn.textContent = '読み込み中...';
+    await fetchAllEmails();
+    loadBtn.textContent = '完了';
+    setTimeout(() => {
+      loadBtn.textContent = original;
+      loadBtn.disabled = false;
+    }, 1000);
+  });
 }
 
 const callHistoryBtn = document.getElementById('call-history-btn');

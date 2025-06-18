@@ -38,3 +38,10 @@ function statusButtonLabel(status) {
   if (status === '進行中') return 'タスクを完了にする';
   return 'タスクを未着手に戻す';
 }
+
+function statusBadge(status) {
+  let color = 'secondary';
+  if (status === '進行中') color = 'warning';
+  else if (status === '完了') color = 'success';
+  return `<span class="badge bg-${color}">${status}</span>`;
+}
