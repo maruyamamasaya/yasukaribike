@@ -54,7 +54,16 @@ async function loadMailTasks(page = 1) {
   const data = await res.json();
   let customers = (data.Items || data)
     .filter(c => !c.draft)
-    .filter(c => (c.type || c.category) === 'メール問い合わせ');
+    .filter(c => !isScheduled(c));
+  const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0]
+    .replace(/-/g, '/');
+  const todayKey = today.replace(/\//g, '');
+  customers = customers.filter(c => {
+    const isToday = c.date ? c.date === today : c.order_id && c.order_id.slice(0, 8) === todayKey;
+    return isToday && (c.type || c.category) === 'メール問い合わせ';
+  });
   const qEl = document.getElementById('quick-search');
   const tEl = document.getElementById('text-search');
   const keyword = qEl ? qEl.value.trim() : '';
