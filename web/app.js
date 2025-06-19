@@ -94,9 +94,10 @@ async function loadDashboard() {
   if (webEl) webEl.textContent = webInputToday;
   const mailAutoEl = document.getElementById('d-mail-auto');
   if (mailAutoEl)
-    mailAutoEl.textContent = customers.filter(
-      c => (c.type || c.category) === 'メール問い合わせ'
-    ).length;
+    mailAutoEl.textContent = customers.filter(c => {
+      const isToday = c.date ? c.date === today : c.order_id && c.order_id.slice(0, 8) === todayKey;
+      return isToday && (c.type || c.category) === 'メール問い合わせ';
+    }).length;
   const callLogEl = document.getElementById('d-call-log');
   if (callLogEl) callLogEl.textContent = 0;
   document.getElementById('d-unconfirmed').textContent = unconfirmed;
