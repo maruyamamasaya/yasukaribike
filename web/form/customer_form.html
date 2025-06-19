@@ -15,11 +15,12 @@
       <input id="f-category" type="hidden" value="顧客WEB入力" />
       <h4>お客様情報</h4>
       <div class="mb-2">ご氏名: <input id="f-name" class="form-control" /></div>
-      <div class="mb-2">氏名カナ: <input id="f-kana" class="form-control" /></div>
+      <div class="mb-2">氏名カナ (必須): <input id="f-kana" class="form-control" required /></div>
       <div class="mb-2">ご連絡先（TEL）: <input id="f-phone" class="form-control" /></div>
-      <div class="mb-2">E-mail: <input id="f-email" class="form-control" /></div>
+      <div class="mb-2">E-mail (必須): <input id="f-email" class="form-control" required /></div>
       <div class="mb-2">免許種別:
         <select id="f-license" class="form-select">
+          <option value="免許なし">免許なし</option>
           <option value="原付">原付</option>
           <option value="普通二輪（小型限定）">普通二輪（小型限定）</option>
           <option value="普通二輪（限定なし）">普通二輪（限定なし）</option>
