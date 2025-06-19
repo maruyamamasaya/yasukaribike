@@ -38,7 +38,16 @@ async function submitForm() {
   const email = document.getElementById('f-email').value.trim();
   const phone = document.getElementById('f-phone').value.trim();
 
-  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+  if (!kana) {
+    alert('氏名カナは必須です');
+    return;
+  }
+  if (!email) {
+    alert('E-mailは必須です');
+    return;
+  }
+
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
     alert('メールアドレスが不正です');
     return;
   }

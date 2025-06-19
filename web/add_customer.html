@@ -13,19 +13,20 @@
     <h1 class="mb-2">顧客WEB入力フォーム（従業員入力用）</h1>
     <p class="text-muted">問い合わせ内容を登録するフォームです。必要事項を入力して保存してください。</p>
     <p class="text-muted">一定時間操作がなかった場合も、自動で一時保存されます。</p>
-    <p class="text-muted">※すべて必須項目ではありません。必要な箇所のみ入力してください。</p>
+    <p class="text-muted">※氏名カナとE-mailは必須です。その他は必要に応じて入力してください。</p>
 
     <div class="card p-3">
       <input id="f-order_id" type="hidden" />
       <input id="f-category" type="hidden" value="顧客WEB入力" />
 
       <div class="mb-2">① ご氏名: <input id="f-name" class="form-control" /></div>
-      <div class="mb-2">① 氏名カナ: <input id="f-kana" class="form-control" /></div>
+      <div class="mb-2">① 氏名カナ (必須): <input id="f-kana" class="form-control" required /></div>
       <div class="mb-2">② ご連絡先（TEL）: <input id="f-phone" class="form-control" /></div>
-      <div class="mb-2">③ E-mail: <input id="f-email" class="form-control" /></div>
+      <div class="mb-2">③ E-mail (必須): <input id="f-email" class="form-control" required /></div>
 
       <div class="mb-2">④ 免許種別:
         <select id="f-license" class="form-select">
+          <option value="免許なし">免許なし</option>
           <option value="原付">原付</option>
           <option value="普通二輪（小型限定）">普通二輪（小型限定）</option>
           <option value="普通二輪（限定なし）">普通二輪（限定なし）</option>
