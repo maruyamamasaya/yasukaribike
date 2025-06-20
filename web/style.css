@@ -127,7 +127,10 @@ th[data-key] {
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.75rem;
-  white-space: nowrap;
+  white-space: normal;
+  max-width: 220px;
+  text-align: left;
+  line-height: 1.2;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s;

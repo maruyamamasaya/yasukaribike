@@ -30,7 +30,7 @@
         <div id="dashboard-metrics" class="row row-cols-2 g-2 mb-3">
           <div class="col">
             <a href="all.html" class="text-decoration-none">
-              <div class="card text-center dashboard-card" data-desc="すべての問い合わせを表示">
+              <div class="card text-center dashboard-card" data-desc="登録されている全ての問い合わせを表示します。フィルターはありません。">
                 <div class="card-body">
                   <div>総問い合わせ</div>
                   <div id="d-total" class="fs-3">0</div>
@@ -40,7 +40,7 @@
           </div>
           <div class="col">
             <a href="today.html" class="text-decoration-none">
-              <div class="card text-center dashboard-card" data-desc="本日入力されたデータのみ">
+              <div class="card text-center dashboard-card" data-desc="本日の日付で登録されたデータのみを表示します。">
                 <div class="card-body">
                   <div>本日の件数</div>
                   <div id="d-today" class="fs-3">0</div>
@@ -51,7 +51,7 @@
           <div class="col-12 text-center small text-muted">本日対応のダッシュボード</div>
           <div class="col">
             <a href="phone_today.html" class="text-decoration-none">
-              <div class="card text-center dashboard-card" data-desc="本日の電話対応">
+              <div class="card text-center dashboard-card" data-desc="本日登録された問い合わせのうちカテゴリーが『電話』のものを表示します。">
                 <div class="card-body">
                   <div>電話対応一覧</div>
                   <div id="d-phone-today" class="fs-3">0</div>
@@ -61,7 +61,7 @@
           </div>
           <div class="col">
             <a href="visit_today.html" class="text-decoration-none">
-              <div class="card text-center dashboard-card" data-desc="本日の訪問対応">
+              <div class="card text-center dashboard-card" data-desc="本日登録された問い合わせのうちカテゴリーが『訪問対応』のものを表示します。">
                 <div class="card-body">
                   <div>訪問対応一覧</div>
                   <div id="d-visit-today" class="fs-3">0</div>
@@ -71,7 +71,7 @@
           </div>
           <div class="col">
             <a href="customer_today.html" class="text-decoration-none">
-              <div class="card text-center dashboard-card" data-desc="本日WEBフォームから追加">
+              <div class="card text-center dashboard-card" data-desc="Webフォーム経由で本日新規登録された問い合わせのみを表示します。">
                 <div class="card-body">
                   <div>顧客から追加</div>
                   <div id="d-web-today" class="fs-3">0</div>
@@ -81,7 +81,7 @@
           </div>
           <div class="col">
             <a href="mail_tasks.html" class="text-decoration-none">
-              <div class="card text-center dashboard-card" data-desc="本日受信したメールから追加">
+              <div class="card text-center dashboard-card" data-desc="今日受信したメールから自動で追加された問い合わせを表示します。">
                 <div class="card-body">
                   <div>メール問い合わせ</div>
                   <div id="d-mail-auto" class="fs-3">0</div>
@@ -91,7 +91,7 @@
           </div>
             <div class="col">
             <a href="pending.html" class="text-decoration-none">
-              <div class="card text-center dashboard-card" data-desc="期限が過ぎた未完了タスク">
+              <div class="card text-center dashboard-card" data-desc="ステータスが未完了で、日付が昨日以前の問い合わせを表示します。">
                 <div class="card-body">
                   <div>昨日までの未完了</div>
                   <div id="d-unconfirmed" class="fs-3">0</div>
@@ -102,7 +102,7 @@
           </div>
             <div class="col">
               <a href="scheduled.html" class="text-decoration-none">
-                <div class="card text-center dashboard-card" data-desc="指定日時まで通知を待つタスク">
+                <div class="card text-center dashboard-card" data-desc="未来の日付で通知設定されている先送りタスクを表示します。">
                   <div class="card-body">
                     <div>先送りのタスク</div>
                     <div id="d-scheduled" class="fs-3">0</div>
@@ -112,7 +112,7 @@
               </a>
             </div>
             <div class="col">
-              <div class="card text-center dashboard-card" data-desc="アイブリーの受電履歴">
+              <div class="card text-center dashboard-card" data-desc="電話システム『アイブリー』から取得した受電履歴を表示します。">
                 <div class="card-body">
                   <div>受電履歴</div>
                   <div id="d-call-log" class="fs-3">0</div>
@@ -121,7 +121,7 @@
             </div>
             <div class="col">
               <a href="completed.html" class="text-decoration-none">
-                <div class="card text-center dashboard-card" data-desc="完了したタスク一覧">
+                <div class="card text-center dashboard-card" data-desc="ステータスが『完了』になったタスクの一覧です。">
                   <div class="card-body">
                     <div>完了</div>
                     <div id="d-completed" class="fs-3">0</div>
