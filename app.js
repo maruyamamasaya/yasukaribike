@@ -39,13 +39,18 @@ function respondError(res, status, label, err) {
 }
 
 function verifyEmailConfig() {
-  const required = ['EMAIL_USER', 'EMAIL_PASS', 'IMAP_HOST'];
-  for (const key of required) {
-    if (!process.env[key]) {
-      console.error(`Missing ${key}`);
-      throw new Error(`Missing ${key}`);
-    }
+  for (let i = 1; i <= 5; i++) {
+    const suffix = i === 1 ? '' : String(i);
+    const user =
+      process.env[`EMAIL_USER${suffix}`] || (i === 1 ? process.env.EMAIL_USER : undefined);
+    const pass =
+      process.env[`EMAIL_PASS${suffix}`] || (i === 1 ? process.env.EMAIL_PASS : undefined);
+    const host =
+      process.env[`IMAP_HOST${suffix}`] || (i === 1 ? process.env.IMAP_HOST : undefined);
+    if (user && pass && host) return;
   }
+  console.error('No email account configured');
+  throw new Error('Missing EMAIL_USER configuration');
 }
 
 const app = express();
@@ -191,14 +196,27 @@ function parseGoobikeReserveEmail(text) {
 }
 
 
-function getImapConfig() {
-  return {
-    user: process.env.EMAIL_USER,
-    password: process.env.EMAIL_PASS,
-    host: process.env.IMAP_HOST,
-    port: parseInt(process.env.IMAP_PORT || '993'),
-    tls: true
-  };
+function getImapConfig(index = 1) {
+  const suffix = index === 1 ? '' : String(index);
+  const user =
+    process.env[`EMAIL_USER${suffix}`] ||
+    (index === 1 ? process.env.EMAIL_USER : undefined);
+  const pass =
+    process.env[`EMAIL_PASS${suffix}`] ||
+    (index === 1 ? process.env.EMAIL_PASS : undefined);
+  const host =
+    process.env[`IMAP_HOST${suffix}`] ||
+    (index === 1 ? process.env.IMAP_HOST : undefined);
+  const port = parseInt(
+    process.env[`IMAP_PORT${suffix}`] ||
+      (index === 1 ? process.env.IMAP_PORT : '993') ||
+      '993',
+    10
+  );
+  if (!user || !pass || !host) {
+    throw new Error(`Missing IMAP config for account ${index}`);
+  }
+  return { user, password: pass, host, port, tls: true };
 }
 
 function getDateKey(item) {
@@ -625,8 +643,9 @@ app.get('/api/fetch-email', async (req, res) => {
 // 全メールを取得して保存
 app.get('/api/fetch-all-emails', async (req, res) => {
   try {
+    const idx = req.query.account ? parseInt(req.query.account, 10) : undefined;
     lastEmailFetchTime = new Date().toISOString();
-    await fetchAllEmails();
+    await fetchAllEmails(idx);
     res.json({ message: 'Fetched all emails' });
   } catch (err) {
     respondError(res, 500, 'Failed to fetch all emails', err);
@@ -984,7 +1003,14 @@ app.get('/goobike-emails/:id', async (req, res) => {
 // 取得済みメール一覧を返す
 app.get('/emails', async (req, res) => {
   try {
-    const data = await dynamo.scan({ TableName: MAIL_TABLE }).promise();
+    const params = { TableName: MAIL_TABLE };
+    const account = req.query.account;
+    if (account) {
+      params.FilterExpression = '#a = :a';
+      params.ExpressionAttributeNames = { '#a': 'account' };
+      params.ExpressionAttributeValues = { ':a': account };
+    }
+    const data = await dynamo.scan(params).promise();
     res.json(data.Items || []);
   } catch (err) {
     respondError(res, 500, 'Failed to fetch emails', err);

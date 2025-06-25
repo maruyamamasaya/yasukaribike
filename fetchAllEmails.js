@@ -22,14 +22,27 @@ const SINCE_DATE = new Date('2025-06-01');
 // Folders to completely skip when scanning
 const EXCLUDED_FOLDERS = ['INBOX.Junk', 'INBOX.Trash'];
 
-function getImapConfig() {
-  return {
-    user: process.env.EMAIL_USER,
-    password: process.env.EMAIL_PASS,
-    host: process.env.IMAP_HOST,
-    port: parseInt(process.env.IMAP_PORT || '993', 10),
-    tls: true,
-  };
+function getImapConfig(index = 1) {
+  const suffix = index === 1 ? '' : String(index);
+  const user =
+    process.env[`EMAIL_USER${suffix}`] ||
+    (index === 1 ? process.env.EMAIL_USER : undefined);
+  const pass =
+    process.env[`EMAIL_PASS${suffix}`] ||
+    (index === 1 ? process.env.EMAIL_PASS : undefined);
+  const host =
+    process.env[`IMAP_HOST${suffix}`] ||
+    (index === 1 ? process.env.IMAP_HOST : undefined);
+  const port = parseInt(
+    process.env[`IMAP_PORT${suffix}`] ||
+      (index === 1 ? process.env.IMAP_PORT : '993') ||
+      '993',
+    10,
+  );
+  if (!user || !pass || !host) {
+    throw new Error(`Missing IMAP config for account ${index}`);
+  }
+  return { user, password: pass, host, port, tls: true };
 }
 
 const FOLDER_CATEGORIES = {
@@ -43,9 +56,9 @@ const FOLDER_CATEGORIES = {
 };
 
 
-function getAllFolders() {
+function getAllFolders(index = 1) {
   return new Promise((resolve, reject) => {
-    const imap = new Imap(getImapConfig());
+    const imap = new Imap(getImapConfig(index));
 
     imap.once('ready', () => {
       imap.getBoxes((err, boxes) => {
@@ -78,7 +91,7 @@ function getAllFolders() {
   });
 }
 
-async function saveMail(uid, parsed, folder) {
+async function saveMail(uid, parsed, folder, account) {
   let category = FOLDER_CATEGORIES[folder] || null;
 
   if (!category) {
@@ -104,9 +117,10 @@ async function saveMail(uid, parsed, folder) {
       category = parts[parts.length - 1];
     }
   }
-  const uniqueId = `${folder}:${uid}`;
+  const uniqueId = `${account}/${folder}:${uid}`;
   const item = {
     unique_id: uniqueId,
+    account,
     folder,
     category,
     subject: parsed.subject || '',
@@ -129,9 +143,9 @@ async function saveMail(uid, parsed, folder) {
   }
 }
 
-function processFolder(name) {
+function processFolder(name, accountIndex) {
   return new Promise((resolve, reject) => {
-    const imap = new Imap(getImapConfig());
+    const imap = new Imap(getImapConfig(accountIndex));
 
     imap.once('ready', () => {
       log(`Opening folder: ${name}`);
@@ -170,7 +184,7 @@ function processFolder(name) {
             msg.once('end', async () => {
               try {
                 const parsed = await simpleParser(raw);
-                await saveMail(uid, parsed, name);
+                await saveMail(uid, parsed, name, accountIndex);
                 log(`Saved mail UID ${uid} from ${name}`);
               } catch (e) {
                 log(`Error processing UID ${uid}: ${e.message}`);
@@ -199,15 +213,34 @@ function processFolder(name) {
   });
 }
 
-async function fetchAllEmails() {
-  const folders = (await getAllFolders()).filter(
-    f => !EXCLUDED_FOLDERS.includes(f)
-  );
-  for (const folder of folders) {
-    try {
-      await processFolder(folder);
-    } catch (e) {
-      log(`Error fetching folder ${folder}: ${e.message}`);
+function getAccountIndices() {
+  const indices = [];
+  for (let i = 1; i <= 5; i++) {
+    const suffix = i === 1 ? '' : String(i);
+    const user =
+      process.env[`EMAIL_USER${suffix}`] || (i === 1 ? process.env.EMAIL_USER : undefined);
+    const pass =
+      process.env[`EMAIL_PASS${suffix}`] || (i === 1 ? process.env.EMAIL_PASS : undefined);
+    const host =
+      process.env[`IMAP_HOST${suffix}`] || (i === 1 ? process.env.IMAP_HOST : undefined);
+    if (user && pass && host) indices.push(i);
+  }
+  return indices;
+}
+
+async function fetchAllEmails(accountIndex) {
+  const targets = accountIndex ? [accountIndex] : getAccountIndices();
+  for (const idx of targets) {
+    log(`Processing account ${idx}`);
+    const folders = (await getAllFolders(idx)).filter(
+      f => !EXCLUDED_FOLDERS.includes(f)
+    );
+    for (const folder of folders) {
+      try {
+        await processFolder(folder, idx);
+      } catch (e) {
+        log(`Error fetching folder ${folder} (account ${idx}): ${e.message}`);
+      }
     }
   }
   log('All folders processed');

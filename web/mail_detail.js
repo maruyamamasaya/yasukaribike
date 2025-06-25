@@ -23,6 +23,7 @@ async function loadMailDetail() {
   if (!tbody) return;
   tbody.innerHTML = '';
   const fields = [
+    ['account', 'アカウント'],
     ['unique_id', 'UID'],
     ['from', '送信元'],
     ['to', '宛先'],

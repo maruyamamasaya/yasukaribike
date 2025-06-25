@@ -68,7 +68,9 @@ async function loadTitles() {
   const spinner = document.getElementById('loading');
   if (spinner) spinner.style.display = 'block';
   try {
-    res = await fetch(API + '/emails');
+    const sel = document.getElementById('account-select');
+    const param = sel && sel.value ? `?account=${encodeURIComponent(sel.value)}` : '';
+    res = await fetch(API + '/emails' + param);
     data = await res.json();
   } catch (err) {
     console.error(err);
@@ -83,7 +85,9 @@ async function loadTitles() {
 
 async function fetchEmails() {
   try {
-    await fetch(API + '/api/fetch-all-emails');
+    const sel = document.getElementById('account-select');
+    const param = sel && sel.value ? `?account=${encodeURIComponent(sel.value)}` : '';
+    await fetch(API + '/api/fetch-all-emails' + param);
   } catch (err) {
     console.error(err);
   }
@@ -132,6 +136,7 @@ function renderTable(page = currentPage) {
     const dateText = formatDateJST(m.date);
     tr.innerHTML = `
       <td><a href="${link}">${dateText}</a></td>
+      <td>${escapeHtml(m.account || '')}</td>
       <td>${escapeHtml(m.from || '')}</td>
       <td>${escapeHtml(subjectShort)}</td>
       <td>${escapeHtml(bodyShort)}</td>`;
