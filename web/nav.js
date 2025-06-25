@@ -25,7 +25,20 @@ function showBreadcrumb() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', showBreadcrumb);
+function addTopButton() {
+  if (window.location.pathname.endsWith('index.html')) return;
+  const container = document.querySelector('.container');
+  if (!container) return;
+  const div = document.createElement('div');
+  div.className = 'mb-2 text-end';
+  div.innerHTML = '<a href="index.html" class="btn btn-outline-primary">TOPに戻る</a>';
+  container.prepend(div);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  showBreadcrumb();
+  addTopButton();
+});
 
 function nextStatus(status) {
   if (status === '未着手') return '進行中';
