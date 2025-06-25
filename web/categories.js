@@ -7,15 +7,20 @@
     const ul = document.getElementById('category-list');
     if (!ul) return;
     try {
-      let list = window.INIT_CATEGORIES;
-      if (!list) {
-        const res = await fetch(API + '/categories');
+      const accountSel = document.getElementById('mail-account-select');
+      const acc = accountSel ? accountSel.value : '';
+      let list;
+      const useInit = !acc && window.INIT_CATEGORIES;
+      if (useInit) {
+        list = window.INIT_CATEGORIES;
+      } else {
+        const res = await fetch(API + '/categories' + (acc ? `?account=${acc}` : ''));
         list = await res.json();
         if (!res.ok) return;
       }
 
       // fetch all emails to count today's messages
-      const res2 = await fetch(API + '/emails');
+      const res2 = await fetch(API + '/emails' + (acc ? `?account=${acc}` : ''));
       const all = await res2.json();
       const items = Array.isArray(all.Items) ? all.Items : Array.isArray(all) ? all : [];
       const todayStr = new Date().toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
@@ -62,5 +67,9 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', loadCategories);
+  document.addEventListener('DOMContentLoaded', () => {
+    loadCategories();
+    const sel = document.getElementById('mail-account-select');
+    if (sel) sel.addEventListener('change', loadCategories);
+  });
 })();

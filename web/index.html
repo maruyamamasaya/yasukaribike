@@ -141,7 +141,12 @@
         <div id="mail-sections" class="d-flex flex-column h-100">
           <div id="mail-top" class="border p-3 mb-2 overflow-auto" style="height:70%;">
             <div class="mb-2">
-              <a href="mail_titles.html" class="btn btn-outline-primary btn-sm">メール全件確認</a>
+              <select id="mail-account-select" class="form-select d-inline-block w-auto me-2">
+                <option value="1">アカウント1</option>
+                <option value="2">info@rebikele.com</option>
+                <option value="3">kanamori@rebikele.com</option>
+              </select>
+              <a id="mail-titles-link" href="mail_titles.html" class="btn btn-outline-primary btn-sm">メール全件確認</a>
               <button id="load-btn" class="btn btn-primary btn-sm ms-2">読み込み開始</button>
               <div class="small text-muted">ダブルクリックや連続してクリックするとエラーになります。間隔をあけて押してください。</div>
               <div id="email-stats" class="small text-muted mt-1"></div>

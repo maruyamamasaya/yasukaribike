@@ -39,6 +39,17 @@ function getMailTable(index = 1) {
 const MAIL_TABLE = getMailTable();
 let lastEmailFetchTime = null;
 
+function getTableFromRequest(req, id) {
+  let idx = 1;
+  if (req && req.query && req.query.account) {
+    idx = parseInt(req.query.account, 10) || 1;
+  } else if (id) {
+    const m = String(id).match(/^(\d+)\//);
+    if (m) idx = parseInt(m[1], 10);
+  }
+  return getMailTable(idx);
+}
+
 function respondError(res, status, label, err) {
   console.error(err);
   const body = { error: label };
@@ -1013,7 +1024,8 @@ app.get('/goobike-emails/:id', async (req, res) => {
 // 取得済みメール一覧を返す
 app.get('/emails', async (req, res) => {
   try {
-    const params = { TableName: MAIL_TABLE };
+    const table = getTableFromRequest(req);
+    const params = { TableName: table };
     const account = req.query.account;
     if (account) {
       params.FilterExpression = '#a = :a';
@@ -1030,7 +1042,8 @@ app.get('/emails', async (req, res) => {
 // メール件数と最終更新日時を返す
 app.get('/email-stats', async (req, res) => {
   try {
-    const data = await dynamo.scan({ TableName: MAIL_TABLE }).promise();
+    const table = getTableFromRequest(req);
+    const data = await dynamo.scan({ TableName: table }).promise();
     const items = data.Items || [];
     const count = items.length;
     let lastDate = '';
@@ -1063,9 +1076,10 @@ app.get('/email-stats', async (req, res) => {
 // メールカテゴリ一覧を返す
 app.get('/categories', async (req, res) => {
   try {
+    const table = getTableFromRequest(req);
     const data = await dynamo
       .scan({
-        TableName: MAIL_TABLE,
+        TableName: table,
         ProjectionExpression: '#c',
         ExpressionAttributeNames: { '#c': 'category' }
       })
@@ -1088,9 +1102,10 @@ app.get('/categories', async (req, res) => {
 // フォルダツリー構造を返す
 app.get('/folder-tree', async (req, res) => {
   try {
+    const table = getTableFromRequest(req);
     const data = await dynamo
       .scan({
-        TableName: MAIL_TABLE,
+        TableName: table,
         ProjectionExpression: '#f, category',
         ExpressionAttributeNames: { '#f': 'folder' }
       })
@@ -1122,8 +1137,9 @@ app.get('/emails/:id', async (req, res) => {
   const id = req.params.id;
   if (!id) return res.status(400).json({ error: 'Missing id' });
   try {
+    const table = getTableFromRequest(req, id);
     const data = await dynamo
-      .get({ TableName: MAIL_TABLE, Key: { unique_id: id } })
+      .get({ TableName: table, Key: { unique_id: id } })
       .promise();
     if (!data || !data.Item) return res.status(404).json({ error: 'Not found' });
     res.json(data.Item);
@@ -1137,8 +1153,9 @@ app.post('/emails/:id/add-task', async (req, res) => {
   const id = req.params.id;
   if (!id) return res.status(400).json({ error: 'Missing id' });
   try {
+    const table = getTableFromRequest(req, id);
     const data = await dynamo
-      .get({ TableName: MAIL_TABLE, Key: { unique_id: id } })
+      .get({ TableName: table, Key: { unique_id: id } })
       .promise();
     if (!data || !data.Item) return res.status(404).json({ error: 'Not found' });
 
@@ -1169,7 +1186,7 @@ app.post('/emails/:id/add-task', async (req, res) => {
 
     await dynamo
       .update({
-        TableName: MAIL_TABLE,
+        TableName: table,
         Key: { unique_id: id },
         UpdateExpression: 'SET task_added = :t',
         ExpressionAttributeValues: { ':t': true }

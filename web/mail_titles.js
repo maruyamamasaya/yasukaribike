@@ -15,9 +15,30 @@ let sortAsc = false;
 let currentPage = 1;
 const PAGE_SIZE = 20;
 
+const ACCOUNT_LABELS = {
+  1: 'アカウント1',
+  2: 'info@rebikele.com',
+  3: 'kanamori@rebikele.com'
+};
+
+function updateAccountLabel() {
+  const sel = document.getElementById('account-select');
+  const label = document.getElementById('selected-account');
+  if (!sel || !label) return;
+  const val = sel.value;
+  if (!val) {
+    label.textContent = 'すべてのアカウント';
+  } else {
+    const name = ACCOUNT_LABELS[val] || `アカウント${val}`;
+    label.textContent = name;
+  }
+}
+
 async function loadCategories() {
   try {
-    const res = await fetch(API + '/categories');
+    const sel = document.getElementById('account-select');
+    const param = sel && sel.value ? `?account=${encodeURIComponent(sel.value)}` : '';
+    const res = await fetch(API + '/categories' + param);
     const list = await res.json();
     if (!res.ok) return;
     categories = (Array.isArray(list) ? list : []).filter(c => (c.name || c) !== 'Sent');
@@ -166,6 +187,10 @@ async function fetchAndLoad() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(location.search);
+  const acc = params.get('account');
+  const sel = document.getElementById('account-select');
+  if (acc && sel) sel.value = acc;
   const loadBtn = document.getElementById('load-btn');
   loadBtn.addEventListener('click', async () => {
     const original = loadBtn.textContent;
@@ -206,7 +231,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
   loadCategories();
+  updateAccountLabel();
   loadTitles();
+
+  const sel = document.getElementById('account-select');
+  if (sel) {
+    sel.addEventListener('change', () => {
+      updateAccountLabel();
+      loadTitles();
+    });
+  }
 });
 
 function nextPage() {
