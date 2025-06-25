@@ -1035,7 +1035,7 @@ app.get('/emails', async (req, res) => {
         TableName: table,
         FilterExpression: '#a = :a',
         ExpressionAttributeNames: { '#a': 'account' },
-        ExpressionAttributeValues: { ':a': account }
+        ExpressionAttributeValues: { ':a': Number(account) }
       };
       const data = await dynamo.scan(params).promise();
       return res.json(data.Items || []);
