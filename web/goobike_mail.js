@@ -131,19 +131,15 @@ async function loadEmails(page = 1, refresh = false) {
   const cat = getCategory();
   if (cat) items = items.filter(i => i.category === cat);
 
-  const qEl = document.getElementById('quick-search');
-  const tEl = document.getElementById('text-search');
-  const keyword = qEl ? qEl.value.trim() : '';
-  const textKey = tEl ? tEl.value.trim() : '';
-  if (keyword) {
+  const sEl = document.getElementById('mail-search');
+  const key = sEl ? sEl.value.trim() : '';
+  if (key) {
     items = items.filter(i =>
-      (i.from || '').includes(keyword) ||
-      (i.to || '').includes(keyword) ||
-      (i.subject || '').includes(keyword)
+      (i.from || '').includes(key) ||
+      (i.to || '').includes(key) ||
+      (i.subject || '').includes(key) ||
+      hasText(i, key)
     );
-  }
-  if (textKey) {
-    items = items.filter(i => hasText(i, textKey));
   }
 
   // rebuild date counts based on current filters (without dateFilter)
@@ -239,9 +235,7 @@ window.addEventListener('DOMContentLoaded', () => {
   if (ascBtn) ascBtn.addEventListener('click', () => { sortDescending = false; loadEmails(); });
   const bulkBtn = document.getElementById('bulk-add-btn');
   if (bulkBtn) bulkBtn.addEventListener('click', addAllTasks);
-  const qEl = document.getElementById('quick-search');
-  const tEl = document.getElementById('text-search');
-  if (qEl) qEl.addEventListener('input', () => loadEmails(1));
-  if (tEl) tEl.addEventListener('input', () => loadEmails(1));
+  const sEl = document.getElementById('mail-search');
+  if (sEl) sEl.addEventListener('input', () => loadEmails(1));
   loadEmails(1, true);
 });
