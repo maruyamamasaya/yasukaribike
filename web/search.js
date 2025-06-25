@@ -184,8 +184,8 @@ function prevPage() {
   searchCustomers(currentPage - 1);
 }
 
-async function searchEmails(page = 1) {
-  if (page === 1) {
+async function searchEmails(page = 1, refresh = false) {
+  if (page === 1 || refresh) {
     const dateInput = document.getElementById('m-date').value.trim();
     const date = dateInput ? dateInput.replace(/-/g, '/') : '';
     const key = document.getElementById('m-key').value.trim();
@@ -226,11 +226,14 @@ async function searchEmails(page = 1) {
         })
       : '';
     const link = `mail_detail.html?id=${encodeURIComponent(item.unique_id || '')}`;
+    const btnLabel = item.task_added ? '追加済み' : 'ボードに追加';
+    const btnClass = item.task_added ? 'btn btn-sm btn-success' : 'btn btn-sm btn-primary';
     tr.innerHTML = `
       <td><a href="${link}">${d}</a></td>
       <td>${item.from || ''}</td>
       <td>${item.subject || ''}</td>
-      <td style="white-space: pre-wrap;">${body}</td>`;
+      <td style="white-space: pre-wrap;">${body}</td>
+      <td><button class="${btnClass}" onclick="addTask('${item.unique_id}')" data-added="${item.task_added ? '1' : '0'}">${btnLabel}</button></td>`;
     tbody.appendChild(tr);
   });
 
@@ -248,6 +251,23 @@ function mailNextPage() {
 
 function mailPrevPage() {
   searchEmails(mailPage - 1);
+}
+
+async function addTask(id) {
+  if (!id) return;
+  const item = mailResults.find(e => e.unique_id === id);
+  if (item && item.task_added) {
+    const ok = confirm('再度追加しますか？\n前回追加済みの場合は、タスクが重複する恐れがあります。');
+    if (!ok) return;
+  }
+  const res = await fetch(API + `/emails/${encodeURIComponent(id)}/add-task`, {
+    method: 'POST'
+  });
+  if (res.ok) {
+    searchEmails(mailPage, true);
+  } else {
+    alert('タスク追加に失敗しました');
+  }
 }
 
 function searchAll() {
