@@ -7,6 +7,9 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
 let currentPage = 1;
 const PAGE_SIZE = 20;
 let searchResults = [];
+let mailPage = 1;
+const MAIL_PAGE_SIZE = 20;
+let mailResults = [];
 
 function hasText(customer, keyword) {
   if ((customer.details || '').includes(keyword)) return true;
@@ -16,6 +19,15 @@ function hasText(customer, keyword) {
     }
   }
   return false;
+}
+
+function formatYMD(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}/${m}/${day}`;
 }
 
 async function searchCustomers(page = 1) {
@@ -93,4 +105,74 @@ function prevPage() {
   searchCustomers(currentPage - 1);
 }
 
-document.addEventListener('DOMContentLoaded', () => searchCustomers());
+async function searchEmails(page = 1) {
+  if (page === 1) {
+    const dateInput = document.getElementById('m-date').value.trim();
+    const date = dateInput ? dateInput.replace(/-/g, '/') : '';
+    const key = document.getElementById('m-key').value.trim();
+
+    const res = await fetch(API + '/emails');
+    const data = await res.json();
+    let emails = Array.isArray(data.Items) ? data.Items : data;
+
+    emails = emails.filter(e =>
+      (!date || formatYMD(e.date || e.createdAt) === formatYMD(date)) &&
+      (!key ||
+        (e.from || '').includes(key) ||
+        (e.to || '').includes(key) ||
+        (e.subject || '').includes(key) ||
+        (e.body || '').includes(key))
+    );
+
+    mailResults = emails;
+  }
+
+  mailPage = page;
+  const total = Math.max(1, Math.ceil(mailResults.length / MAIL_PAGE_SIZE));
+  if (mailPage > total) mailPage = total;
+  if (mailPage < 1) mailPage = 1;
+
+  const tbody = document.querySelector('#mail-result-table tbody');
+  tbody.innerHTML = '';
+  const start = (mailPage - 1) * MAIL_PAGE_SIZE;
+  const slice = mailResults.slice(start, start + MAIL_PAGE_SIZE);
+  slice.forEach(item => {
+    const tr = document.createElement('tr');
+    let body = item.body || '';
+    if (body.length > 200) body = body.slice(0, 200) + '…';
+    const d = item.date
+      ? new Date(item.date).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', hour12: false })
+      : '';
+    tr.innerHTML = `
+      <td>${d}</td>
+      <td>${item.from || ''}</td>
+      <td>${item.subject || ''}</td>
+      <td style="white-space: pre-wrap;">${body}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  const info = document.getElementById('mail-page-info');
+  if (info) info.textContent = `${mailPage} / ${total}`;
+  const prev = document.getElementById('mail-prev-btn');
+  const next = document.getElementById('mail-next-btn');
+  if (prev) prev.disabled = mailPage === 1;
+  if (next) next.disabled = mailPage === total || mailResults.length === 0;
+}
+
+function mailNextPage() {
+  searchEmails(mailPage + 1);
+}
+
+function mailPrevPage() {
+  searchEmails(mailPage - 1);
+}
+
+function searchAll() {
+  searchCustomers(1);
+  searchEmails(1);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  searchCustomers();
+  searchEmails();
+});
