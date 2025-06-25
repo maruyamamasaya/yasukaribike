@@ -91,7 +91,7 @@ Set `AWS_REGION` for the AWS SDK (e.g., `ap-northeast-1`).
 - `EMAIL_USER2`～`EMAIL_USER5` などで追加アカウントを設定可能 /
   Additional accounts can be set as `EMAIL_USER2` to `EMAIL_USER5` with matching
   `EMAIL_PASSn` and `IMAP_HOSTn` variables
-- **TABLE_NAME**, **MAIL_TABLE1**〜**MAIL_TABLE5**: 利用する DynamoDB テーブル名 / DynamoDB table names
+- **TABLE_NAME**, **MAIL_TABLE1**〜**MAIL_TABLE5**: 利用する DynamoDB テーブル名 / DynamoDB table names. `MAIL_TABLE1` が無い場合は `MAIL_TABLE` または `GOOBIKE_TABLE` を使用できます / If `MAIL_TABLE1` is not set, the app falls back to `MAIL_TABLE` or `GOOBIKE_TABLE`.
 - **AWS_REGION**: AWS SDK が利用するリージョン / AWS region used by the SDK
 
 アカウント1は `EMAIL_USER1` などの末尾に `1` を付けた変数名を使用します。
@@ -113,6 +113,10 @@ replies and forwarded messages with the same inquiry ID are also captured.
 ```bash
 npm install
 export AWS_REGION=ap-northeast-1
+export MAIL_TABLE1=Rebikele_goobikemail01_TBL
+# If MAIL_TABLE1 is unset, either MAIL_TABLE or GOOBIKE_TABLE can provide the table name
+# export MAIL_TABLE=Rebikele_goobikemail01_TBL
+# export GOOBIKE_TABLE=Rebikele_goobikemail01_TBL
 npm start
 ```
 グーバイクお客様センター (<goobike_reserve@goobike.com>) から届いたメールをすべて取得したい場合は次のスクリプトを実行できます。
