@@ -200,3 +200,11 @@ th[data-key] {
 .dashboard-card:hover::before {
   opacity: 1;
 }
+
+/* Category filter button grid */
+#category-buttons.category-group {
+  display: grid;
+  grid-template-columns: repeat(8, auto);
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
