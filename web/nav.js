@@ -30,8 +30,20 @@ function addTopButton() {
   const container = document.querySelector('.container');
   if (!container) return;
   const div = document.createElement('div');
-  div.className = 'mb-2 text-end';
-  div.innerHTML = '<a href="index.html" class="btn btn-outline-primary">TOPに戻る</a>';
+  div.className = 'mb-2 d-flex justify-content-end gap-2';
+  const topBtn = document.createElement('a');
+  topBtn.href = 'index.html';
+  topBtn.className = 'btn btn-outline-primary';
+  topBtn.textContent = 'TOPに戻る';
+  div.appendChild(topBtn);
+
+  if (window.location.pathname.endsWith('search.html')) {
+    const toggle = document.createElement('button');
+    toggle.id = 'header-toggle';
+    toggle.className = 'btn btn-outline-secondary';
+    toggle.textContent = 'メール検索へ';
+    div.appendChild(toggle);
+  }
   container.prepend(div);
 }
 

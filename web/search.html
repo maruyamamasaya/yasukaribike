@@ -11,7 +11,11 @@
 <body class="p-4">
   <div class="container">
     <h1 class="mb-3">詳細検索</h1>
-    <div id="search-form" class="d-flex flex-wrap gap-2 mb-3">
+    <div id="mode-select" class="mb-3 text-center">
+      <button id="btn-customer" class="btn btn-primary btn-lg me-2">問い合わせ検索</button>
+      <button id="btn-mail" class="btn btn-outline-primary btn-lg">メール検索</button>
+    </div>
+    <div id="customer-form" class="d-flex flex-wrap gap-2 mb-3">
       <details>
         <summary class="btn btn-outline-secondary">日付</summary>
         <input id="s-date" type="date" class="form-control mt-2" />
@@ -52,24 +56,30 @@
         <summary class="btn btn-outline-secondary">バイク機種名</summary>
         <input id="s-details" class="form-control mt-2" />
       </details>
-        <details>
-          <summary class="btn btn-outline-secondary">本文検索</summary>
-          <input id="s-text" class="form-control mt-2" />
-        </details>
-        <details>
-          <summary class="btn btn-outline-secondary">メール受信日</summary>
-          <input id="m-date" type="date" class="form-control mt-2" />
-        </details>
-        <details>
-          <summary class="btn btn-outline-secondary">メール検索</summary>
-          <input id="m-key" class="form-control mt-2" placeholder="送信元・タイトル・本文" />
-        </details>
-        <div class="align-self-end mt-2">
-          <button class="btn btn-primary me-2" onclick="searchAll()">検索</button>
-          <a class="btn btn-secondary" href="#" onclick="goBack(event)">戻る</a>
-        </div>
+      <details>
+        <summary class="btn btn-outline-secondary">本文検索</summary>
+        <input id="s-text" class="form-control mt-2" />
+      </details>
+      <div class="align-self-end mt-2">
+        <button id="customer-search-btn" class="btn btn-primary">検索</button>
       </div>
+    </div>
+    <div id="mail-form" class="d-flex flex-wrap gap-2 mb-3" style="display:none;">
+      <details>
+        <summary class="btn btn-outline-secondary">メール受信日</summary>
+        <input id="m-date" type="date" class="form-control mt-2" />
+      </details>
+      <details>
+        <summary class="btn btn-outline-secondary">メール検索</summary>
+        <input id="m-key" class="form-control mt-2" placeholder="送信元・タイトル・本文" />
+      </details>
+      <div class="align-self-end mt-2">
+        <button id="mail-search-btn" class="btn btn-primary">検索</button>
+      </div>
+    </div>
     <div id="breadcrumb" class="text-muted small mb-2"></div>
+    <div id="customer-results">
+      <div id="loading-customer" class="spinner mb-3"></div>
       <table id="result-table" class="table table-striped">
         <thead>
           <tr>
@@ -82,6 +92,16 @@
         </thead>
         <tbody></tbody>
       </table>
+      <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+          <button id="prev-btn" class="btn btn-outline-primary btn-sm" onclick="prevPage()">前へ</button>
+          <span id="page-info">1 / 1</span>
+          <button id="next-btn" class="btn btn-outline-primary btn-sm" onclick="nextPage()">次へ</button>
+        </div>
+      </div>
+    </div>
+    <div id="mail-results" style="display:none;">
+      <div id="loading-mail" class="spinner mb-3"></div>
       <h2 class="h5 mt-4">メール検索結果</h2>
       <table id="mail-result-table" class="table table-striped">
         <thead>
@@ -101,17 +121,11 @@
           <button id="mail-next-btn" class="btn btn-outline-primary btn-sm" onclick="mailNextPage()">次へ</button>
         </div>
       </div>
-      <div class="row mb-3">
-        <div class="col-12 d-flex justify-content-between align-items-center">
-          <button id="prev-btn" class="btn btn-outline-primary btn-sm" onclick="prevPage()">前へ</button>
-          <span id="page-info">1 / 1</span>
-          <button id="next-btn" class="btn btn-outline-primary btn-sm" onclick="nextPage()">次へ</button>
-        </div>
-      </div>
-      <div class="d-flex align-items-center mb-3">
-        <a href="#" class="btn btn-secondary" onclick="goBack(event)">戻る</a>
-        <a href="index.html" class="btn btn-primary mx-auto">ホーム</a>
-      </div>
+    </div>
+    <div class="d-flex align-items-center mb-3">
+      <a href="#" class="btn btn-secondary" onclick="goBack(event)">戻る</a>
+      <a href="index.html" class="btn btn-primary mx-auto">ホーム</a>
+    </div>
     </div>
   <footer class="text-center mt-4">
     <small style="color: var(--bs-link-color);">©2025 JIMUSURU All rights reserved.</small>

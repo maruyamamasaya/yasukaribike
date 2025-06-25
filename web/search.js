@@ -10,6 +10,8 @@ let searchResults = [];
 let mailPage = 1;
 const MAIL_PAGE_SIZE = 20;
 let mailResults = [];
+let mode = 'customer';
+let searchTimeout;
 
 function hasText(customer, keyword) {
   if ((customer.details || '').includes(keyword)) return true;
@@ -28,6 +30,49 @@ function formatYMD(dateStr) {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}/${m}/${day}`;
+}
+
+function setMode(m) {
+  mode = m;
+  const cForm = document.getElementById('customer-form');
+  const mForm = document.getElementById('mail-form');
+  const cRes = document.getElementById('customer-results');
+  const mRes = document.getElementById('mail-results');
+  if (cForm && cRes) cForm.style.display = cRes.style.display = m === 'customer' ? '' : 'none';
+  if (mForm && mRes) mForm.style.display = mRes.style.display = m === 'mail' ? '' : 'none';
+
+  const btnC = document.getElementById('btn-customer');
+  const btnM = document.getElementById('btn-mail');
+  if (btnC && btnM) {
+    if (m === 'customer') {
+      btnC.classList.add('btn-primary');
+      btnC.classList.remove('btn-outline-primary');
+      btnM.classList.add('btn-outline-primary');
+      btnM.classList.remove('btn-primary');
+    } else {
+      btnM.classList.add('btn-primary');
+      btnM.classList.remove('btn-outline-primary');
+      btnC.classList.add('btn-outline-primary');
+      btnC.classList.remove('btn-primary');
+    }
+  }
+
+  const headerToggle = document.getElementById('header-toggle');
+  if (headerToggle) {
+    headerToggle.textContent = m === 'customer' ? 'メール検索へ' : '問い合わせ検索へ';
+  }
+  triggerSearch();
+}
+
+function triggerSearch() {
+  clearTimeout(searchTimeout);
+  const spinner = document.getElementById(mode === 'customer' ? 'loading-customer' : 'loading-mail');
+  if (spinner) spinner.style.display = 'block';
+  searchTimeout = setTimeout(() => {
+    if (mode === 'customer') searchCustomers(1);
+    else searchEmails(1);
+    if (spinner) spinner.style.display = 'none';
+  }, 500);
 }
 
 async function searchCustomers(page = 1) {
@@ -168,11 +213,28 @@ function mailPrevPage() {
 }
 
 function searchAll() {
-  searchCustomers(1);
-  searchEmails(1);
+  triggerSearch();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  searchCustomers();
-  searchEmails();
+  const btnC = document.getElementById('btn-customer');
+  const btnM = document.getElementById('btn-mail');
+  const headerToggle = document.getElementById('header-toggle');
+  if (btnC) btnC.addEventListener('click', () => setMode('customer'));
+  if (btnM) btnM.addEventListener('click', () => setMode('mail'));
+  if (headerToggle) headerToggle.addEventListener('click', () => setMode(mode === 'customer' ? 'mail' : 'customer'));
+
+  const btnSearchC = document.getElementById('customer-search-btn');
+  const btnSearchM = document.getElementById('mail-search-btn');
+  if (btnSearchC) btnSearchC.addEventListener('click', triggerSearch);
+  if (btnSearchM) btnSearchM.addEventListener('click', triggerSearch);
+
+  document.querySelectorAll('#customer-form input,#customer-form select').forEach(el => {
+    el.addEventListener('input', triggerSearch);
+  });
+  document.querySelectorAll('#mail-form input').forEach(el => {
+    el.addEventListener('input', triggerSearch);
+  });
+
+  setMode('customer');
 });
