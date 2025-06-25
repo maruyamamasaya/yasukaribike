@@ -25,8 +25,18 @@ const client = new DynamoDBClient({ region });
 const ddb = DynamoDBDocumentClient.from(client);
 AWS.config.update({ region });
 const dynamo = new AWS.DynamoDB.DocumentClient();
-const MAIL_TABLE = process.env.MAIL_TABLE || 'Rebikele_goobikemail01_TBL';
-const GOOBIKE_TABLE = process.env.GOOBIKE_TABLE || MAIL_TABLE;
+
+function getMailTable(index = 1) {
+  const suffix = index === 1 ? '1' : String(index);
+  return (
+    process.env[`MAIL_TABLE${suffix}`] ||
+    process.env.MAIL_TABLE ||
+    process.env.GOOBIKE_TABLE ||
+    'Rebikele_goobikemail01_TBL'
+  );
+}
+
+const MAIL_TABLE = getMailTable();
 let lastEmailFetchTime = null;
 
 function respondError(res, status, label, err) {
@@ -567,12 +577,12 @@ app.get('/api/fetch-email', async (req, res) => {
                     const key = { inquiry_id: baseId };
                     try {
                       const existing = await dynamo
-                        .get({ TableName: GOOBIKE_TABLE, Key: key })
+                        .get({ TableName: MAIL_TABLE, Key: key })
                         .promise();
 
                       if (existing && existing.Item) {
                         const updateParams = {
-                          TableName: GOOBIKE_TABLE,
+                          TableName: MAIL_TABLE,
                           Key: key,
                           UpdateExpression:
                             'SET #n = :n, email = :e, from_email = :f, body = :b, inquiry_method = :m, inquiry_content = :c, request_car = :r, updatedAt = :u',
@@ -605,7 +615,7 @@ app.get('/api/fetch-email', async (req, res) => {
                         createdAt: now
                       };
                       await dynamo
-                        .put({ TableName: GOOBIKE_TABLE, Item: item })
+                        .put({ TableName: MAIL_TABLE, Item: item })
                         .promise();
                       return resolve({ status: 'saved', inquiry_id: baseId });
                     } catch (e) {
@@ -694,12 +704,12 @@ app.get('/api/fetch-skip-email', async (req, res) => {
                   const now = new Date().toISOString();
                   try {
                     const existing = await dynamo
-                      .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: inquiryId } })
+                      .get({ TableName: MAIL_TABLE, Key: { inquiry_id: inquiryId } })
                       .promise();
 
                     if (existing && existing.Item) {
                       const updateParams = {
-                        TableName: GOOBIKE_TABLE,
+                        TableName: MAIL_TABLE,
                         Key: { inquiry_id: inquiryId },
                         UpdateExpression:
                           'SET #s = :s, inquiry_method = if_not_exists(inquiry_method, :m), request_car = if_not_exists(request_car, :c), updatedAt = :u',
@@ -723,7 +733,7 @@ app.get('/api/fetch-skip-email', async (req, res) => {
                         createdAt: now
                       };
                       await dynamo
-                        .put({ TableName: GOOBIKE_TABLE, Item: item })
+                        .put({ TableName: MAIL_TABLE, Item: item })
                         .promise();
                       resolve({ status: 'saved', inquiry_id: inquiryId });
                     }
@@ -799,12 +809,12 @@ app.get('/api/fetch-answer-request-email', async (req, res) => {
                   const now = new Date().toISOString();
                   try {
                     const existing = await dynamo
-                      .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: inquiryId } })
+                      .get({ TableName: MAIL_TABLE, Key: { inquiry_id: inquiryId } })
                       .promise();
 
                     if (existing && existing.Item) {
                       const updateParams = {
-                        TableName: GOOBIKE_TABLE,
+                        TableName: MAIL_TABLE,
                         Key: { inquiry_id: inquiryId },
                         UpdateExpression:
                           'SET answer_request = :r, answer_request_date = :d, inquiry_method = if_not_exists(inquiry_method, :m), inquiry_content = if_not_exists(inquiry_content, :c), request_car = if_not_exists(request_car, :car), updatedAt = :u',
@@ -831,7 +841,7 @@ app.get('/api/fetch-answer-request-email', async (req, res) => {
                         createdAt: now
                       };
                       await dynamo
-                        .put({ TableName: GOOBIKE_TABLE, Item: item })
+                        .put({ TableName: MAIL_TABLE, Item: item })
                         .promise();
                       resolve({ status: 'saved', inquiry_id: inquiryId });
                     }
@@ -907,12 +917,12 @@ app.get('/api/fetch-reserve-email', async (req, res) => {
                   const now = new Date().toISOString();
                   try {
                     const existing = await dynamo
-                      .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: inquiryId } })
+                      .get({ TableName: MAIL_TABLE, Key: { inquiry_id: inquiryId } })
                       .promise();
 
                     if (existing && existing.Item) {
                       const updateParams = {
-                        TableName: GOOBIKE_TABLE,
+                        TableName: MAIL_TABLE,
                         Key: { inquiry_id: inquiryId },
                         UpdateExpression:
                           'SET reserve_notice = :r, reserve_datetime = if_not_exists(reserve_datetime, :dt), updatedAt = :u',
@@ -933,7 +943,7 @@ app.get('/api/fetch-reserve-email', async (req, res) => {
                         createdAt: now
                       };
                       await dynamo
-                        .put({ TableName: GOOBIKE_TABLE, Item: item })
+                        .put({ TableName: MAIL_TABLE, Item: item })
                         .promise();
                       resolve({ status: 'saved', inquiry_id: inquiryId });
                     }
@@ -974,7 +984,7 @@ app.get('/api/fetch-reserve-email', async (req, res) => {
 app.get('/goobike-emails', async (req, res) => {
   try {
     const data = await dynamo
-      .scan({ TableName: GOOBIKE_TABLE })
+      .scan({ TableName: MAIL_TABLE })
       .promise();
     const items = (data.Items || []).sort((a, b) =>
       (b.createdAt || '').localeCompare(a.createdAt || '')
@@ -991,7 +1001,7 @@ app.get('/goobike-emails/:id', async (req, res) => {
   if (!id) return res.status(400).json({ error: 'Missing id' });
   try {
     const data = await dynamo
-      .get({ TableName: GOOBIKE_TABLE, Key: { inquiry_id: id } })
+      .get({ TableName: MAIL_TABLE, Key: { inquiry_id: id } })
       .promise();
     if (!data || !data.Item) return res.status(404).json({ error: 'Not found' });
     res.json(data.Item);

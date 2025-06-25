@@ -91,7 +91,7 @@ Set `AWS_REGION` for the AWS SDK (e.g., `ap-northeast-1`).
 - `EMAIL_USER2`～`EMAIL_USER5` などで追加アカウントを設定可能 /
   Additional accounts can be set as `EMAIL_USER2` to `EMAIL_USER5` with matching
   `EMAIL_PASSn` and `IMAP_HOSTn` variables
-- **TABLE_NAME**, **GOOBIKE_TABLE**, **MAIL_TABLE**: 利用する DynamoDB テーブル名 / DynamoDB table names
+- **TABLE_NAME**, **MAIL_TABLE1**〜**MAIL_TABLE5**: 利用する DynamoDB テーブル名 / DynamoDB table names
 - **AWS_REGION**: AWS SDK が利用するリージョン / AWS region used by the SDK
 
 これらは `.env` ファイルまたは環境変数として設定してください。 / Add these values in a `.env` file or export them.
