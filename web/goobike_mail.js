@@ -170,7 +170,7 @@ async function loadEmails(page = 1, refresh = false) {
     if (bodySnippet.length > 200) bodySnippet = bodySnippet.slice(0, 200) + '…';
     const link = `mail_detail.html?id=${encodeURIComponent(item.unique_id || '')}`;
     const dateText = formatDateJST(item.date || item.createdAt);
-    const btnLabel = item.task_added ? '追加済み' : 'タスクに追加';
+    const btnLabel = item.task_added ? '追加済み' : 'ボードに追加';
     const btnClass = item.task_added ? 'btn btn-sm btn-success' : 'btn btn-sm btn-primary';
     tr.innerHTML = `
       <td><a href="${link}">${dateText}</a></td>
