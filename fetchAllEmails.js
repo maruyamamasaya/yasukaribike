@@ -253,4 +253,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { fetchAllEmails };
+module.exports = { fetchAllEmails, getAccountEnv };
