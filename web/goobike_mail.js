@@ -10,9 +10,20 @@ let currentPageItems = [];
 let dateCounts = {};
 let dateFilter = '';
 
+const ACCOUNT_LABELS = {
+  1: 'アカウント1',
+  2: 'info@rebikele.com',
+  3: 'kanamori@rebikele.com'
+};
+
 function getCategory() {
   const params = new URLSearchParams(window.location.search);
   return params.get('cat');
+}
+
+function getAccount() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('account');
 }
 
 function escapeHtml(text) {
@@ -104,7 +115,9 @@ async function fetchData() {
   let res;
   let data = {};
   try {
-    res = await fetch(API + '/emails');
+    const acc = getAccount();
+    const param = acc ? `?account=${encodeURIComponent(acc)}` : '';
+    res = await fetch(API + '/emails' + param);
     data = await res.json();
   } catch (err) {
     console.error(err);
@@ -237,5 +250,14 @@ window.addEventListener('DOMContentLoaded', () => {
   if (bulkBtn) bulkBtn.addEventListener('click', addAllTasks);
   const sEl = document.getElementById('mail-search');
   if (sEl) sEl.addEventListener('input', () => loadEmails(1));
+  const title = document.getElementById('page-title');
+  if (title) {
+    const cat = getCategory();
+    const acc = getAccount();
+    const label = ACCOUNT_LABELS[acc] || (acc ? `アカウント${acc}` : '');
+    if (cat) {
+      title.textContent = `${cat}${label ? ` (${label})` : ''} のメール一覧`;
+    }
+  }
   loadEmails(1, true);
 });

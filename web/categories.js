@@ -14,13 +14,13 @@
       if (useInit) {
         list = window.INIT_CATEGORIES;
       } else {
-        const res = await fetch(API + '/categories' + (acc ? `?account=${acc}` : ''));
+        const res = await fetch(API + '/categories' + (acc ? `?account=${encodeURIComponent(acc)}` : ''));
         list = await res.json();
         if (!res.ok) return;
       }
 
       // fetch all emails to count today's messages
-      const res2 = await fetch(API + '/emails' + (acc ? `?account=${acc}` : ''));
+      const res2 = await fetch(API + '/emails' + (acc ? `?account=${encodeURIComponent(acc)}` : ''));
       const all = await res2.json();
       const items = Array.isArray(all.Items) ? all.Items : Array.isArray(all) ? all : [];
       const todayStr = new Date().toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
@@ -46,7 +46,8 @@
         const today = todayCounts[name] || 0;
         const li = document.createElement('li');
         const a = document.createElement('a');
-        a.href = `goobike_mail.html?cat=${encodeURIComponent(name)}`;
+        const accQuery = acc ? `&account=${encodeURIComponent(acc)}` : '';
+        a.href = `goobike_mail.html?cat=${encodeURIComponent(name)}${accQuery}`;
         a.textContent = label;
         li.appendChild(a);
         if (typeof count === 'number') {
