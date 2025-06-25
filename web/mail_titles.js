@@ -56,7 +56,7 @@ function renderCategoryButtons() {
     container.style.display = 'none';
     return;
   }
-  container.style.display = 'inline-flex';
+  container.style.display = 'grid';
   const allBtn = document.createElement('button');
   allBtn.className = 'btn btn-outline-secondary btn-sm';
   if (categoryFilter === 'all') allBtn.classList.add('active');
