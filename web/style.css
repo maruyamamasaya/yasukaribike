@@ -80,8 +80,18 @@
 /* layout and styling for search filter boxes */
 .filter-box {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 0.75rem;
+}
+
+.filter-box details.wide {
+  grid-column: span 2;
+}
+
+@media (max-width: 768px) {
+  .filter-box {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
 }
 
 .filter-box details {
