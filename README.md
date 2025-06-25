@@ -86,9 +86,12 @@ Set `AWS_REGION` for the AWS SDK (e.g., `ap-northeast-1`).
 
 ### 必要な環境変数 / Required Environment Variables
 - **BASIC_USER / BASIC_PASS**: ベーシック認証のユーザー名とパスワード / Basic auth credentials
-- **EMAIL_USER / EMAIL_PASS**: メール取得用 IMAP アカウント / IMAP login for email
-- **IMAP_HOST / IMAP_PORT**: IMAP サーバーのホスト名とポート / IMAP server host and port
- - **TABLE_NAME**, **GOOBIKE_TABLE**, **MAIL_TABLE**: 利用する DynamoDB テーブル名 / DynamoDB table names
+- **EMAIL_USER1 / EMAIL_PASS1**: メインの IMAP アカウント / Primary IMAP login
+- **IMAP_HOST1 / IMAP_PORT1**: メインアカウントのホスト名とポート / Primary host and port
+- `EMAIL_USER2`～`EMAIL_USER5` などで追加アカウントを設定可能 /
+  Additional accounts can be set as `EMAIL_USER2` to `EMAIL_USER5` with matching
+  `EMAIL_PASSn` and `IMAP_HOSTn` variables
+- **TABLE_NAME**, **GOOBIKE_TABLE**, **MAIL_TABLE**: 利用する DynamoDB テーブル名 / DynamoDB table names
 - **AWS_REGION**: AWS SDK が利用するリージョン / AWS region used by the SDK
 
 これらは `.env` ファイルまたは環境変数として設定してください。 / Add these values in a `.env` file or export them.
@@ -126,8 +129,9 @@ A log of the operation is appended to `fetchAllEmails.log`.
 
 Node.js 18 以上を使用してください。アプリはグローバル `fetch` API に依存します。古い Node.js を利用する場合は `node-fetch` などのポリフィルが必要です。
 Use Node.js 18 or later because the app relies on the global `fetch` API. Older Node versions require a fetch polyfill such as `node-fetch`.
-アプリは起動時に `EMAIL_USER`、`EMAIL_PASS`、`IMAP_HOST` を確認し、不足しているとエラーで停止します。
-The application checks `EMAIL_USER`, `EMAIL_PASS`, and `IMAP_HOST` on startup. Missing values throw an error and stop the server.
+アプリは起動時に `EMAIL_USER1` (または `EMAIL_USER`) など少なくとも1つのメールアカウント設定を確認し、
+不足している場合はエラーで停止します。
+The application checks that at least one set of `EMAIL_USERn`, `EMAIL_PASSn`, and `IMAP_HOSTn` variables (or the legacy `EMAIL_USER` form) is present. Missing values cause the server to stop.
 サーバーは `server.js` で `process.env.PORT || 3000` を使用して起動します。
 The server starts on `process.env.PORT || 3000` in `server.js`.
 

@@ -12,6 +12,14 @@
   <div class="container">
     <h1 class="mb-3">メールタイトル一覧</h1>
     <div class="mb-3">
+      <select id="account-select" class="form-select d-inline-block w-auto me-2">
+        <option value="">すべて</option>
+        <option value="1">アカウント1</option>
+        <option value="2">アカウント2</option>
+        <option value="3">アカウント3</option>
+        <option value="4">アカウント4</option>
+        <option value="5">アカウント5</option>
+      </select>
       <button id="load-btn" class="btn btn-primary me-2">読み込み開始</button>
       <div class="small text-muted">ダブルクリックや連続してクリックするとエラーになります。間隔をあけて押してください。</div>
       <div class="btn-group me-2" role="group" id="folder-buttons">
@@ -25,6 +33,7 @@
       <thead class="table-primary">
         <tr>
           <th data-key="date">受信日時</th>
+          <th data-key="account">アカウント</th>
           <th data-key="from">送信元</th>
           <th data-key="subject">タイトル</th>
           <th data-key="body">本文(冒頭)</th>
