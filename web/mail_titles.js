@@ -157,7 +157,6 @@ function renderTable(page = currentPage) {
     const dateText = formatDateJST(m.date);
     tr.innerHTML = `
       <td><a href="${link}">${dateText}</a></td>
-      <td>${escapeHtml(m.account || '')}</td>
       <td>${escapeHtml(m.from || '')}</td>
       <td>${escapeHtml(subjectShort)}</td>
       <td>${escapeHtml(bodyShort)}</td>`;
