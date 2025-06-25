@@ -14,7 +14,16 @@ function log(message) {
 const region = process.env.AWS_REGION || 'ap-northeast-1';
 AWS.config.update({ region });
 const dynamo = new AWS.DynamoDB.DocumentClient();
-const MAIL_TABLE = process.env.MAIL_TABLE || 'Rebikele_goobikemail01_TBL';
+
+function getMailTable(index = 1) {
+  const suffix = index === 1 ? '1' : String(index);
+  return (
+    process.env[`MAIL_TABLE${suffix}`] ||
+    process.env.MAIL_TABLE ||
+    process.env.GOOBIKE_TABLE ||
+    'Rebikele_goobikemail01_TBL'
+  );
+}
 
 // Only fetch messages received on or after this date
 const SINCE_DATE = new Date('2025-06-01');
@@ -132,7 +141,7 @@ async function saveMail(uid, parsed, folder, account) {
   try {
     await dynamo
       .put({
-        TableName: MAIL_TABLE,
+        TableName: getMailTable(account),
         Item: item,
         ConditionExpression: 'attribute_not_exists(unique_id)',
       })
