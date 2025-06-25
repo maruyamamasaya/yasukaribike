@@ -31,23 +31,18 @@ const SINCE_DATE = new Date('2025-06-01');
 // Folders to completely skip when scanning
 const EXCLUDED_FOLDERS = ['INBOX.Junk', 'INBOX.Trash'];
 
+function getAccountEnv(prefix, index) {
+  if (index === 1) {
+    return process.env[`${prefix}1`] || process.env[prefix];
+  }
+  return process.env[`${prefix}${index}`];
+}
+
 function getImapConfig(index = 1) {
-  const suffix = index === 1 ? '' : String(index);
-  const user =
-    process.env[`EMAIL_USER${suffix}`] ||
-    (index === 1 ? process.env.EMAIL_USER : undefined);
-  const pass =
-    process.env[`EMAIL_PASS${suffix}`] ||
-    (index === 1 ? process.env.EMAIL_PASS : undefined);
-  const host =
-    process.env[`IMAP_HOST${suffix}`] ||
-    (index === 1 ? process.env.IMAP_HOST : undefined);
-  const port = parseInt(
-    process.env[`IMAP_PORT${suffix}`] ||
-      (index === 1 ? process.env.IMAP_PORT : '993') ||
-      '993',
-    10,
-  );
+  const user = getAccountEnv('EMAIL_USER', index);
+  const pass = getAccountEnv('EMAIL_PASS', index);
+  const host = getAccountEnv('IMAP_HOST', index);
+  const port = parseInt(getAccountEnv('IMAP_PORT', index) || '993', 10);
   if (!user || !pass || !host) {
     throw new Error(`Missing IMAP config for account ${index}`);
   }
@@ -225,13 +220,9 @@ function processFolder(name, accountIndex) {
 function getAccountIndices() {
   const indices = [];
   for (let i = 1; i <= 5; i++) {
-    const suffix = i === 1 ? '' : String(i);
-    const user =
-      process.env[`EMAIL_USER${suffix}`] || (i === 1 ? process.env.EMAIL_USER : undefined);
-    const pass =
-      process.env[`EMAIL_PASS${suffix}`] || (i === 1 ? process.env.EMAIL_PASS : undefined);
-    const host =
-      process.env[`IMAP_HOST${suffix}`] || (i === 1 ? process.env.IMAP_HOST : undefined);
+    const user = getAccountEnv('EMAIL_USER', i);
+    const pass = getAccountEnv('EMAIL_PASS', i);
+    const host = getAccountEnv('IMAP_HOST', i);
     if (user && pass && host) indices.push(i);
   }
   return indices;
