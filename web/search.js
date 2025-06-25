@@ -13,6 +13,44 @@ let mailResults = [];
 let mode = 'customer';
 let searchTimeout;
 
+function updateFilterState(id) {
+  const input = document.getElementById(id);
+  if (!input) return;
+  const details = input.closest('details');
+  if (!details) return;
+  const summary = details.querySelector('summary');
+  const clear = details.querySelector('.clear-filter');
+  const val = input.value.trim();
+  if (val) {
+    summary.classList.add('active', 'btn-primary');
+    summary.classList.remove('btn-outline-secondary');
+    if (clear) clear.style.display = '';
+  } else {
+    summary.classList.remove('active', 'btn-primary');
+    summary.classList.add('btn-outline-secondary');
+    if (clear) clear.style.display = 'none';
+  }
+}
+
+function setupFilter(id) {
+  const input = document.getElementById(id);
+  if (!input) return;
+  const details = input.closest('details');
+  const clear = details.querySelector('.clear-filter');
+  input.addEventListener('input', () => {
+    updateFilterState(id);
+    triggerSearch();
+  });
+  if (clear) {
+    clear.addEventListener('click', () => {
+      input.value = '';
+      updateFilterState(id);
+      triggerSearch();
+    });
+  }
+  updateFilterState(id);
+}
+
 function hasText(customer, keyword) {
   if ((customer.details || '').includes(keyword)) return true;
   if (customer.history) {
@@ -57,10 +95,6 @@ function setMode(m) {
     }
   }
 
-  const headerToggle = document.getElementById('header-toggle');
-  if (headerToggle) {
-    headerToggle.textContent = m === 'customer' ? 'メール検索へ' : '問い合わせ検索へ';
-  }
   triggerSearch();
 }
 
@@ -93,7 +127,7 @@ async function searchCustomers(page = 1) {
 
     customers = customers.filter(c =>
       (!date || (c.date || '').includes(date)) &&
-      (!name || (c.name || '').includes(name)) &&
+      (!name || (c.name || '').includes(name) || (c.kana || '').includes(name)) &&
       (!phone || (c.phone || c.phoneNumber || '').includes(phone)) &&
       (!email || (c.email || '').includes(email)) &&
       (!status || (c.status || '') === status) &&
@@ -186,10 +220,14 @@ async function searchEmails(page = 1) {
     let body = item.body || '';
     if (body.length > 200) body = body.slice(0, 200) + '…';
     const d = item.date
-      ? new Date(item.date).toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo', hour12: false })
+      ? new Date(item.date).toLocaleString('ja-JP', {
+          timeZone: 'Asia/Tokyo',
+          hour12: false,
+        })
       : '';
+    const link = `mail_detail.html?id=${encodeURIComponent(item.unique_id || '')}`;
     tr.innerHTML = `
-      <td>${d}</td>
+      <td><a href="${link}">${d}</a></td>
       <td>${item.from || ''}</td>
       <td>${item.subject || ''}</td>
       <td style="white-space: pre-wrap;">${body}</td>`;
@@ -219,22 +257,18 @@ function searchAll() {
 document.addEventListener('DOMContentLoaded', () => {
   const btnC = document.getElementById('btn-customer');
   const btnM = document.getElementById('btn-mail');
-  const headerToggle = document.getElementById('header-toggle');
   if (btnC) btnC.addEventListener('click', () => setMode('customer'));
   if (btnM) btnM.addEventListener('click', () => setMode('mail'));
-  if (headerToggle) headerToggle.addEventListener('click', () => setMode(mode === 'customer' ? 'mail' : 'customer'));
 
   const btnSearchC = document.getElementById('customer-search-btn');
   const btnSearchM = document.getElementById('mail-search-btn');
   if (btnSearchC) btnSearchC.addEventListener('click', triggerSearch);
   if (btnSearchM) btnSearchM.addEventListener('click', triggerSearch);
 
-  document.querySelectorAll('#customer-form input,#customer-form select').forEach(el => {
-    el.addEventListener('input', triggerSearch);
-  });
-  document.querySelectorAll('#mail-form input').forEach(el => {
-    el.addEventListener('input', triggerSearch);
-  });
+  [
+    's-date','s-name','s-phone','s-email','s-status','s-category','s-details','s-text',
+    'm-date','m-key'
+  ].forEach(setupFilter);
 
   setMode('customer');
 });

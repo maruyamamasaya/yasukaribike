@@ -16,62 +16,92 @@
       <button id="btn-mail" class="btn btn-outline-primary btn-lg">メール検索</button>
     </div>
     <div id="customer-form" class="d-flex flex-wrap gap-2 mb-3">
-      <details>
-        <summary class="btn btn-outline-secondary">日付</summary>
-        <input id="s-date" type="date" class="form-control mt-2" />
+      <details open>
+        <summary class="btn btn-outline-secondary filter-summary">日付</summary>
+        <div class="d-flex align-items-center mt-2">
+          <input id="s-date" type="date" class="form-control flex-grow-1 filter-input" />
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-date" style="display:none;">×</button>
+        </div>
       </details>
-      <details>
-        <summary class="btn btn-outline-secondary">名前</summary>
-        <input id="s-name" class="form-control mt-2" />
+      <details open>
+        <summary class="btn btn-outline-secondary filter-summary">顧客名</summary>
+        <div class="d-flex align-items-center mt-2">
+          <input id="s-name" class="form-control flex-grow-1 filter-input" />
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-name" style="display:none;">×</button>
+        </div>
       </details>
-      <details>
-        <summary class="btn btn-outline-secondary">電話番号</summary>
-        <input id="s-phone" class="form-control mt-2" />
+      <details open>
+        <summary class="btn btn-outline-secondary filter-summary">電話番号</summary>
+        <div class="d-flex align-items-center mt-2">
+          <input id="s-phone" class="form-control flex-grow-1 filter-input" />
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-phone" style="display:none;">×</button>
+        </div>
       </details>
-      <details>
-        <summary class="btn btn-outline-secondary">メール</summary>
-        <input id="s-email" class="form-control mt-2" />
+      <details open>
+        <summary class="btn btn-outline-secondary filter-summary">メールアドレス</summary>
+        <div class="d-flex align-items-center mt-2">
+          <input id="s-email" class="form-control flex-grow-1 filter-input" />
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-email" style="display:none;">×</button>
+        </div>
       </details>
-      <details>
-        <summary class="btn btn-outline-secondary">タスクの状態</summary>
-        <select id="s-status" class="form-select mt-2">
+      <details open>
+        <summary class="btn btn-outline-secondary filter-summary">タスクの状態</summary>
+        <div class="d-flex align-items-center mt-2">
+          <select id="s-status" class="form-select flex-grow-1 filter-input">
           <option value="">--</option>
           <option value="未着手">未着手</option>
           <option value="進行中">進行中</option>
           <option value="完了">完了</option>
-        </select>
+          </select>
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-status" style="display:none;">×</button>
+        </div>
       </details>
-      <details>
-        <summary class="btn btn-outline-secondary">種別</summary>
-        <select id="s-category" class="form-select mt-2">
+      <details open>
+        <summary class="btn btn-outline-secondary filter-summary">問い合わせ種別</summary>
+        <div class="d-flex align-items-center mt-2">
+          <select id="s-category" class="form-select flex-grow-1 filter-input">
           <option value="">--</option>
           <option value="電話">電話</option>
           <option value="訪問対応">訪問対応</option>
           <option value="メール問い合わせ">メール問い合わせ</option>
           <option value="顧客WEB入力">顧客WEB入力</option>
           <option value="その他">その他</option>
-        </select>
+          </select>
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-category" style="display:none;">×</button>
+        </div>
       </details>
-      <details>
-        <summary class="btn btn-outline-secondary">バイク機種名</summary>
-        <input id="s-details" class="form-control mt-2" />
+      <details open>
+        <summary class="btn btn-outline-secondary filter-summary">バイク機種名</summary>
+        <div class="d-flex align-items-center mt-2">
+          <input id="s-details" class="form-control flex-grow-1 filter-input" />
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-details" style="display:none;">×</button>
+        </div>
       </details>
-      <details>
-        <summary class="btn btn-outline-secondary">本文検索</summary>
-        <input id="s-text" class="form-control mt-2" />
+      <details open>
+        <summary class="btn btn-outline-secondary filter-summary">本文（メモ）検索</summary>
+        <div class="d-flex align-items-center mt-2">
+          <input id="s-text" class="form-control flex-grow-1 filter-input" style="min-width:280px;" />
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-text" style="display:none;">×</button>
+        </div>
       </details>
       <div class="align-self-end mt-2">
         <button id="customer-search-btn" class="btn btn-primary">検索</button>
       </div>
     </div>
     <div id="mail-form" class="d-flex flex-wrap gap-2 mb-3" style="display:none;">
-      <details>
-        <summary class="btn btn-outline-secondary">メール受信日</summary>
-        <input id="m-date" type="date" class="form-control mt-2" />
+      <details open>
+        <summary class="btn btn-outline-secondary filter-summary">メール受信日</summary>
+        <div class="d-flex align-items-center mt-2">
+          <input id="m-date" type="date" class="form-control flex-grow-1 filter-input" />
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="m-date" style="display:none;">×</button>
+        </div>
       </details>
-      <details>
-        <summary class="btn btn-outline-secondary">メール検索</summary>
-        <input id="m-key" class="form-control mt-2" placeholder="送信元・タイトル・本文" />
+      <details open>
+        <summary class="btn btn-outline-secondary filter-summary">メール検索</summary>
+        <div class="d-flex align-items-center mt-2">
+          <input id="m-key" class="form-control flex-grow-1 filter-input" placeholder="送信元・タイトル・本文" style="min-width:300px;" />
+          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="m-key" style="display:none;">×</button>
+        </div>
       </details>
       <div class="align-self-end mt-2">
         <button id="mail-search-btn" class="btn btn-primary">検索</button>
@@ -83,8 +113,8 @@
       <table id="result-table" class="table table-striped">
         <thead>
           <tr>
-            <th>名前</th>
-            <th>種別</th>
+            <th>顧客名</th>
+            <th>問い合わせ種別</th>
             <th>バイク種別</th>
             <th>タスクの状態</th>
             <th>本文</th>

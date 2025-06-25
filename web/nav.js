@@ -37,13 +37,7 @@ function addTopButton() {
   topBtn.textContent = 'TOPに戻る';
   div.appendChild(topBtn);
 
-  if (window.location.pathname.endsWith('search.html')) {
-    const toggle = document.createElement('button');
-    toggle.id = 'header-toggle';
-    toggle.className = 'btn btn-outline-secondary';
-    toggle.textContent = 'メール検索へ';
-    div.appendChild(toggle);
-  }
+  // Remove unused toggle button that used to switch search modes
   container.prepend(div);
 }
 
