@@ -260,11 +260,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnC) btnC.addEventListener('click', () => setMode('customer'));
   if (btnM) btnM.addEventListener('click', () => setMode('mail'));
 
-  const btnSearchC = document.getElementById('customer-search-btn');
-  const btnSearchM = document.getElementById('mail-search-btn');
-  if (btnSearchC) btnSearchC.addEventListener('click', triggerSearch);
-  if (btnSearchM) btnSearchM.addEventListener('click', triggerSearch);
-
+  document.querySelectorAll('details.static').forEach(d => {
+    const s = d.querySelector('summary');
+    if (s) s.addEventListener('click', e => e.preventDefault());
+    d.open = true;
+  });
   [
     's-date','s-name','s-phone','s-email','s-status','s-category','s-details','s-text',
     'm-date','m-key'

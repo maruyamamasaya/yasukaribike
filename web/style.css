@@ -77,6 +77,14 @@
   border-color: #0d6efd;
 }
 
+/* disable details toggle and hide marker */
+details.static > summary {
+  cursor: default;
+}
+details.static > summary::-webkit-details-marker {
+  display: none;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
