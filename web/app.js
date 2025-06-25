@@ -7,6 +7,7 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
 let currentPage = 1;
 const PAGE_SIZE = 20;
 let sortDescending = true;
+let mailAccount = 1;
 
 function isScheduled(c) {
   if (!c.scheduledDate) return false;
@@ -198,7 +199,8 @@ async function loadEmailStats() {
   const el = document.getElementById('email-stats');
   if (!el) return;
   try {
-    const res = await fetch(API + '/email-stats');
+    const param = mailAccount ? `?account=${mailAccount}` : '';
+    const res = await fetch(API + '/email-stats' + param);
     const data = await res.json();
     if (!res.ok) return;
     const base = data.fetchTime || data.lastDate;
@@ -228,7 +230,8 @@ function prevPage() {
 
 async function fetchAllEmails() {
   try {
-    await fetch(API + '/api/fetch-all-emails');
+    const param = mailAccount ? `?account=${mailAccount}` : '';
+    await fetch(API + '/api/fetch-all-emails' + param);
     loadEmailStats();
   } catch (err) {
     console.error(err);
@@ -274,6 +277,23 @@ if (loadBtn) {
       loadBtn.textContent = original;
       loadBtn.disabled = false;
     }, 1000);
+  });
+}
+
+const mailSel = document.getElementById('mail-account-select');
+if (mailSel) {
+  mailAccount = parseInt(mailSel.value || '1', 10);
+  const link = document.getElementById('mail-titles-link');
+  const updateLink = () => {
+    if (link) {
+      link.href = `mail_titles.html?account=${mailAccount}`;
+    }
+  };
+  updateLink();
+  mailSel.addEventListener('change', () => {
+    mailAccount = parseInt(mailSel.value || '1', 10);
+    updateLink();
+    loadEmailStats();
   });
 }
 
