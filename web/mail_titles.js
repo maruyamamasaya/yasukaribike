@@ -237,6 +237,14 @@ document.addEventListener('DOMContentLoaded', () => {
     accountSel.addEventListener('change', () => {
       updateAccountLabel();
       loadTitles();
+      const url = new URL(window.location);
+      const val = accountSel.value;
+      if (val) {
+        url.searchParams.set('account', val);
+      } else {
+        url.searchParams.delete('account');
+      }
+      history.replaceState(null, '', url);
     });
   }
 });
