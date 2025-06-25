@@ -11,7 +11,7 @@ let dateCounts = {};
 let dateFilter = '';
 
 const ACCOUNT_LABELS = {
-  1: 'アカウント1',
+  1: 'kjet@rebikele.com',
   2: 'info@rebikele.com',
   3: 'kanamori@rebikele.com'
 };

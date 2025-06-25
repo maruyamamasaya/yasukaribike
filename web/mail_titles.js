@@ -16,16 +16,16 @@ let currentPage = 1;
 const PAGE_SIZE = 20;
 
 const ACCOUNT_LABELS = {
-  1: 'アカウント1',
+  1: 'kjet@rebikele.com',
   2: 'info@rebikele.com',
   3: 'kanamori@rebikele.com'
 };
 
 function updateAccountLabel() {
-  const sel = document.getElementById('account-select');
+  const accountSel = document.getElementById('account-select');
   const label = document.getElementById('selected-account');
-  if (!sel || !label) return;
-  const val = sel.value;
+  if (!accountSel || !label) return;
+  const val = accountSel.value;
   if (!val) {
     label.textContent = 'すべてのアカウント';
   } else {
@@ -36,8 +36,8 @@ function updateAccountLabel() {
 
 async function loadCategories() {
   try {
-    const sel = document.getElementById('account-select');
-    const param = sel && sel.value ? `?account=${encodeURIComponent(sel.value)}` : '';
+    const accountSel = document.getElementById('account-select');
+    const param = accountSel && accountSel.value ? `?account=${encodeURIComponent(accountSel.value)}` : '';
     const res = await fetch(API + '/categories' + param);
     const list = await res.json();
     if (!res.ok) return;
@@ -89,8 +89,8 @@ async function loadTitles() {
   const spinner = document.getElementById('loading');
   if (spinner) spinner.style.display = 'block';
   try {
-    const sel = document.getElementById('account-select');
-    const param = sel && sel.value ? `?account=${encodeURIComponent(sel.value)}` : '';
+    const accountSel = document.getElementById('account-select');
+    const param = accountSel && accountSel.value ? `?account=${encodeURIComponent(accountSel.value)}` : '';
     res = await fetch(API + '/emails' + param);
     data = await res.json();
   } catch (err) {
@@ -106,8 +106,8 @@ async function loadTitles() {
 
 async function fetchEmails() {
   try {
-    const sel = document.getElementById('account-select');
-    const param = sel && sel.value ? `?account=${encodeURIComponent(sel.value)}` : '';
+    const accountSel = document.getElementById('account-select');
+    const param = accountSel && accountSel.value ? `?account=${encodeURIComponent(accountSel.value)}` : '';
     await fetch(API + '/api/fetch-all-emails' + param);
   } catch (err) {
     console.error(err);
@@ -189,8 +189,8 @@ async function fetchAndLoad() {
 document.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(location.search);
   const acc = params.get('account');
-  const sel = document.getElementById('account-select');
-  if (acc && sel) sel.value = acc;
+  const accountSel = document.getElementById('account-select');
+  if (acc && accountSel) accountSel.value = acc;
   const loadBtn = document.getElementById('load-btn');
   loadBtn.addEventListener('click', async () => {
     const original = loadBtn.textContent;
@@ -234,8 +234,8 @@ document.addEventListener('DOMContentLoaded', () => {
   updateAccountLabel();
   loadTitles();
 
-  if (sel) {
-    sel.addEventListener('change', () => {
+  if (accountSel) {
+    accountSel.addEventListener('change', () => {
       updateAccountLabel();
       loadTitles();
     });
