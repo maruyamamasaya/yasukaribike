@@ -94,6 +94,10 @@ Set `AWS_REGION` for the AWS SDK (e.g., `ap-northeast-1`).
 - **TABLE_NAME**, **MAIL_TABLE1**〜**MAIL_TABLE5**: 利用する DynamoDB テーブル名 / DynamoDB table names
 - **AWS_REGION**: AWS SDK が利用するリージョン / AWS region used by the SDK
 
+アカウント1は `EMAIL_USER1` などの末尾に `1` を付けた変数名を使用します。
+過去のバージョンとの互換のため `EMAIL_USER` や `IMAP_HOST` といった旧名称も
+認識されますが、ドキュメントと合わせるため新しい形式への移行を推奨します。
+
 これらは `.env` ファイルまたは環境変数として設定してください。 / Add these values in a `.env` file or export them.
 `.env.example` に典型的な値のサンプルを用意しています。 / See `.env.example` for typical values.
 値が不足していると `/api/fetch-email` などのエンドポイントは 500 エラーを返します。
