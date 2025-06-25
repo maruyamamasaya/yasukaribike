@@ -66,6 +66,17 @@ function getAccountEnv(prefix, index) {
   return process.env[`${prefix}${index}`];
 }
 
+function getAccountIndices() {
+  const indices = [];
+  for (let i = 1; i <= 5; i++) {
+    const user = getAccountEnv('EMAIL_USER', i);
+    const pass = getAccountEnv('EMAIL_PASS', i);
+    const host = getAccountEnv('IMAP_HOST', i);
+    if (user && pass && host) indices.push(i);
+  }
+  return indices;
+}
+
 function verifyEmailConfig() {
   for (let i = 1; i <= 5; i++) {
     const user = getAccountEnv('EMAIL_USER', i);
@@ -118,17 +129,19 @@ app.get(['/', '/index.html'], async (req, res, next) => {
       path.join(__dirname, 'web', 'index.html'),
       'utf8'
     );
-    const data = await dynamo
-      .scan({
-        TableName: MAIL_TABLE,
-        ProjectionExpression: '#c',
-        ExpressionAttributeNames: { '#c': 'category' }
-      })
-      .promise();
     const counts = {};
-    for (const item of data.Items || []) {
-      if (item.category) {
-        counts[item.category] = (counts[item.category] || 0) + 1;
+    for (const idx of getAccountIndices()) {
+      const data = await dynamo
+        .scan({
+          TableName: getMailTable(idx),
+          ProjectionExpression: '#c',
+          ExpressionAttributeNames: { '#c': 'category' }
+        })
+        .promise();
+      for (const item of data.Items || []) {
+        if (item.category) {
+          counts[item.category] = (counts[item.category] || 0) + 1;
+        }
       }
     }
     const list = Object.keys(counts)
@@ -1015,16 +1028,28 @@ app.get('/goobike-emails/:id', async (req, res) => {
 // 取得済みメール一覧を返す
 app.get('/emails', async (req, res) => {
   try {
-    const table = getTableFromRequest(req);
-    const params = { TableName: table };
     const account = req.query.account;
     if (account) {
-      params.FilterExpression = '#a = :a';
-      params.ExpressionAttributeNames = { '#a': 'account' };
-      params.ExpressionAttributeValues = { ':a': account };
+      const table = getTableFromRequest(req);
+      const params = {
+        TableName: table,
+        FilterExpression: '#a = :a',
+        ExpressionAttributeNames: { '#a': 'account' },
+        ExpressionAttributeValues: { ':a': account }
+      };
+      const data = await dynamo.scan(params).promise();
+      return res.json(data.Items || []);
     }
-    const data = await dynamo.scan(params).promise();
-    res.json(data.Items || []);
+
+    const indices = getAccountIndices();
+    const items = [];
+    for (const idx of indices) {
+      const data = await dynamo
+        .scan({ TableName: getMailTable(idx) })
+        .promise();
+      items.push(...(data.Items || []));
+    }
+    res.json(items);
   } catch (err) {
     respondError(res, 500, 'Failed to fetch emails', err);
   }
@@ -1033,9 +1058,13 @@ app.get('/emails', async (req, res) => {
 // メール件数と最終更新日時を返す
 app.get('/email-stats', async (req, res) => {
   try {
-    const table = getTableFromRequest(req);
-    const data = await dynamo.scan({ TableName: table }).promise();
-    const items = data.Items || [];
+    const account = req.query.account;
+    const indices = account ? [parseInt(account, 10) || 1] : getAccountIndices();
+    let items = [];
+    for (const idx of indices) {
+      const data = await dynamo.scan({ TableName: getMailTable(idx) }).promise();
+      items = items.concat(data.Items || []);
+    }
     const count = items.length;
     let lastDate = '';
     for (const item of items) {
@@ -1067,18 +1096,21 @@ app.get('/email-stats', async (req, res) => {
 // メールカテゴリ一覧を返す
 app.get('/categories', async (req, res) => {
   try {
-    const table = getTableFromRequest(req);
-    const data = await dynamo
-      .scan({
-        TableName: table,
-        ProjectionExpression: '#c',
-        ExpressionAttributeNames: { '#c': 'category' }
-      })
-      .promise();
+    const account = req.query.account;
+    const indices = account ? [parseInt(account, 10) || 1] : getAccountIndices();
     const counts = {};
-    for (const item of data.Items || []) {
-      if (item.category) {
-        counts[item.category] = (counts[item.category] || 0) + 1;
+    for (const idx of indices) {
+      const data = await dynamo
+        .scan({
+          TableName: getMailTable(idx),
+          ProjectionExpression: '#c',
+          ExpressionAttributeNames: { '#c': 'category' }
+        })
+        .promise();
+      for (const item of data.Items || []) {
+        if (item.category) {
+          counts[item.category] = (counts[item.category] || 0) + 1;
+        }
       }
     }
     const list = Object.keys(counts)
@@ -1093,29 +1125,32 @@ app.get('/categories', async (req, res) => {
 // フォルダツリー構造を返す
 app.get('/folder-tree', async (req, res) => {
   try {
-    const table = getTableFromRequest(req);
-    const data = await dynamo
-      .scan({
-        TableName: table,
-        ProjectionExpression: '#f, category',
-        ExpressionAttributeNames: { '#f': 'folder' }
-      })
-      .promise();
+    const account = req.query.account;
+    const indices = account ? [parseInt(account, 10) || 1] : getAccountIndices();
     const tree = {};
-    for (const item of data.Items || []) {
-      if (!item.folder) continue;
-      const delimiter = item.folder.includes('/')
-        ? '/'
-        : item.folder.includes('.')
-        ? '.'
-        : null;
-      const parts = delimiter ? item.folder.split(delimiter) : [item.folder];
-      let node = tree;
-      for (const part of parts) {
-        if (!node[part]) node[part] = {};
-        node = node[part];
+    for (const idx of indices) {
+      const data = await dynamo
+        .scan({
+          TableName: getMailTable(idx),
+          ProjectionExpression: '#f, category',
+          ExpressionAttributeNames: { '#f': 'folder' }
+        })
+        .promise();
+      for (const item of data.Items || []) {
+        if (!item.folder) continue;
+        const delimiter = item.folder.includes('/')
+          ? '/'
+          : item.folder.includes('.')
+          ? '.'
+          : null;
+        const parts = delimiter ? item.folder.split(delimiter) : [item.folder];
+        let node = tree;
+        for (const part of parts) {
+          if (!node[part]) node[part] = {};
+          node = node[part];
+        }
+        if (item.category && !node._category) node._category = item.category;
       }
-      if (item.category && !node._category) node._category = item.category;
     }
     res.json(tree);
   } catch (err) {
