@@ -3,7 +3,7 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   window.location.origin;
 
 function escapeHtml(text) {
-  return text.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  return String(text).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 }
 
 let titles = [];
