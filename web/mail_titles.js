@@ -234,7 +234,6 @@ document.addEventListener('DOMContentLoaded', () => {
   updateAccountLabel();
   loadTitles();
 
-  const sel = document.getElementById('account-select');
   if (sel) {
     sel.addEventListener('change', () => {
       updateAccountLabel();
