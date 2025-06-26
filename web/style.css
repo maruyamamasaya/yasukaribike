@@ -201,6 +201,18 @@ th[data-key] {
   opacity: 1;
 }
 
+/* Tooltips shown below the card */
+.dashboard-card.tooltip-down::after {
+  top: 100%;
+  bottom: auto;
+}
+
+.dashboard-card.tooltip-down::before {
+  top: calc(100% - 4px);
+  bottom: auto;
+  border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent;
+}
+
 /* Category filter button grid */
 #category-buttons.category-group {
   display: grid;

@@ -17,7 +17,7 @@
     <div class="row mb-3">
       <div class="col d-flex gap-2 flex-wrap">
         <a class="btn btn-success btn-lg" href="add.html">電話・訪問対応新規フォーム</a>
-        <a class="btn btn-success btn-lg" href="add_customer.html">顧客から追加</a>
+        <a class="btn btn-success btn-lg" href="add_customer.html">顧客WEB入力フォーム</a>
         <a class="btn btn-danger btn-lg" href="search.html">詳細検索</a>
         <button id="ai-summary-btn" class="btn btn-info btn-lg">AI要約</button>
         <a class="btn btn-outline-info btn-lg" href="drafts.html">一時保存一覧</a>
@@ -26,11 +26,11 @@
 
     <div id="split-container" class="d-flex mb-3 flex-nowrap">
       <!-- Dashboard Area -->
-      <div id="dashboard" class="flex-grow-1 p-0" style="height:750px; overflow:auto;">
+        <div id="dashboard" class="flex-grow-1 p-0" style="height:750px; overflow:auto;">
         <div id="dashboard-metrics" class="row row-cols-2 g-2 mb-3">
           <div class="col">
             <a href="all.html" class="text-decoration-none">
-              <div class="card text-center dashboard-card" data-desc="登録されている全ての問い合わせを表示します。フィルターはありません。">
+              <div class="card text-center dashboard-card tooltip-down" data-desc="登録されている全ての問い合わせを表示します。フィルターはありません。">
                 <div class="card-body">
                   <div>総問い合わせ</div>
                   <div id="d-total" class="fs-3">0</div>
@@ -40,7 +40,7 @@
           </div>
           <div class="col">
             <a href="today.html" class="text-decoration-none">
-              <div class="card text-center dashboard-card" data-desc="本日の日付で登録されたデータのみを表示します。">
+              <div class="card text-center dashboard-card tooltip-down" data-desc="本日の日付で登録されたデータのみを表示します。">
                 <div class="card-body">
                   <div>本日の件数</div>
                   <div id="d-today" class="fs-3">0</div>
@@ -73,7 +73,7 @@
             <a href="customer_today.html" class="text-decoration-none">
               <div class="card text-center dashboard-card" data-desc="Webフォーム経由で本日新規登録された問い合わせのみを表示します。">
                 <div class="card-body">
-                  <div>顧客から追加</div>
+                  <div>顧客WEB入力フォーム</div>
                   <div id="d-web-today" class="fs-3">0</div>
                 </div>
               </div>
