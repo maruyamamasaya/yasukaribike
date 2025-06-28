@@ -11,13 +11,12 @@
 <body class="p-4">
   <div class="container">
     <h1 class="mb-3">詳細検索</h1>
-    <div id="mode-select" class="mb-3 text-center">
-      <button id="btn-customer" class="btn btn-primary btn-lg me-2">問い合わせ検索</button>
-      <button id="btn-mail" class="btn btn-outline-primary btn-lg">メール検索</button>
+    <div class="mb-3">
+      <input id="all-key" class="form-control form-control-lg global-search" placeholder="まとめて検索" />
     </div>
     <p class="text-muted small mb-3">
       文字、文章やプルダウンを項目に入れると自動検索します。複数のフィルターでの検索は、AND検索になります。<br />
-      上記のボタンで問い合わせ検索とメール検索を切り替え、それぞれのグループで検索できます。
+      上の「まとめて検索」では全ての項目を横断的に検索します。
     </p>
     <div id="customer-form" class="card p-3 mb-3 filter-box">
       <details open class="static">
@@ -90,7 +89,7 @@
       </details>
 
     </div>
-    <div id="mail-form" class="card p-3 mb-3 filter-box" style="display:none;">
+    <div id="mail-form" class="card p-3 mb-3 filter-box">
       <details open class="static">
         <summary class="btn btn-outline-secondary filter-summary">メール受信日</summary>
         <div class="d-flex align-items-center mt-2">
@@ -130,7 +129,7 @@
         </div>
       </div>
     </div>
-    <div id="mail-results" style="display:none;">
+    <div id="mail-results">
       <div id="loading-mail" class="spinner mb-3"></div>
       <h2 class="h5 mt-4">メール検索結果</h2>
       <table id="mail-result-table" class="table table-striped">
