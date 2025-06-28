@@ -10,8 +10,8 @@ let searchResults = [];
 let mailPage = 1;
 const MAIL_PAGE_SIZE = 20;
 let mailResults = [];
-let mode = 'customer';
 let searchTimeout;
+let globalKey = '';
 
 function updateFilterState(id) {
   const input = document.getElementById(id);
@@ -61,6 +61,24 @@ function hasText(customer, keyword) {
   return false;
 }
 
+function matchesGlobalCustomer(c, key) {
+  if (!key) return true;
+  const props = [c.order_id, c.status, c.email, c.name, c.kana, c.category || c.type, c.details, c.date, c.staff, c.phone, c.phoneNumber];
+  for (const p of props) {
+    if (p && String(p).includes(key)) return true;
+  }
+  return hasText(c, key);
+}
+
+function matchesGlobalEmail(e, key) {
+  if (!key) return true;
+  const props = [e.from, e.to, e.subject, e.body, e.folder, e.category];
+  for (const p of props) {
+    if (p && String(p).includes(key)) return true;
+  }
+  return false;
+}
+
 function formatYMD(dateStr) {
   if (!dateStr) return '';
   const d = new Date(dateStr);
@@ -70,42 +88,18 @@ function formatYMD(dateStr) {
   return `${y}/${m}/${day}`;
 }
 
-function setMode(m) {
-  mode = m;
-  const cForm = document.getElementById('customer-form');
-  const mForm = document.getElementById('mail-form');
-  const cRes = document.getElementById('customer-results');
-  const mRes = document.getElementById('mail-results');
-  if (cForm && cRes) cForm.style.display = cRes.style.display = m === 'customer' ? '' : 'none';
-  if (mForm && mRes) mForm.style.display = mRes.style.display = m === 'mail' ? '' : 'none';
-
-  const btnC = document.getElementById('btn-customer');
-  const btnM = document.getElementById('btn-mail');
-  if (btnC && btnM) {
-    if (m === 'customer') {
-      btnC.classList.add('btn-primary');
-      btnC.classList.remove('btn-outline-primary');
-      btnM.classList.add('btn-outline-primary');
-      btnM.classList.remove('btn-primary');
-    } else {
-      btnM.classList.add('btn-primary');
-      btnM.classList.remove('btn-outline-primary');
-      btnC.classList.add('btn-outline-primary');
-      btnC.classList.remove('btn-primary');
-    }
-  }
-
-  triggerSearch();
-}
 
 function triggerSearch() {
   clearTimeout(searchTimeout);
-  const spinner = document.getElementById(mode === 'customer' ? 'loading-customer' : 'loading-mail');
-  if (spinner) spinner.style.display = 'block';
+  const spinnerC = document.getElementById('loading-customer');
+  const spinnerM = document.getElementById('loading-mail');
+  if (spinnerC) spinnerC.style.display = 'block';
+  if (spinnerM) spinnerM.style.display = 'block';
   searchTimeout = setTimeout(() => {
-    if (mode === 'customer') searchCustomers(1);
-    else searchEmails(1);
-    if (spinner) spinner.style.display = 'none';
+    searchCustomers(1);
+    searchEmails(1);
+    if (spinnerC) spinnerC.style.display = 'none';
+    if (spinnerM) spinnerM.style.display = 'none';
   }, 500);
 }
 
@@ -133,7 +127,8 @@ async function searchCustomers(page = 1) {
       (!status || (c.status || '') === status) &&
       (!category || (c.category || c.type || '') === category) &&
       (!details || (c.details || '').includes(details)) &&
-      (!text || hasText(c, text))
+      (!text || hasText(c, text)) &&
+      matchesGlobalCustomer(c, globalKey)
     );
 
     searchResults = customers;
@@ -200,7 +195,8 @@ async function searchEmails(page = 1, refresh = false) {
         (e.from || '').includes(key) ||
         (e.to || '').includes(key) ||
         (e.subject || '').includes(key) ||
-        (e.body || '').includes(key))
+        (e.body || '').includes(key)) &&
+      matchesGlobalEmail(e, globalKey)
     );
 
     mailResults = emails;
@@ -275,10 +271,6 @@ function searchAll() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const btnC = document.getElementById('btn-customer');
-  const btnM = document.getElementById('btn-mail');
-  if (btnC) btnC.addEventListener('click', () => setMode('customer'));
-  if (btnM) btnM.addEventListener('click', () => setMode('mail'));
 
   document.querySelectorAll('details.static').forEach(d => {
     const s = d.querySelector('summary');
@@ -289,6 +281,9 @@ document.addEventListener('DOMContentLoaded', () => {
     's-date','s-name','s-phone','s-email','s-status','s-category','s-details','s-text',
     'm-date','m-key'
   ].forEach(setupFilter);
+  const g = document.getElementById('all-key');
+  if (g) g.addEventListener('input', () => { globalKey = g.value.trim(); triggerSearch(); });
 
-  setMode('customer');
+  searchCustomers(1);
+  searchEmails(1);
 });
