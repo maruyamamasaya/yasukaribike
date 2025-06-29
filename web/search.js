@@ -11,6 +11,7 @@ let mailPage = 1;
 const MAIL_PAGE_SIZE = 20;
 let mailResults = [];
 let totalEmailCount = 0; // 総メール件数
+let mailSortDescending = true;
 let searchTimeout;
 let globalKey = '';
 
@@ -87,6 +88,11 @@ function formatYMD(dateStr) {
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}/${m}/${day}`;
+}
+
+function getEmailTimeValue(item) {
+  const d = item.date || item.createdAt;
+  return d ? new Date(d).getTime() : 0;
 }
 
 
@@ -203,6 +209,12 @@ async function searchEmails(page = 1, refresh = false) {
       matchesGlobalEmail(e, globalKey)
     );
 
+    emails.sort((a, b) =>
+      mailSortDescending
+        ? getEmailTimeValue(b) - getEmailTimeValue(a)
+        : getEmailTimeValue(a) - getEmailTimeValue(b)
+    );
+
     mailResults = emails;
   }
 
@@ -289,6 +301,12 @@ document.addEventListener('DOMContentLoaded', () => {
   ].forEach(setupFilter);
   const g = document.getElementById('all-key');
   if (g) g.addEventListener('input', () => { globalKey = g.value.trim(); triggerSearch(); });
+
+  const mailHeader = document.getElementById('mail-date-header');
+  if (mailHeader) mailHeader.addEventListener('click', () => {
+    mailSortDescending = !mailSortDescending;
+    searchEmails(mailPage, true);
+  });
 
   searchCustomers(1);
   searchEmails(1);
