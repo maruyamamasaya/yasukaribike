@@ -169,6 +169,8 @@ async function searchCustomers(page = 1) {
   const next = document.getElementById('next-btn');
   if (prev) prev.disabled = currentPage === 1;
   if (next) next.disabled = currentPage === totalPages || searchResults.length === 0;
+  const ccount = document.getElementById('customer-count');
+  if (ccount) ccount.textContent = `【${slice.length}件／${searchResults.length}件中】`;
 }
 
 function nextPage() {
@@ -239,6 +241,8 @@ async function searchEmails(page = 1, refresh = false) {
   const next = document.getElementById('mail-next-btn');
   if (prev) prev.disabled = mailPage === 1;
   if (next) next.disabled = mailPage === total || mailResults.length === 0;
+  const mcount = document.getElementById('mail-count');
+  if (mcount) mcount.textContent = `【${slice.length}件／${mailResults.length}件中】`;
 }
 
 function mailNextPage() {
