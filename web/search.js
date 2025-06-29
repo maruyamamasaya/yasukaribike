@@ -10,6 +10,7 @@ let searchResults = [];
 let mailPage = 1;
 const MAIL_PAGE_SIZE = 20;
 let mailResults = [];
+let totalEmailCount = 0; // 総メール件数
 let searchTimeout;
 let globalKey = '';
 
@@ -190,6 +191,7 @@ async function searchEmails(page = 1, refresh = false) {
     const res = await fetch(API + '/emails');
     const data = await res.json();
     let emails = Array.isArray(data.Items) ? data.Items : data;
+    totalEmailCount = emails.length;
 
     emails = emails.filter(e =>
       (!date || formatYMD(e.date || e.createdAt) === formatYMD(date)) &&
@@ -242,7 +244,7 @@ async function searchEmails(page = 1, refresh = false) {
   if (prev) prev.disabled = mailPage === 1;
   if (next) next.disabled = mailPage === total || mailResults.length === 0;
   const mcount = document.getElementById('mail-count');
-  if (mcount) mcount.textContent = `【${slice.length}件／${mailResults.length}件中】`;
+  if (mcount) mcount.textContent = `【${mailResults.length}件／${totalEmailCount}件中】`;
 }
 
 function mailNextPage() {
