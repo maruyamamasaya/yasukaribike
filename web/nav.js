@@ -25,7 +25,24 @@ function showBreadcrumb() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', showBreadcrumb);
+function addTopLink() {
+  if (window.location.pathname.endsWith('index.html')) return;
+  const header = document.querySelector('.container h1');
+  if (!header) return;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'text-end mb-2';
+  const link = document.createElement('a');
+  link.href = 'index.html';
+  link.className = 'btn btn-primary btn-sm';
+  link.textContent = 'TOP';
+  wrapper.appendChild(link);
+  header.after(wrapper);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  showBreadcrumb();
+  addTopLink();
+});
 
 function nextStatus(status) {
   if (status === '未着手') return '進行中';
