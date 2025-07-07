@@ -99,8 +99,6 @@ async function loadDashboard() {
       const isToday = c.date ? c.date === today : c.order_id && c.order_id.slice(0, 8) === todayKey;
       return isToday && (c.type || c.category) === 'メール問い合わせ';
     }).length;
-  const callLogEl = document.getElementById('d-call-log');
-  if (callLogEl) callLogEl.textContent = 0;
   document.getElementById('d-unconfirmed').textContent = unconfirmed;
   const schedEl = document.getElementById('d-scheduled');
   if (schedEl) schedEl.textContent = scheduled;
