@@ -79,6 +79,7 @@ async function scanAll(params) {
             ConsistentRead: true
           })
           .promise();
+        console.log('LastEvaluatedKey:', data.LastEvaluatedKey || null);
         break;
       } catch (err) {
         if (err.retryable && attempts < 5) {
@@ -175,7 +176,7 @@ app.get(['/', '/index.html'], async (req, res, next) => {
     for (const idx of getAccountIndices()) {
       const items = await scanAll({
         TableName: getMailTable(idx),
-        ProjectionExpression: '#c',
+        ProjectionExpression: 'unique_id, #c',
         ExpressionAttributeNames: { '#c': 'category' }
       });
       for (const item of items) {
@@ -1139,7 +1140,7 @@ app.get('/categories', async (req, res) => {
     for (const idx of indices) {
       const items = await scanAll({
         TableName: getMailTable(idx),
-        ProjectionExpression: '#c',
+        ProjectionExpression: 'unique_id, #c',
         ExpressionAttributeNames: { '#c': 'category' }
       });
       for (const item of items) {
@@ -1166,7 +1167,7 @@ app.get('/folder-tree', async (req, res) => {
     for (const idx of indices) {
       const items = await scanAll({
         TableName: getMailTable(idx),
-        ProjectionExpression: '#f, category',
+        ProjectionExpression: 'unique_id, #f, category',
         ExpressionAttributeNames: { '#f': 'folder' }
       });
       for (const item of items) {
