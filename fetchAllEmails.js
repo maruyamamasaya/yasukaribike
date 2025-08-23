@@ -172,23 +172,42 @@ function processFolder(name, accountIndex) {
           }
 
           log(`Fetching ${results.length} emails from ${name}`);
-          const f = imap.fetch(results, { bodies: '' });
+          const f = imap.fetch(results, { bodies: ['BODY[]'], markSeen: true });
 
           f.on('message', msg => {
-            let raw = '';
+            let chunks = [];
             let uid;
             msg.once('attributes', attrs => {
               uid = attrs.uid;
             });
             msg.on('body', stream => {
               stream.on('data', chunk => {
-                raw += chunk.toString('utf8');
+                chunks.push(chunk);
               });
             });
             msg.once('end', async () => {
               try {
+                const raw = Buffer.concat(chunks);
                 const parsed = await simpleParser(raw);
-                await saveMail(uid, parsed, name, accountIndex);
+                let bodyText = parsed.text || '';
+                if (parsed.html) {
+                  const { parseDocument, DomUtils } = require('htmlparser2');
+                  const doc = parseDocument(parsed.html);
+                  const htmlText = DomUtils.getText(doc);
+                  if (htmlText) {
+                    bodyText = bodyText
+                      ? `${bodyText}\n${htmlText}`
+                      : htmlText;
+                  }
+                }
+                if (!bodyText) {
+                  log(
+                    `No body content for UID ${uid}; headers: ${JSON.stringify(
+                      parsed.headerLines
+                    )} attachments: ${parsed.attachments?.length || 0}`
+                  );
+                }
+                await saveMail(uid, { ...parsed, text: bodyText }, name, accountIndex);
                 log(`Saved mail UID ${uid} from ${name}`);
               } catch (e) {
                 log(`Error processing UID ${uid}: ${e.message}`);
