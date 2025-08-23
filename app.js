@@ -59,6 +59,87 @@ function respondError(res, status, label, err) {
   res.status(status).json(body);
 }
 
+// DynamoDB から全件を取得するヘルパー
+// 読み取り制限で一時的に失敗した場合はリトライし、
+// ページごとに短い待機を挟んで確実に全件を取得する
+async function scanAll(params) {
+  const delay = ms => new Promise(res => setTimeout(res, ms));
+  const items = [];
+
+  // Ensure unique_id is always included when using ProjectionExpression
+  const baseParams = { ...params };
+  if (baseParams.ProjectionExpression) {
+    const names = baseParams.ExpressionAttributeNames || {};
+    const alias = Object.entries(names).find(([, v]) => v === 'unique_id')?.[0];
+    const projections = baseParams.ProjectionExpression.split(/\s*,\s*/);
+    const hasId =
+      projections.includes('unique_id') || (alias && projections.includes(alias));
+    if (!hasId) {
+      baseParams.ProjectionExpression += ', #uid';
+      baseParams.ExpressionAttributeNames = {
+        ...names,
+        '#uid': 'unique_id'
+      };
+    }
+  }
+
+  let ExclusiveStartKey;
+
+  // ensure unique_id is always projected when using ProjectionExpression
+  if (params.ProjectionExpression) {
+    params.ExpressionAttributeNames = params.ExpressionAttributeNames || {};
+    const names = params.ExpressionAttributeNames;
+    // check if unique_id already referenced directly
+    const hasDirect = /\bunique_id\b/.test(params.ProjectionExpression);
+    // check if any alias maps to unique_id
+    const alias = Object.keys(names).find(key => names[key] === 'unique_id');
+    const hasAlias = alias && new RegExp(`\\b${alias}\\b`).test(params.ProjectionExpression);
+    if (!hasDirect && !hasAlias) {
+      const newAlias = '#id';
+      if (!names[newAlias]) names[newAlias] = 'unique_id';
+      params.ProjectionExpression = `${params.ProjectionExpression}, ${newAlias}`;
+    } else if (alias && !hasAlias) {
+      params.ProjectionExpression = `${params.ProjectionExpression}, ${alias}`;
+    }
+  }
+  do {
+    let data;
+    let attempts = 0;
+    // retry with exponential backoff for retryable errors
+    while (true) {
+      try {
+        data = await dynamo
+          .scan({
+            ...baseParams,
+            ExclusiveStartKey,
+            ConsistentRead: true
+          })
+          .promise();
+        console.log('LastEvaluatedKey:', data.LastEvaluatedKey || null);
+        break;
+      } catch (err) {
+        if (err.retryable && attempts < 5) {
+          attempts += 1;
+          await delay(50 * 2 ** attempts);
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    items.push(...(data.Items || []));
+    console.log('LastEvaluatedKey:', data.LastEvaluatedKey || null);
+    ExclusiveStartKey = data.LastEvaluatedKey;
+    console.log('LastEvaluatedKey:', ExclusiveStartKey);
+    if (ExclusiveStartKey) {
+      // small delay between pages to avoid throttling
+      await delay(200);
+    }
+
+  } while (ExclusiveStartKey);
+  return items;
+}
+
 function getAccountEnv(prefix, index) {
   if (index === 1) {
     return process.env[`${prefix}1`] || process.env[prefix];
@@ -131,14 +212,12 @@ app.get(['/', '/index.html'], async (req, res, next) => {
     );
     const counts = {};
     for (const idx of getAccountIndices()) {
-      const data = await dynamo
-        .scan({
-          TableName: getMailTable(idx),
-          ProjectionExpression: '#c',
-          ExpressionAttributeNames: { '#c': 'category' }
-        })
-        .promise();
-      for (const item of data.Items || []) {
+      const items = await scanAll({
+        TableName: getMailTable(idx),
+        ProjectionExpression: '#id, #c',
+        ExpressionAttributeNames: { '#c': 'category', '#id': 'unique_id' }
+      });
+      for (const item of items) {
         if (item.category) {
           counts[item.category] = (counts[item.category] || 0) + 1;
         }
@@ -997,10 +1076,8 @@ app.get('/api/fetch-reserve-email', async (req, res) => {
 // グーバイク追加連絡データ取得
 app.get('/goobike-emails', async (req, res) => {
   try {
-    const data = await dynamo
-      .scan({ TableName: MAIL_TABLE })
-      .promise();
-    const items = (data.Items || []).sort((a, b) =>
+    const items = await scanAll({ TableName: MAIL_TABLE });
+    items.sort((a, b) =>
       (b.createdAt || '').localeCompare(a.createdAt || '')
     );
     res.json(items);
@@ -1036,19 +1113,19 @@ app.get('/emails', async (req, res) => {
         ExpressionAttributeNames: { '#a': 'account' },
         ExpressionAttributeValues: { ':a': Number(account) }
       };
-      const data = await dynamo.scan(params).promise();
-      return res.json(data.Items || []);
+      const items = await scanAll(params);
+      return res.json(items);
     }
 
     const indices = getAccountIndices();
-    const items = [];
+    const map = new Map();
     for (const idx of indices) {
-      const data = await dynamo
-        .scan({ TableName: getMailTable(idx) })
-        .promise();
-      items.push(...(data.Items || []));
+      const items = await scanAll({ TableName: getMailTable(idx) });
+      for (const item of items) {
+        if (item.unique_id) map.set(item.unique_id, item);
+      }
     }
-    res.json(items);
+    res.json(Array.from(map.values()));
   } catch (err) {
     respondError(res, 500, 'Failed to fetch emails', err);
   }
@@ -1061,8 +1138,8 @@ app.get('/email-stats', async (req, res) => {
     const indices = account ? [parseInt(account, 10) || 1] : getAccountIndices();
     let items = [];
     for (const idx of indices) {
-      const data = await dynamo.scan({ TableName: getMailTable(idx) }).promise();
-      items = items.concat(data.Items || []);
+      const scanned = await scanAll({ TableName: getMailTable(idx) });
+      items = items.concat(scanned);
     }
     const count = items.length;
     let lastDate = '';
@@ -1099,14 +1176,12 @@ app.get('/categories', async (req, res) => {
     const indices = account ? [parseInt(account, 10) || 1] : getAccountIndices();
     const counts = {};
     for (const idx of indices) {
-      const data = await dynamo
-        .scan({
-          TableName: getMailTable(idx),
-          ProjectionExpression: '#c',
-          ExpressionAttributeNames: { '#c': 'category' }
-        })
-        .promise();
-      for (const item of data.Items || []) {
+      const items = await scanAll({
+        TableName: getMailTable(idx),
+        ProjectionExpression: '#id, #c',
+        ExpressionAttributeNames: { '#c': 'category', '#id': 'unique_id' }
+      });
+      for (const item of items) {
         if (item.category) {
           counts[item.category] = (counts[item.category] || 0) + 1;
         }
@@ -1128,14 +1203,12 @@ app.get('/folder-tree', async (req, res) => {
     const indices = account ? [parseInt(account, 10) || 1] : getAccountIndices();
     const tree = {};
     for (const idx of indices) {
-      const data = await dynamo
-        .scan({
-          TableName: getMailTable(idx),
-          ProjectionExpression: '#f, category',
-          ExpressionAttributeNames: { '#f': 'folder' }
-        })
-        .promise();
-      for (const item of data.Items || []) {
+      const items = await scanAll({
+        TableName: getMailTable(idx),
+        ProjectionExpression: '#id, #f, category',
+        ExpressionAttributeNames: { '#f': 'folder', '#id': 'unique_id' }
+      });
+      for (const item of items) {
         if (!item.folder) continue;
         const delimiter = item.folder.includes('/')
           ? '/'
