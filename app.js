@@ -92,6 +92,7 @@ async function scanAll(params) {
     }
 
     items.push(...(data.Items || []));
+    console.log('LastEvaluatedKey:', data.LastEvaluatedKey || null);
     ExclusiveStartKey = data.LastEvaluatedKey;
     if (ExclusiveStartKey) {
       // small delay between pages to avoid throttling
@@ -176,7 +177,7 @@ app.get(['/', '/index.html'], async (req, res, next) => {
     for (const idx of getAccountIndices()) {
       const items = await scanAll({
         TableName: getMailTable(idx),
-        ProjectionExpression: 'unique_id, #c',
+        ProjectionExpression: '#c, unique_id',
         ExpressionAttributeNames: { '#c': 'category' }
       });
       for (const item of items) {
@@ -1140,7 +1141,7 @@ app.get('/categories', async (req, res) => {
     for (const idx of indices) {
       const items = await scanAll({
         TableName: getMailTable(idx),
-        ProjectionExpression: 'unique_id, #c',
+        ProjectionExpression: '#c, unique_id',
         ExpressionAttributeNames: { '#c': 'category' }
       });
       for (const item of items) {
