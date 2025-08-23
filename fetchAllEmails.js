@@ -3,6 +3,7 @@ const fs = require('fs');
 const Imap = require('imap');
 const AWS = require('aws-sdk');
 const { simpleParser } = require('mailparser');
+const cheerio = require('cheerio');
 
 function htmlToText(html) {
   return html
@@ -66,6 +67,12 @@ const FOLDER_CATEGORIES = {
   'グーバイク/見送りのお知らせ': 'skip',
   'グーバイク/追加連絡': 'additional',
 };
+
+function extractTextFromHtml(html) {
+  const $ = cheerio.load(html);
+  $('script, style').remove();
+  return $.root().text();
+}
 
 
 function getAllFolders(index = 1) {
@@ -188,6 +195,7 @@ function processFolder(name, accountIndex) {
             msg.once('attributes', attrs => {
               uid = attrs.uid;
             });
+            const chunks = [];
             msg.on('body', stream => {
               stream.on('data', chunk => {
                 chunks.push(chunk);
