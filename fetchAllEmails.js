@@ -172,23 +172,37 @@ function processFolder(name, accountIndex) {
           }
 
           log(`Fetching ${results.length} emails from ${name}`);
-          const f = imap.fetch(results, { bodies: '' });
+          const f = imap.fetch(results, { bodies: ['BODY[]'] });
 
           f.on('message', msg => {
-            let raw = '';
+            const chunks = [];
             let uid;
             msg.once('attributes', attrs => {
               uid = attrs.uid;
             });
             msg.on('body', stream => {
               stream.on('data', chunk => {
-                raw += chunk.toString('utf8');
+                chunks.push(chunk);
               });
             });
             msg.once('end', async () => {
               try {
+                const raw = Buffer.concat(chunks).toString('utf8');
                 const parsed = await simpleParser(raw);
-                await saveMail(uid, parsed, name, accountIndex);
+                let bodyText = parsed.text || '';
+                if (!bodyText && parsed.html) {
+                  bodyText = parsed.html
+                    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' ')
+                    .replace(/<[^>]+>/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                }
+                await saveMail(
+                  uid,
+                  { ...parsed, text: bodyText },
+                  name,
+                  accountIndex
+                );
                 log(`Saved mail UID ${uid} from ${name}`);
               } catch (e) {
                 log(`Error processing UID ${uid}: ${e.message}`);
