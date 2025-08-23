@@ -196,7 +196,6 @@ function processFolder(name, accountIndex) {
             msg.once('attributes', attrs => {
               uid = attrs.uid;
             });
-            const chunks = [];
             msg.on('body', stream => {
               stream.on('data', chunk => {
                 messageChunks.push(chunk);
