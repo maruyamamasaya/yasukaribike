@@ -31,6 +31,19 @@ const SINCE_DATE = new Date('2025-05-01');
 // Folders to completely skip when scanning
 const EXCLUDED_FOLDERS = ['INBOX.Junk', 'INBOX.Trash'];
 
+function extractTextFromHtml(html) {
+  if (!html) return '';
+  const withoutScripts = html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+  const withNewlines = withoutScripts.replace(
+    /<(br|p|div|blockquote)[^>]*>/gi,
+    '\n',
+  );
+  const text = withNewlines.replace(/<[^>]+>/g, '');
+  return text.replace(/\s+/g, ' ').trim();
+}
+
 function getAccountEnv(prefix, index) {
   if (index === 1) {
     return process.env[`${prefix}1`] || process.env[prefix];
@@ -172,7 +185,7 @@ function processFolder(name, accountIndex) {
           }
 
           log(`Fetching ${results.length} emails from ${name}`);
-          const f = imap.fetch(results, { bodies: '' });
+          const f = imap.fetch(results, { bodies: '', markSeen: true });
 
           f.on('message', msg => {
             let raw = '';
@@ -188,6 +201,17 @@ function processFolder(name, accountIndex) {
             msg.once('end', async () => {
               try {
                 const parsed = await simpleParser(raw);
+                let bodyText = parsed.text || '';
+                if (!bodyText && parsed.html) {
+                  bodyText = extractTextFromHtml(parsed.html);
+                }
+                if (!bodyText && !parsed.html) {
+                  const headers = parsed.headerLines
+                    ? parsed.headerLines.map(h => `${h.key}: ${h.line}`).join('\n')
+                    : '';
+                  log(`UID ${uid} has no text/html parts. Headers: ${headers}`);
+                }
+                parsed.text = bodyText;
                 await saveMail(uid, parsed, name, accountIndex);
                 log(`Saved mail UID ${uid} from ${name}`);
               } catch (e) {
