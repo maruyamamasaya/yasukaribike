@@ -5,6 +5,14 @@ const AWS = require('aws-sdk');
 const { simpleParser } = require('mailparser');
 const cheerio = require('cheerio');
 
+function htmlToText(html) {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 const logStream = fs.createWriteStream('fetchAllEmails.log', { flags: 'a' });
 function log(message) {
   const line = `[${new Date().toISOString()}] ${message}`;
@@ -102,7 +110,7 @@ function getAllFolders(index = 1) {
   });
 }
 
-async function saveMail(uid, parsed, folder, account) {
+async function saveMail(uid, parsed, body, folder, account) {
   let category = FOLDER_CATEGORIES[folder] || null;
 
   if (!category) {
@@ -138,7 +146,7 @@ async function saveMail(uid, parsed, folder, account) {
     from: parsed.from ? parsed.from.text : '',
     to: parsed.to ? parsed.to.text : '',
     date: parsed.date ? parsed.date.toISOString() : null,
-    body: parsed.text || '',
+    body,
   };
   try {
     await dynamo
@@ -183,7 +191,6 @@ function processFolder(name, accountIndex) {
 
           f.on('message', msg => {
             const chunks = [];
-
             let uid;
             msg.once('attributes', attrs => {
               uid = attrs.uid;
@@ -196,23 +203,21 @@ function processFolder(name, accountIndex) {
             });
             msg.once('end', async () => {
               try {
-                const raw = Buffer.concat(chunks).toString('utf8');
-                const parsed = await simpleParser(raw);
-                let bodyText = parsed.text || '';
-                if (!bodyText && parsed.html) {
-                  bodyText = parsed.html
-                    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' ')
-                    .replace(/<[^>]+>/g, ' ')
-                    .replace(/\s+/g, ' ')
-                    .trim();
+                const parsed = await simpleParser(Buffer.concat(chunks));
+                let body = parsed.text || '';
+                if (!body && parsed.html) {
+                  body = htmlToText(parsed.html);
                 }
-                await saveMail(
-                  uid,
-                  { ...parsed, text: bodyText },
-                  name,
-                  accountIndex
-                );
-
+                if (!body) {
+                  log(`No body content for UID ${uid} in ${name}`);
+                  if (parsed.headerLines) {
+                    log(`Headers: ${JSON.stringify(parsed.headerLines)}`);
+                  }
+                  if (parsed.attachments && parsed.attachments.length) {
+                    log(`Attachments: ${parsed.attachments.length}`);
+                  }
+                }
+                await saveMail(uid, parsed, body, name, accountIndex);
                 log(`Saved mail UID ${uid} from ${name}`);
               } catch (e) {
                 log(`Error processing UID ${uid}: ${e.message}`);
