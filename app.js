@@ -65,6 +65,24 @@ function respondError(res, status, label, err) {
 async function scanAll(params) {
   const delay = ms => new Promise(res => setTimeout(res, ms));
   const items = [];
+
+  // Ensure unique_id is always included when using ProjectionExpression
+  const baseParams = { ...params };
+  if (baseParams.ProjectionExpression) {
+    const names = baseParams.ExpressionAttributeNames || {};
+    const alias = Object.entries(names).find(([, v]) => v === 'unique_id')?.[0];
+    const projections = baseParams.ProjectionExpression.split(/\s*,\s*/);
+    const hasId =
+      projections.includes('unique_id') || (alias && projections.includes(alias));
+    if (!hasId) {
+      baseParams.ProjectionExpression += ', #uid';
+      baseParams.ExpressionAttributeNames = {
+        ...names,
+        '#uid': 'unique_id'
+      };
+    }
+  }
+
   let ExclusiveStartKey;
 
   // ensure unique_id is always projected when using ProjectionExpression
@@ -92,11 +110,12 @@ async function scanAll(params) {
       try {
         data = await dynamo
           .scan({
-            ...params,
+            ...baseParams,
             ExclusiveStartKey,
             ConsistentRead: true
           })
           .promise();
+        console.log('LastEvaluatedKey:', data.LastEvaluatedKey || null);
         break;
       } catch (err) {
         if (err.retryable && attempts < 5) {
@@ -109,6 +128,7 @@ async function scanAll(params) {
     }
 
     items.push(...(data.Items || []));
+    console.log('LastEvaluatedKey:', data.LastEvaluatedKey || null);
     ExclusiveStartKey = data.LastEvaluatedKey;
     console.log('LastEvaluatedKey:', ExclusiveStartKey);
     if (ExclusiveStartKey) {
