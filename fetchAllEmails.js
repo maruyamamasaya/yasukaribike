@@ -190,7 +190,7 @@ function processFolder(name, accountIndex) {
           const f = imap.fetch(results, { bodies: ['BODY[]'], markSeen: true });
 
           f.on('message', msg => {
-            const chunks = [];
+            let chunks = [];
             let uid;
             msg.once('attributes', attrs => {
               uid = attrs.uid;
