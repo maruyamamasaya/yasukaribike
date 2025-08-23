@@ -24,13 +24,13 @@ AWS.config.update({ region });
 const dynamo = new AWS.DynamoDB.DocumentClient();
 
 function getMailTable(index = 1) {
-  const suffix = index === 1 ? '1' : String(index);
-  return (
-    process.env[`MAIL_TABLE${suffix}`] ||
+  const envTable =
+    process.env[`MAIL_TABLE${index}`] ||
     process.env.MAIL_TABLE ||
-    process.env.GOOBIKE_TABLE ||
-    'Rebikele_goobikemail01_TBL'
-  );
+    process.env.GOOBIKE_TABLE;
+  if (envTable) return envTable;
+  const suffix = String(index).padStart(2, '0');
+  return `Rebikele_goobikemail${suffix}_TBL`;
 }
 
 // Only fetch messages received on or after this date
