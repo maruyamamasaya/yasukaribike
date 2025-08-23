@@ -103,7 +103,7 @@ Set `AWS_REGION` for the AWS SDK (e.g., `ap-northeast-1`).
 値が不足していると `/api/fetch-email` などのエンドポイントは 500 エラーを返します。
 Missing values will cause endpoints such as `/api/fetch-email` to return 500 errors.
 
-`/api/fetch-email` will read all matching messages from the last two months and
+`/api/fetch-email` will read all matching messages received on or after May 1, 2025 and
 save them in DynamoDB. If an email with the same inquiry number already exists,
 the record is updated with the latest details instead of creating a suffixed
 duplicate. The endpoint now searches for the pattern `[UB` in the subject line so that

@@ -544,8 +544,7 @@ app.get('/api/fetch-email', async (req, res) => {
         return respondError(res, 500, 'Failed to open mailbox', err);
       }
 
-      const since = new Date();
-      since.setMonth(since.getMonth() - 2);
+      const since = new Date('2025-05-01');
 
       imap.search(
         [
