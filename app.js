@@ -66,6 +66,24 @@ async function scanAll(params) {
   const delay = ms => new Promise(res => setTimeout(res, ms));
   const items = [];
   let ExclusiveStartKey;
+
+  // ensure unique_id is always projected when using ProjectionExpression
+  if (params.ProjectionExpression) {
+    params.ExpressionAttributeNames = params.ExpressionAttributeNames || {};
+    const names = params.ExpressionAttributeNames;
+    // check if unique_id already referenced directly
+    const hasDirect = /\bunique_id\b/.test(params.ProjectionExpression);
+    // check if any alias maps to unique_id
+    const alias = Object.keys(names).find(key => names[key] === 'unique_id');
+    const hasAlias = alias && new RegExp(`\\b${alias}\\b`).test(params.ProjectionExpression);
+    if (!hasDirect && !hasAlias) {
+      const newAlias = '#id';
+      if (!names[newAlias]) names[newAlias] = 'unique_id';
+      params.ProjectionExpression = `${params.ProjectionExpression}, ${newAlias}`;
+    } else if (alias && !hasAlias) {
+      params.ProjectionExpression = `${params.ProjectionExpression}, ${alias}`;
+    }
+  }
   do {
     let data;
     let attempts = 0;
@@ -92,6 +110,7 @@ async function scanAll(params) {
 
     items.push(...(data.Items || []));
     ExclusiveStartKey = data.LastEvaluatedKey;
+    console.log('LastEvaluatedKey:', ExclusiveStartKey);
     if (ExclusiveStartKey) {
       // small delay between pages to avoid throttling
       await delay(200);
@@ -175,8 +194,8 @@ app.get(['/', '/index.html'], async (req, res, next) => {
     for (const idx of getAccountIndices()) {
       const items = await scanAll({
         TableName: getMailTable(idx),
-        ProjectionExpression: '#c',
-        ExpressionAttributeNames: { '#c': 'category' }
+        ProjectionExpression: '#id, #c',
+        ExpressionAttributeNames: { '#c': 'category', '#id': 'unique_id' }
       });
       for (const item of items) {
         if (item.category) {
@@ -1139,8 +1158,8 @@ app.get('/categories', async (req, res) => {
     for (const idx of indices) {
       const items = await scanAll({
         TableName: getMailTable(idx),
-        ProjectionExpression: '#c',
-        ExpressionAttributeNames: { '#c': 'category' }
+        ProjectionExpression: '#id, #c',
+        ExpressionAttributeNames: { '#c': 'category', '#id': 'unique_id' }
       });
       for (const item of items) {
         if (item.category) {
@@ -1166,8 +1185,8 @@ app.get('/folder-tree', async (req, res) => {
     for (const idx of indices) {
       const items = await scanAll({
         TableName: getMailTable(idx),
-        ProjectionExpression: '#f, category',
-        ExpressionAttributeNames: { '#f': 'folder' }
+        ProjectionExpression: '#id, #f, category',
+        ExpressionAttributeNames: { '#f': 'folder', '#id': 'unique_id' }
       });
       for (const item of items) {
         if (!item.folder) continue;
