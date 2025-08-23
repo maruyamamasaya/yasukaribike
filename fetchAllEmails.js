@@ -3,7 +3,6 @@ const fs = require('fs');
 const Imap = require('imap');
 const AWS = require('aws-sdk');
 const { simpleParser } = require('mailparser');
-const cheerio = require('cheerio');
 
 function htmlToText(html) {
   return html
