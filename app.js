@@ -79,6 +79,7 @@ async function scanAll(params) {
             ConsistentRead: true
           })
           .promise();
+        console.log('LastEvaluatedKey:', data.LastEvaluatedKey || null);
         break;
       } catch (err) {
         if (err.retryable && attempts < 5) {
