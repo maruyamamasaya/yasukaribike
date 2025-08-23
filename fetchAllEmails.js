@@ -3,6 +3,15 @@ const fs = require('fs');
 const Imap = require('imap');
 const AWS = require('aws-sdk');
 const { simpleParser } = require('mailparser');
+const cheerio = require('cheerio');
+
+function htmlToText(html) {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 const logStream = fs.createWriteStream('fetchAllEmails.log', { flags: 'a' });
 function log(message) {
@@ -59,6 +68,12 @@ const FOLDER_CATEGORIES = {
   'グーバイク/追加連絡': 'additional',
 };
 
+function extractTextFromHtml(html) {
+  const $ = cheerio.load(html);
+  $('script, style').remove();
+  return $.root().text();
+}
+
 
 function getAllFolders(index = 1) {
   return new Promise((resolve, reject) => {
@@ -95,7 +110,7 @@ function getAllFolders(index = 1) {
   });
 }
 
-async function saveMail(uid, parsed, folder, account) {
+async function saveMail(uid, parsed, body, folder, account) {
   let category = FOLDER_CATEGORIES[folder] || null;
 
   if (!category) {
@@ -131,7 +146,7 @@ async function saveMail(uid, parsed, folder, account) {
     from: parsed.from ? parsed.from.text : '',
     to: parsed.to ? parsed.to.text : '',
     date: parsed.date ? parsed.date.toISOString() : null,
-    body: parsed.text || '',
+    body,
   };
   try {
     await dynamo
@@ -176,13 +191,16 @@ function processFolder(name, accountIndex) {
 
           f.on('message', msg => {
             const messageChunks = [];
+
             let uid;
             msg.once('attributes', attrs => {
               uid = attrs.uid;
             });
+            const chunks = [];
             msg.on('body', stream => {
               stream.on('data', chunk => {
                 messageChunks.push(chunk);
+
               });
             });
             msg.once('end', async () => {
