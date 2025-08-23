@@ -3,6 +3,7 @@ const fs = require('fs');
 const Imap = require('imap');
 const AWS = require('aws-sdk');
 const { simpleParser } = require('mailparser');
+const cheerio = require('cheerio');
 
 const logStream = fs.createWriteStream('fetchAllEmails.log', { flags: 'a' });
 function log(message) {
@@ -58,6 +59,12 @@ const FOLDER_CATEGORIES = {
   'グーバイク/見送りのお知らせ': 'skip',
   'グーバイク/追加連絡': 'additional',
 };
+
+function extractTextFromHtml(html) {
+  const $ = cheerio.load(html);
+  $('script, style').remove();
+  return $.root().text();
+}
 
 
 function getAllFolders(index = 1) {
@@ -172,23 +179,28 @@ function processFolder(name, accountIndex) {
           }
 
           log(`Fetching ${results.length} emails from ${name}`);
-          const f = imap.fetch(results, { bodies: '' });
+          const f = imap.fetch(results, { bodies: ['BODY[]'] });
 
           f.on('message', msg => {
-            let raw = '';
             let uid;
             msg.once('attributes', attrs => {
               uid = attrs.uid;
             });
+            const chunks = [];
             msg.on('body', stream => {
               stream.on('data', chunk => {
-                raw += chunk.toString('utf8');
+                chunks.push(chunk);
               });
             });
             msg.once('end', async () => {
               try {
-                const parsed = await simpleParser(raw);
-                await saveMail(uid, parsed, name, accountIndex);
+                const parsed = await simpleParser(Buffer.concat(chunks));
+                const htmlText = parsed.html ? extractTextFromHtml(parsed.html) : '';
+                const headerText = parsed.headerLines
+                  ? parsed.headerLines.map(h => h.line).join('\n')
+                  : '';
+                const text = parsed.text || htmlText || headerText;
+                await saveMail(uid, { ...parsed, text }, name, accountIndex);
                 log(`Saved mail UID ${uid} from ${name}`);
               } catch (e) {
                 log(`Error processing UID ${uid}: ${e.message}`);
