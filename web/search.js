@@ -300,6 +300,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (s) s.addEventListener('click', e => e.preventDefault());
     d.open = true;
   });
+  const toggleBtn = document.getElementById('toggle-filters');
+  const customerForm = document.getElementById('customer-form');
+  const mailForm = document.getElementById('mail-form');
+  if (toggleBtn && customerForm && mailForm) {
+    toggleBtn.addEventListener('click', () => {
+      const hidden = customerForm.classList.contains('d-none') && mailForm.classList.contains('d-none');
+      if (hidden) {
+        customerForm.classList.remove('d-none');
+        mailForm.classList.remove('d-none');
+        toggleBtn.textContent = '－';
+      } else {
+        customerForm.classList.add('d-none');
+        mailForm.classList.add('d-none');
+        toggleBtn.textContent = '＋';
+      }
+    });
+  }
   [
     's-date','s-name','s-phone','s-email','s-status','s-category','s-details','s-text',
     'm-date','m-key'
