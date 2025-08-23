@@ -133,9 +133,9 @@ th[data-key] {
   cursor: pointer;
 }
 
-/* clickable mail date cell */
-.mail-link {
-  cursor: pointer;
+/* exclude non-link cells from pointer */
+.link-row .no-link {
+  cursor: default;
 }
 
 /* Ensure mail list table remains within the screen */
