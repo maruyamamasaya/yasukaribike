@@ -60,15 +60,43 @@ function respondError(res, status, label, err) {
 }
 
 // DynamoDB から全件を取得するヘルパー
+// 読み取り制限で一時的に失敗した場合はリトライし、
+// ページごとに短い待機を挟んで確実に全件を取得する
 async function scanAll(params) {
-  let items = [];
+  const delay = ms => new Promise(res => setTimeout(res, ms));
+  const items = [];
   let ExclusiveStartKey;
   do {
-    const data = await dynamo
-      .scan({ ...params, ExclusiveStartKey })
-      .promise();
-    items = items.concat(data.Items || []);
+    let data;
+    let attempts = 0;
+    // retry with exponential backoff for retryable errors
+    while (true) {
+      try {
+        data = await dynamo
+          .scan({
+            ...params,
+            ExclusiveStartKey,
+            ConsistentRead: true
+          })
+          .promise();
+        break;
+      } catch (err) {
+        if (err.retryable && attempts < 5) {
+          attempts += 1;
+          await delay(50 * 2 ** attempts);
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    items.push(...(data.Items || []));
     ExclusiveStartKey = data.LastEvaluatedKey;
+    if (ExclusiveStartKey) {
+      // small delay between pages to avoid throttling
+      await delay(200);
+    }
+
   } while (ExclusiveStartKey);
   return items;
 }
