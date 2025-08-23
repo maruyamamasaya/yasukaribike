@@ -190,7 +190,8 @@ function processFolder(name, accountIndex) {
           const f = imap.fetch(results, { bodies: ['BODY[]'], markSeen: true });
 
           f.on('message', msg => {
-            let chunks = [];
+            const messageChunks = [];
+
             let uid;
             msg.once('attributes', attrs => {
               uid = attrs.uid;
@@ -198,12 +199,13 @@ function processFolder(name, accountIndex) {
             const chunks = [];
             msg.on('body', stream => {
               stream.on('data', chunk => {
-                chunks.push(chunk);
+                messageChunks.push(chunk);
+
               });
             });
             msg.once('end', async () => {
               try {
-                const raw = Buffer.concat(chunks);
+                const raw = Buffer.concat(messageChunks);
                 const parsed = await simpleParser(raw);
                 let bodyText = parsed.text || '';
                 if (parsed.html) {
