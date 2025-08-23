@@ -26,7 +26,7 @@ function getMailTable(index = 1) {
 }
 
 // Only fetch messages received on or after this date
-const SINCE_DATE = new Date('2025-06-01');
+const SINCE_DATE = new Date('2025-05-01');
 
 // Folders to completely skip when scanning
 const EXCLUDED_FOLDERS = ['INBOX.Junk', 'INBOX.Trash'];
