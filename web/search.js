@@ -300,20 +300,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (s) s.addEventListener('click', e => e.preventDefault());
     d.open = true;
   });
-  const toggleCustomerBtn = document.getElementById('toggle-customer-form');
+  const toggleBtn = document.getElementById('toggle-filters');
   const customerForm = document.getElementById('customer-form');
-  if (toggleCustomerBtn && customerForm) {
-    toggleCustomerBtn.addEventListener('click', () => {
-      const hidden = customerForm.classList.toggle('d-none');
-      toggleCustomerBtn.textContent = hidden ? '＋' : '－';
-    });
-  }
-  const toggleMailBtn = document.getElementById('toggle-mail-form');
   const mailForm = document.getElementById('mail-form');
-  if (toggleMailBtn && mailForm) {
-    toggleMailBtn.addEventListener('click', () => {
-      const hidden = mailForm.classList.toggle('d-none');
-      toggleMailBtn.textContent = hidden ? '＋' : '－';
+  if (toggleBtn && customerForm && mailForm) {
+    toggleBtn.addEventListener('click', () => {
+      const hidden = customerForm.classList.contains('d-none') && mailForm.classList.contains('d-none');
+      if (hidden) {
+        customerForm.classList.remove('d-none');
+        mailForm.classList.remove('d-none');
+        toggleBtn.textContent = '－';
+      } else {
+        customerForm.classList.add('d-none');
+        mailForm.classList.add('d-none');
+        toggleBtn.textContent = '＋';
+      }
     });
   }
   [
