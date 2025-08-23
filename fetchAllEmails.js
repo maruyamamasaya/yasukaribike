@@ -3,6 +3,7 @@ const fs = require('fs');
 const Imap = require('imap');
 const AWS = require('aws-sdk');
 const { simpleParser } = require('mailparser');
+const cheerio = require('cheerio');
 
 const logStream = fs.createWriteStream('fetchAllEmails.log', { flags: 'a' });
 function log(message) {
@@ -58,6 +59,12 @@ const FOLDER_CATEGORIES = {
   'グーバイク/見送りのお知らせ': 'skip',
   'グーバイク/追加連絡': 'additional',
 };
+
+function extractTextFromHtml(html) {
+  const $ = cheerio.load(html);
+  $('script, style').remove();
+  return $.root().text();
+}
 
 
 function getAllFolders(index = 1) {
@@ -176,10 +183,12 @@ function processFolder(name, accountIndex) {
 
           f.on('message', msg => {
             const chunks = [];
+
             let uid;
             msg.once('attributes', attrs => {
               uid = attrs.uid;
             });
+            const chunks = [];
             msg.on('body', stream => {
               stream.on('data', chunk => {
                 chunks.push(chunk);
@@ -203,6 +212,7 @@ function processFolder(name, accountIndex) {
                   name,
                   accountIndex
                 );
+
                 log(`Saved mail UID ${uid} from ${name}`);
               } catch (e) {
                 log(`Error processing UID ${uid}: ${e.message}`);
