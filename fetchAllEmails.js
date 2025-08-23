@@ -182,6 +182,8 @@ function processFolder(name, accountIndex) {
           const f = imap.fetch(results, { bodies: ['BODY[]'] });
 
           f.on('message', msg => {
+            const chunks = [];
+
             let uid;
             msg.once('attributes', attrs => {
               uid = attrs.uid;
@@ -194,13 +196,23 @@ function processFolder(name, accountIndex) {
             });
             msg.once('end', async () => {
               try {
-                const parsed = await simpleParser(Buffer.concat(chunks));
-                const htmlText = parsed.html ? extractTextFromHtml(parsed.html) : '';
-                const headerText = parsed.headerLines
-                  ? parsed.headerLines.map(h => h.line).join('\n')
-                  : '';
-                const text = parsed.text || htmlText || headerText;
-                await saveMail(uid, { ...parsed, text }, name, accountIndex);
+                const raw = Buffer.concat(chunks).toString('utf8');
+                const parsed = await simpleParser(raw);
+                let bodyText = parsed.text || '';
+                if (!bodyText && parsed.html) {
+                  bodyText = parsed.html
+                    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' ')
+                    .replace(/<[^>]+>/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                }
+                await saveMail(
+                  uid,
+                  { ...parsed, text: bodyText },
+                  name,
+                  accountIndex
+                );
+
                 log(`Saved mail UID ${uid} from ${name}`);
               } catch (e) {
                 log(`Error processing UID ${uid}: ${e.message}`);
