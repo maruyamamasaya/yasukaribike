@@ -133,6 +133,11 @@ th[data-key] {
   cursor: pointer;
 }
 
+/* clickable mail date cell */
+.mail-link {
+  cursor: pointer;
+}
+
 /* Ensure mail list table remains within the screen */
 #mail-table {
   table-layout: fixed;

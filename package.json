@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "deploy": "npx serverless deploy",
-    "test": "jest",
-    "fetch-all": "node fetchAllEmails.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -16,10 +17,17 @@
     "aws-sdk": "^2.1571.0",
     "imap": "^0.8.19",
     "mailparser": "^3.7.3",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "next": "^13.5.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "serverless": "^3.38.0",
-    "jest": "^29.7.0"
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.0",
+    "@types/jest": "^29.5.0",
+    "eslint": "^8.56.0",
+    "eslint-config-next": "^14.2.3"
   }
 }
