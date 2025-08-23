@@ -65,6 +65,24 @@ function respondError(res, status, label, err) {
 async function scanAll(params) {
   const delay = ms => new Promise(res => setTimeout(res, ms));
   const items = [];
+
+  // Ensure unique_id is always included when using ProjectionExpression
+  const baseParams = { ...params };
+  if (baseParams.ProjectionExpression) {
+    const names = baseParams.ExpressionAttributeNames || {};
+    const alias = Object.entries(names).find(([, v]) => v === 'unique_id')?.[0];
+    const projections = baseParams.ProjectionExpression.split(/\s*,\s*/);
+    const hasId =
+      projections.includes('unique_id') || (alias && projections.includes(alias));
+    if (!hasId) {
+      baseParams.ProjectionExpression += ', #uid';
+      baseParams.ExpressionAttributeNames = {
+        ...names,
+        '#uid': 'unique_id'
+      };
+    }
+  }
+
   let ExclusiveStartKey;
   do {
     let data;
@@ -74,7 +92,7 @@ async function scanAll(params) {
       try {
         data = await dynamo
           .scan({
-            ...params,
+            ...baseParams,
             ExclusiveStartKey,
             ConsistentRead: true
           })
@@ -94,6 +112,7 @@ async function scanAll(params) {
     items.push(...(data.Items || []));
     console.log('LastEvaluatedKey:', data.LastEvaluatedKey || null);
     ExclusiveStartKey = data.LastEvaluatedKey;
+    console.log('LastEvaluatedKey:', ExclusiveStartKey);
     if (ExclusiveStartKey) {
       // small delay between pages to avoid throttling
       await delay(200);
@@ -177,8 +196,8 @@ app.get(['/', '/index.html'], async (req, res, next) => {
     for (const idx of getAccountIndices()) {
       const items = await scanAll({
         TableName: getMailTable(idx),
-        ProjectionExpression: '#c, unique_id',
-        ExpressionAttributeNames: { '#c': 'category' }
+        ProjectionExpression: '#id, #c',
+        ExpressionAttributeNames: { '#c': 'category', '#id': 'unique_id' }
       });
       for (const item of items) {
         if (item.category) {
@@ -1141,8 +1160,8 @@ app.get('/categories', async (req, res) => {
     for (const idx of indices) {
       const items = await scanAll({
         TableName: getMailTable(idx),
-        ProjectionExpression: '#c, unique_id',
-        ExpressionAttributeNames: { '#c': 'category' }
+        ProjectionExpression: '#id, #c',
+        ExpressionAttributeNames: { '#c': 'category', '#id': 'unique_id' }
       });
       for (const item of items) {
         if (item.category) {
@@ -1168,8 +1187,9 @@ app.get('/folder-tree', async (req, res) => {
     for (const idx of indices) {
       const items = await scanAll({
         TableName: getMailTable(idx),
-        ProjectionExpression: 'unique_id, #f, category',
-        ExpressionAttributeNames: { '#f': 'folder' }
+        ProjectionExpression: '#id, #f, category',
+        ExpressionAttributeNames: { '#f': 'folder', '#id': 'unique_id' }
+
       });
       for (const item of items) {
         if (!item.folder) continue;
