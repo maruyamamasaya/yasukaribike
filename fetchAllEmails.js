@@ -187,7 +187,7 @@ function processFolder(name, accountIndex) {
           }
 
           log(`Fetching ${results.length} emails from ${name}`);
-          const f = imap.fetch(results, { bodies: ['BODY[]'] });
+          const f = imap.fetch(results, { bodies: ['BODY[]'], markSeen: true });
 
           f.on('message', msg => {
             const chunks = [];
@@ -203,21 +203,27 @@ function processFolder(name, accountIndex) {
             });
             msg.once('end', async () => {
               try {
-                const parsed = await simpleParser(Buffer.concat(chunks));
-                let body = parsed.text || '';
-                if (!body && parsed.html) {
-                  body = htmlToText(parsed.html);
-                }
-                if (!body) {
-                  log(`No body content for UID ${uid} in ${name}`);
-                  if (parsed.headerLines) {
-                    log(`Headers: ${JSON.stringify(parsed.headerLines)}`);
+                const raw = Buffer.concat(chunks);
+                const parsed = await simpleParser(raw);
+                let bodyText = parsed.text || '';
+                if (parsed.html) {
+                  const { parseDocument, DomUtils } = require('htmlparser2');
+                  const doc = parseDocument(parsed.html);
+                  const htmlText = DomUtils.getText(doc);
+                  if (htmlText) {
+                    bodyText = bodyText
+                      ? `${bodyText}\n${htmlText}`
+                      : htmlText;
                   }
-                  if (parsed.attachments && parsed.attachments.length) {
-                    log(`Attachments: ${parsed.attachments.length}`);
-                  }
                 }
-                await saveMail(uid, parsed, body, name, accountIndex);
+                if (!bodyText) {
+                  log(
+                    `No body content for UID ${uid}; headers: ${JSON.stringify(
+                      parsed.headerLines
+                    )} attachments: ${parsed.attachments?.length || 0}`
+                  );
+                }
+                await saveMail(uid, { ...parsed, text: bodyText }, name, accountIndex);
                 log(`Saved mail UID ${uid} from ${name}`);
               } catch (e) {
                 log(`Error processing UID ${uid}: ${e.message}`);
