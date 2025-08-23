@@ -241,11 +241,17 @@ async function searchEmails(page = 1, refresh = false) {
     const btnLabel = item.task_added ? '追加済み' : 'ボードに追加';
     const btnClass = item.task_added ? 'btn btn-sm btn-success' : 'btn btn-sm btn-primary';
     tr.innerHTML = `
-      <td><a href="${link}">${d}</a></td>
+      <td class="mail-link">${d}</td>
       <td>${item.from || ''}</td>
       <td>${item.subject || ''}</td>
       <td style="white-space: pre-wrap;">${body}</td>
       <td><button class="${btnClass}" onclick="addTask('${item.unique_id}')" data-added="${item.task_added ? '1' : '0'}">${btnLabel}</button></td>`;
+    const cell = tr.querySelector('.mail-link');
+    if (cell) {
+      cell.addEventListener('click', () => {
+        window.location.href = link;
+      });
+    }
     tbody.appendChild(tr);
   });
 
