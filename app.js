@@ -97,6 +97,7 @@ async function scanAll(params) {
             ConsistentRead: true
           })
           .promise();
+        console.log('LastEvaluatedKey:', data.LastEvaluatedKey || null);
         break;
       } catch (err) {
         if (err.retryable && attempts < 5) {
@@ -109,6 +110,7 @@ async function scanAll(params) {
     }
 
     items.push(...(data.Items || []));
+    console.log('LastEvaluatedKey:', data.LastEvaluatedKey || null);
     ExclusiveStartKey = data.LastEvaluatedKey;
     console.log('LastEvaluatedKey:', ExclusiveStartKey);
     if (ExclusiveStartKey) {
@@ -1187,6 +1189,7 @@ app.get('/folder-tree', async (req, res) => {
         TableName: getMailTable(idx),
         ProjectionExpression: '#id, #f, category',
         ExpressionAttributeNames: { '#f': 'folder', '#id': 'unique_id' }
+
       });
       for (const item of items) {
         if (!item.folder) continue;
