@@ -59,6 +59,20 @@ function respondError(res, status, label, err) {
   res.status(status).json(body);
 }
 
+// DynamoDB から全件を取得するヘルパー
+async function scanAll(params) {
+  let items = [];
+  let ExclusiveStartKey;
+  do {
+    const data = await dynamo
+      .scan({ ...params, ExclusiveStartKey })
+      .promise();
+    items = items.concat(data.Items || []);
+    ExclusiveStartKey = data.LastEvaluatedKey;
+  } while (ExclusiveStartKey);
+  return items;
+}
+
 function getAccountEnv(prefix, index) {
   if (index === 1) {
     return process.env[`${prefix}1`] || process.env[prefix];
@@ -131,14 +145,12 @@ app.get(['/', '/index.html'], async (req, res, next) => {
     );
     const counts = {};
     for (const idx of getAccountIndices()) {
-      const data = await dynamo
-        .scan({
-          TableName: getMailTable(idx),
-          ProjectionExpression: '#c',
-          ExpressionAttributeNames: { '#c': 'category' }
-        })
-        .promise();
-      for (const item of data.Items || []) {
+      const items = await scanAll({
+        TableName: getMailTable(idx),
+        ProjectionExpression: '#c',
+        ExpressionAttributeNames: { '#c': 'category' }
+      });
+      for (const item of items) {
         if (item.category) {
           counts[item.category] = (counts[item.category] || 0) + 1;
         }
@@ -997,10 +1009,8 @@ app.get('/api/fetch-reserve-email', async (req, res) => {
 // グーバイク追加連絡データ取得
 app.get('/goobike-emails', async (req, res) => {
   try {
-    const data = await dynamo
-      .scan({ TableName: MAIL_TABLE })
-      .promise();
-    const items = (data.Items || []).sort((a, b) =>
+    const items = await scanAll({ TableName: MAIL_TABLE });
+    items.sort((a, b) =>
       (b.createdAt || '').localeCompare(a.createdAt || '')
     );
     res.json(items);
@@ -1036,19 +1046,19 @@ app.get('/emails', async (req, res) => {
         ExpressionAttributeNames: { '#a': 'account' },
         ExpressionAttributeValues: { ':a': Number(account) }
       };
-      const data = await dynamo.scan(params).promise();
-      return res.json(data.Items || []);
+      const items = await scanAll(params);
+      return res.json(items);
     }
 
     const indices = getAccountIndices();
-    const items = [];
+    const map = new Map();
     for (const idx of indices) {
-      const data = await dynamo
-        .scan({ TableName: getMailTable(idx) })
-        .promise();
-      items.push(...(data.Items || []));
+      const items = await scanAll({ TableName: getMailTable(idx) });
+      for (const item of items) {
+        if (item.unique_id) map.set(item.unique_id, item);
+      }
     }
-    res.json(items);
+    res.json(Array.from(map.values()));
   } catch (err) {
     respondError(res, 500, 'Failed to fetch emails', err);
   }
@@ -1061,8 +1071,8 @@ app.get('/email-stats', async (req, res) => {
     const indices = account ? [parseInt(account, 10) || 1] : getAccountIndices();
     let items = [];
     for (const idx of indices) {
-      const data = await dynamo.scan({ TableName: getMailTable(idx) }).promise();
-      items = items.concat(data.Items || []);
+      const scanned = await scanAll({ TableName: getMailTable(idx) });
+      items = items.concat(scanned);
     }
     const count = items.length;
     let lastDate = '';
@@ -1099,14 +1109,12 @@ app.get('/categories', async (req, res) => {
     const indices = account ? [parseInt(account, 10) || 1] : getAccountIndices();
     const counts = {};
     for (const idx of indices) {
-      const data = await dynamo
-        .scan({
-          TableName: getMailTable(idx),
-          ProjectionExpression: '#c',
-          ExpressionAttributeNames: { '#c': 'category' }
-        })
-        .promise();
-      for (const item of data.Items || []) {
+      const items = await scanAll({
+        TableName: getMailTable(idx),
+        ProjectionExpression: '#c',
+        ExpressionAttributeNames: { '#c': 'category' }
+      });
+      for (const item of items) {
         if (item.category) {
           counts[item.category] = (counts[item.category] || 0) + 1;
         }
@@ -1128,14 +1136,12 @@ app.get('/folder-tree', async (req, res) => {
     const indices = account ? [parseInt(account, 10) || 1] : getAccountIndices();
     const tree = {};
     for (const idx of indices) {
-      const data = await dynamo
-        .scan({
-          TableName: getMailTable(idx),
-          ProjectionExpression: '#f, category',
-          ExpressionAttributeNames: { '#f': 'folder' }
-        })
-        .promise();
-      for (const item of data.Items || []) {
+      const items = await scanAll({
+        TableName: getMailTable(idx),
+        ProjectionExpression: '#f, category',
+        ExpressionAttributeNames: { '#f': 'folder' }
+      });
+      for (const item of items) {
         if (!item.folder) continue;
         const delimiter = item.folder.includes('/')
           ? '/'
