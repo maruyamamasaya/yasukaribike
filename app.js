@@ -96,6 +96,7 @@ async function scanAll(params) {
       // small delay between pages to avoid throttling
       await delay(200);
     }
+
   } while (ExclusiveStartKey);
   return items;
 }

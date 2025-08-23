@@ -300,6 +300,22 @@ document.addEventListener('DOMContentLoaded', () => {
     if (s) s.addEventListener('click', e => e.preventDefault());
     d.open = true;
   });
+  const toggleCustomerBtn = document.getElementById('toggle-customer-form');
+  const customerForm = document.getElementById('customer-form');
+  if (toggleCustomerBtn && customerForm) {
+    toggleCustomerBtn.addEventListener('click', () => {
+      const hidden = customerForm.classList.toggle('d-none');
+      toggleCustomerBtn.textContent = hidden ? '＋' : '－';
+    });
+  }
+  const toggleMailBtn = document.getElementById('toggle-mail-form');
+  const mailForm = document.getElementById('mail-form');
+  if (toggleMailBtn && mailForm) {
+    toggleMailBtn.addEventListener('click', () => {
+      const hidden = mailForm.classList.toggle('d-none');
+      toggleMailBtn.textContent = hidden ? '＋' : '－';
+    });
+  }
   [
     's-date','s-name','s-phone','s-email','s-status','s-category','s-details','s-text',
     'm-date','m-key'

@@ -131,6 +131,26 @@ th[data-key] {
 /* clickable table row */
 .link-row {
   cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.link-row:active {
+  animation: link-row-glow 0.8s ease-out;
+}
+
+@keyframes link-row-glow {
+  0% {
+    background-color: inherit;
+    box-shadow: none;
+  }
+  50% {
+    background-color: rgba(255, 255, 0, 0.3);
+    box-shadow: 0 0 8px rgba(255, 255, 0, 0.8);
+  }
+  100% {
+    background-color: inherit;
+    box-shadow: none;
+  }
 }
 
 /* exclude non-link cells from pointer */
@@ -157,6 +177,16 @@ th[data-key] {
 .month-content {
   border-left: 3px solid #ddd;
   padding-left: 1rem;
+}
+
+.toggle-btn {
+  width: 60px;
+  height: 60px;
+  font-size: 2rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Dashboard tooltip */
