@@ -47,7 +47,16 @@ fileInput.addEventListener('change', e => {
 });
 
 async function uploadSequential() {
-  for (const file of queue) {
+  if (queue.length === 0) return;
+  const btn = $('#upload-btn');
+  btn.disabled = true;
+  const status = $('#status-msg');
+  const files = [...queue];
+  queue = [];
+  updateQueue();
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    status.textContent = `アップロード中... (${i + 1}/${files.length})`;
     const ext = '.' + file.name.split('.').pop().toLowerCase();
     const resp = await fetch(`${API_BASE}/upload-url`, {
       method: 'POST',
@@ -56,7 +65,7 @@ async function uploadSequential() {
     });
     if (!resp.ok) {
       alert('アップロードURL取得に失敗');
-      return;
+      break;
     }
     const info = await resp.json();
     await fetch(info.presignedUrl, {
@@ -64,10 +73,11 @@ async function uploadSequential() {
       body: file,
       headers: { 'Content-Type': file.type }
     });
+    await refreshList();
+    await new Promise(r => setTimeout(r, 500));
   }
-  queue = [];
-  updateQueue();
-  await refreshList();
+  status.textContent = '';
+  btn.disabled = false;
 }
 
 $('#upload-btn').addEventListener('click', uploadSequential);
