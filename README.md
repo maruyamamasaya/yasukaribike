@@ -173,6 +173,42 @@ Customer data is stored in the DynamoDB table `kokyakukanri_TBL`.
 
 ---
 
+## 📸 画像アップロード API / Image Upload API
+
+`/uploader/api/upload-url` エンドポイントは、S3 に画像をアップロードするための事前署名付き URL と公開 URL を生成します。  
+The `/uploader/api/upload-url` endpoint returns a presigned URL for uploading an image to S3 and a public URL for later access.
+
+### 🔄 リクエスト / Request
+
+```json
+POST /uploader/api/upload-url
+{
+  "key": "abc123",
+  "ext": ".png"
+}
+```
+
+- `key`: 画像をグループ化する任意の識別子 / Identifier used to group images.
+- `ext`: 許可された拡張子 `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif` のいずれか / One of the allowed extensions.
+
+### 📦 レスポンス / Response
+
+```json
+{
+  "filename": "001.png",
+  "objectKey": "keys/abc123/001.png",
+  "presignedUrl": "https://s3.amazonaws.com/.../001.png?...",
+  "publicUrl": "https://<bucket>.s3.<region>.amazonaws.com/keys/abc123/001.png"
+}
+```
+
+`presignedUrl` に PUT リクエストでファイルを送信すると、`publicUrl` でアップロード済み画像を参照できます。  
+Upload the file with a PUT request to `presignedUrl`, then access the uploaded image via `publicUrl`.
+
+この API は1つの `key` につき最大50枚まで画像を登録でき、未使用の番号に自動で連番を割り当てます。  
+Each `key` can hold up to 50 images; the server assigns the next available sequential number automatically.
+
+---
 ## ☁️ AWS Lambda デプロイ / Deploying to AWS Lambda
 
 Serverless Framework を使って AWS Lambda へデプロイできます。
