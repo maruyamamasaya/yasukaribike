@@ -44,7 +44,8 @@ async function saveMeta(key, meta) {
       Bucket: bucket,
       Key: metaKey,
       Body: JSON.stringify(meta),
-      ContentType: 'application/json'
+      ContentType: 'application/json',
+      ServerSideEncryption: 'AES256'
     })
     .promise();
 }
@@ -71,12 +72,19 @@ router.post('/upload-url', async (req, res) => {
   const presignedUrl = await s3.getSignedUrlPromise('putObject', {
     Bucket: bucket,
     Key: objectKey,
-    Expires: 60
+    Expires: 60,
+    ServerSideEncryption: 'AES256'
   });
 
   const publicUrl = `${publicBase}/keys/${key}/${filename}`;
 
-  res.json({ filename, objectKey, presignedUrl, publicUrl });
+  res.json({
+    filename,
+    objectKey,
+    presignedUrl,
+    publicUrl,
+    headers: { 'x-amz-server-side-encryption': 'AES256' }
+  });
 });
 
 router.get('/images/:key', async (req, res) => {

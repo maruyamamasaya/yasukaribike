@@ -175,8 +175,11 @@ Customer data is stored in the DynamoDB table `kokyakukanri_TBL`.
 
 ## 📸 画像アップロード API / Image Upload API
 
-`/uploader/api/upload-url` エンドポイントは、S3 に画像をアップロードするための事前署名付き URL と公開 URL を生成します。  
+`/uploader/api/upload-url` エンドポイントは、S3 に画像をアップロードするための事前署名付き URL と公開 URL を生成します。
 The `/uploader/api/upload-url` endpoint returns a presigned URL for uploading an image to S3 and a public URL for later access.
+
+アップロード時は `x-amz-server-side-encryption: AES256` ヘッダを必ず付与し、SSE-S3 を利用してください。
+Add the `x-amz-server-side-encryption: AES256` header when uploading to ensure SSE-S3 is used.
 
 ### 🔄 リクエスト / Request
 
@@ -198,11 +201,12 @@ POST /uploader/api/upload-url
   "filename": "001.png",
   "objectKey": "keys/abc123/001.png",
   "presignedUrl": "https://s3.amazonaws.com/.../001.png?...",
-  "publicUrl": "https://<bucket>.s3.<region>.amazonaws.com/keys/abc123/001.png"
+  "publicUrl": "https://<bucket>.s3.<region>.amazonaws.com/keys/abc123/001.png",
+  "headers": { "x-amz-server-side-encryption": "AES256" }
 }
 ```
 
-`presignedUrl` に PUT リクエストでファイルを送信すると、`publicUrl` でアップロード済み画像を参照できます。  
+`presignedUrl` に PUT リクエストでファイルを送信すると、`publicUrl` でアップロード済み画像を参照できます。
 Upload the file with a PUT request to `presignedUrl`, then access the uploaded image via `publicUrl`.
 
 この API は1つの `key` につき最大50枚まで画像を登録でき、未使用の番号に自動で連番を割り当てます。  
