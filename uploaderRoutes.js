@@ -87,7 +87,11 @@ router.get('/images/:key', async (req, res) => {
   if (format === 'csv') {
     res.type('text/plain').send(files.join(', '));
   } else {
-    res.json({ files, thumbnail: meta.thumbnail || null });
+    const fileUrls = files.map(f => `${publicBase}/keys/${key}/${f}`);
+    const thumbUrl = meta.thumbnail
+      ? `${publicBase}/keys/${key}/${meta.thumbnail}`
+      : null;
+    res.json({ files: fileUrls, thumbnail: thumbUrl });
   }
 });
 
@@ -111,8 +115,12 @@ router.post('/thumbnail', async (req, res) => {
 });
 
 router.get('/thumbnail/:key', async (req, res) => {
-  const meta = await getMeta(req.params.key);
-  res.json({ thumbnail: meta.thumbnail || null });
+  const key = req.params.key;
+  const meta = await getMeta(key);
+  const thumbUrl = meta.thumbnail
+    ? `${publicBase}/keys/${key}/${meta.thumbnail}`
+    : null;
+  res.json({ thumbnail: thumbUrl });
 });
 
 module.exports = router;
