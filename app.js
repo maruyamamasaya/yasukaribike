@@ -235,6 +235,10 @@ app.get(['/', '/index.html'], async (req, res, next) => {
   }
 });
 
+app.get(['/uploader', '/uploader/:key'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'web', 'uploader.html'));
+});
+
 app.use('/form', express.static(path.join(__dirname, 'web')));
 app.use(express.static(path.join(__dirname, 'web')));
 

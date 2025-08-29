@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>画像アップロード</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/flatly/bootstrap.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="p-4">
+  <div class="container">
+    <h1 class="mb-3">画像アップロード</h1>
+    <p>キー: <span id="key-label"></span></p>
+    <div id="drop-zone" class="border border-secondary rounded p-4 text-center mb-3" style="cursor:pointer;">
+      <p class="mb-0">ここに画像をドラッグ＆ドロップ、またはクリックして選択</p>
+      <input type="file" id="file-input" accept="image/*" multiple class="d-none" />
+    </div>
+    <button id="upload-btn" class="btn btn-primary mb-4">アップロード開始</button>
+    <div id="queue" class="mb-4"></div>
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h2 class="h5 mb-0">画像一覧</h2>
+      <button id="csv-btn" class="btn btn-secondary btn-sm">CSVコピー</button>
+    </div>
+    <div id="gallery" class="row g-3"></div>
+    <p id="empty-msg" class="text-muted">画像がありません</p>
+  </div>
+  <script src="uploader.js"></script>
+</body>
+</html>
