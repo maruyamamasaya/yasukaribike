@@ -7,7 +7,7 @@ const region = process.env.AWS_REGION || 'ap-northeast-1';
 const bucket = process.env.S3_BUCKET || 'rebikele-file';
 const publicBase = process.env.PUBLIC_BASE_URL || `https://${bucket}.s3.${region}.amazonaws.com`;
 
-const s3 = new AWS.S3({ region });
+const s3 = new AWS.S3({ region, signatureVersion: 'v4' });
 
 const ALLOWED_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
 const MAX_SLOT = 50;
@@ -44,8 +44,7 @@ async function saveMeta(key, meta) {
       Bucket: bucket,
       Key: metaKey,
       Body: JSON.stringify(meta),
-      ContentType: 'application/json',
-      ACL: 'public-read'
+      ContentType: 'application/json'
     })
     .promise();
 }
@@ -72,8 +71,7 @@ router.post('/upload-url', async (req, res) => {
   const presignedUrl = await s3.getSignedUrlPromise('putObject', {
     Bucket: bucket,
     Key: objectKey,
-    Expires: 60,
-    ACL: 'public-read'
+    Expires: 60
   });
 
   const publicUrl = `${publicBase}/keys/${key}/${filename}`;

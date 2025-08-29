@@ -70,8 +70,7 @@ async function uploadSequential() {
     const info = await resp.json();
     await fetch(info.presignedUrl, {
       method: 'PUT',
-      body: file,
-      headers: { 'Content-Type': file.type }
+      body: file
     });
     await refreshList();
     await new Promise(r => setTimeout(r, 500));
