@@ -17,6 +17,7 @@ const {
   DeleteCommand
 } = require('@aws-sdk/lib-dynamodb');
 const { fetchAllEmails } = require('./fetchAllEmails');
+const uploaderRoutes = require('./uploaderRoutes');
 
 const TABLE = process.env.TABLE_NAME || 'kokyakukanri_TBL';
 
@@ -202,6 +203,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+app.use('/uploader/api', uploaderRoutes);
 
 // Serve index.html with categories embedded
 app.get(['/', '/index.html'], async (req, res, next) => {
