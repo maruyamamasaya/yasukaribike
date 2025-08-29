@@ -254,3 +254,20 @@ th[data-key] {
   gap: 0.25rem;
   margin-top: 0.5rem;
 }
+
+#drop-zone {
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#gallery .card-img-top {
+  height: 200px;
+  object-fit: cover;
+}
+
+#thumbnail .card-img-top {
+  max-height: 300px;
+  object-fit: cover;
+}

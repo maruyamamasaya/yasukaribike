@@ -10,23 +10,15 @@ $('#key-label').textContent = key;
 
 const dropZone = $('#drop-zone');
 const fileInput = $('#file-input');
-const queueDiv = $('#queue');
 let queue = [];
-
-function updateQueue() {
-  if (queue.length === 0) {
-    queueDiv.textContent = '';
-  } else {
-    queueDiv.textContent = queue.map(f => f.name).join(', ');
-  }
-}
+let uploading = false;
 
 function handleFiles(files) {
   for (const f of files) {
     if (!f.type.startsWith('image/')) continue;
     queue.push(f);
   }
-  updateQueue();
+  if (!uploading) uploadSequential();
 }
 
 ['dragover', 'drop'].forEach(ev => {
@@ -48,15 +40,13 @@ fileInput.addEventListener('change', e => {
 
 async function uploadSequential() {
   if (queue.length === 0) return;
-  const btn = $('#upload-btn');
-  btn.disabled = true;
+  uploading = true;
   const status = $('#status-msg');
-  const files = [...queue];
-  queue = [];
-  updateQueue();
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
-    status.textContent = `アップロード中... (${i + 1}/${files.length})`;
+  let count = 0;
+  while (queue.length > 0) {
+    const file = queue.shift();
+    count++;
+    status.textContent = `アップロード中... (${count})`;
     const ext = '.' + file.name.split('.').pop().toLowerCase();
     const resp = await fetch(`${API_BASE}/upload-url`, {
       method: 'POST',
@@ -76,21 +66,22 @@ async function uploadSequential() {
     await new Promise(r => setTimeout(r, 500));
   }
   status.textContent = '';
-  btn.disabled = false;
+  uploading = false;
+  if (queue.length > 0) uploadSequential();
 }
-
-$('#upload-btn').addEventListener('click', uploadSequential);
 
 async function refreshList() {
   const res = await fetch(`${API_BASE}/images/${key}?format=json`);
   if (!res.ok) return;
   const data = await res.json();
   const gallery = $('#gallery');
+  const thumb = $('#thumbnail');
   gallery.innerHTML = '';
+  thumb.innerHTML = '';
   $('#empty-msg').style.display = data.files.length ? 'none' : 'block';
   data.files.forEach(name => {
     const col = document.createElement('div');
-    col.className = 'col-6 col-md-3';
+    col.className = 'col';
     const card = document.createElement('div');
     card.className = 'card';
     const img = document.createElement('img');
@@ -136,7 +127,11 @@ async function refreshList() {
     body.appendChild(btnGrp);
     card.appendChild(body);
     col.appendChild(card);
-    gallery.appendChild(col);
+    if (data.thumbnail === name) {
+      thumb.appendChild(col);
+    } else {
+      gallery.appendChild(col);
+    }
   });
 }
 
