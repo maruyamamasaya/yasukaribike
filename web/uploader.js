@@ -13,6 +13,17 @@ const fileInput = $('#file-input');
 let queue = [];
 let uploading = false;
 
+function openModal(src) {
+  $('#modal-img').src = src;
+  $('#image-modal').classList.remove('d-none');
+}
+
+$('#modal-close').addEventListener('click', () => {
+  $('#image-modal').classList.add('d-none');
+});
+
+$('#close-tab').addEventListener('click', () => window.close());
+
 function handleFiles(files) {
   for (const f of files) {
     if (!f.type.startsWith('image/')) continue;
@@ -87,6 +98,8 @@ async function refreshList() {
     const img = document.createElement('img');
     img.src = `${PUBLIC_BASE}/keys/${key}/${name}`;
     img.className = 'card-img-top';
+    img.style.cursor = 'pointer';
+    img.addEventListener('click', () => openModal(img.src));
     card.appendChild(img);
     const body = document.createElement('div');
     body.className = 'card-body p-2 text-center';
