@@ -181,6 +181,9 @@ The `/uploader/api/upload-url` endpoint returns a presigned URL for uploading an
 アップロード時は `x-amz-server-side-encryption: AES256` ヘッダを必ず付与し、SSE-S3 を利用してください。
 Add the `x-amz-server-side-encryption: AES256` header when uploading to ensure SSE-S3 is used.
 
+ウェブのアップロード画面では、2MB を超える画像を選択した場合、自動的に JPEG へ圧縮し、おおよそ 1MB 程度までサイズを削減してから送信します。
+On the web upload page, images larger than 2MB are automatically compressed to JPEG around 1MB before being uploaded.
+
 ### 🔄 リクエスト / Request
 
 ```json
