@@ -24,10 +24,42 @@ $('#modal-close').addEventListener('click', () => {
 
 $('#close-tab').addEventListener('click', () => window.close());
 
-function handleFiles(files) {
+async function compressImage(file) {
+  const img = await new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = URL.createObjectURL(file);
+  });
+  const canvas = document.createElement('canvas');
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0);
+  URL.revokeObjectURL(img.src);
+
+  let quality = 0.9;
+  let blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
+  while (blob && blob.size > 1024 * 1024 && quality > 0.5) {
+    quality -= 0.1;
+    blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
+  }
+  const name = file.name.replace(/\.[^.]+$/, '.jpg');
+  return new File([blob], name, { type: 'image/jpeg' });
+}
+
+async function handleFiles(files) {
   for (const f of files) {
     if (!f.type.startsWith('image/')) continue;
-    queue.push(f);
+    let file = f;
+    if (file.size > 2 * 1024 * 1024) {
+      try {
+        file = await compressImage(file);
+      } catch (err) {
+        console.error('compression failed', err);
+      }
+    }
+    queue.push(file);
   }
   if (!uploading) uploadSequential();
 }
