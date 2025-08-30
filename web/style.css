@@ -268,3 +268,10 @@ th[data-key] {
   aspect-ratio: 1 / 1;
   object-fit: cover;
 }
+
+#image-modal {
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
