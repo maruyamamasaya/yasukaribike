@@ -8,6 +8,23 @@
   body {
     font-size: 1.2rem;
   }
+
+  .btn {
+    font-size: var(--bs-btn-font-size, 1rem);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.2;
+    max-width: 100%;
+  }
+
+  @supports (font-size: clamp(1rem, 1vw, 1rem)) {
+    .btn {
+      font-size: clamp(0.65rem, 2.8vw, var(--bs-btn-font-size, 1rem));
+    }
+  }
 }
 
 /* Styling for date/time display */
