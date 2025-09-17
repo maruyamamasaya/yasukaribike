@@ -45,12 +45,15 @@ async function compressImage(file) {
     blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
   }
   const name = file.name.replace(/\.[^.]+$/, '.jpg');
-  return new File([blob], name, { type: 'image/jpeg' });
+  return new File([blob], name, { type: 'image/jpeg', lastModified: file.lastModified });
 }
 
 async function handleFiles(files) {
+  const additions = [];
+  let index = 0;
   for (const f of files) {
     if (!f.type.startsWith('image/')) continue;
+    index += 1;
     let file = f;
     if (file.size > 2 * 1024 * 1024) {
       try {
@@ -59,8 +62,23 @@ async function handleFiles(files) {
         console.error('compression failed', err);
       }
     }
-    queue.push(file);
+    additions.push({
+      file,
+      lastModified: typeof f.lastModified === 'number' ? f.lastModified : 0,
+      name: f.name,
+      index
+    });
   }
+  additions
+    .sort((a, b) => {
+      if (a.lastModified !== b.lastModified) {
+        return a.lastModified - b.lastModified;
+      }
+      const nameCmp = a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+      if (nameCmp !== 0) return nameCmp;
+      return a.index - b.index;
+    })
+    .forEach(item => queue.push(item.file));
   if (!uploading) uploadSequential();
 }
 
