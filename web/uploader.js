@@ -12,6 +12,18 @@ const dropZone = $('#drop-zone');
 const fileInput = $('#file-input');
 let queue = [];
 let uploading = false;
+const overlay = $('#upload-overlay');
+
+function setUploadingState(active) {
+  if (!overlay) return;
+  if (active) {
+    overlay.classList.remove('d-none');
+    document.body.classList.add('uploading');
+  } else {
+    overlay.classList.add('d-none');
+    document.body.classList.remove('uploading');
+  }
+}
 
 function openModal(src) {
   $('#modal-img').src = src;
@@ -104,31 +116,36 @@ async function uploadSequential() {
   uploading = true;
   const status = $('#status-msg');
   let count = 0;
-  while (queue.length > 0) {
-    const file = queue.shift();
-    count++;
-    status.textContent = `アップロード中... (${count})`;
-    const ext = '.' + file.name.split('.').pop().toLowerCase();
-    const resp = await fetch(`${API_BASE}/upload-url`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, ext })
-    });
-    if (!resp.ok) {
-      alert('アップロードURL取得に失敗');
-      break;
+  setUploadingState(true);
+  try {
+    while (queue.length > 0) {
+      const file = queue.shift();
+      count++;
+      status.textContent = `アップロード中... (${count})`;
+      const ext = '.' + file.name.split('.').pop().toLowerCase();
+      const resp = await fetch(`${API_BASE}/upload-url`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, ext })
+      });
+      if (!resp.ok) {
+        alert('アップロードURL取得に失敗');
+        break;
+      }
+      const info = await resp.json();
+      await fetch(info.presignedUrl, {
+        method: 'PUT',
+        body: file
+      });
+      await refreshList();
+      await new Promise(r => setTimeout(r, 500));
     }
-    const info = await resp.json();
-    await fetch(info.presignedUrl, {
-      method: 'PUT',
-      body: file
-    });
-    await refreshList();
-    await new Promise(r => setTimeout(r, 500));
+  } finally {
+    status.textContent = '';
+    uploading = false;
+    setUploadingState(false);
+    if (queue.length > 0) uploadSequential();
   }
-  status.textContent = '';
-  uploading = false;
-  if (queue.length > 0) uploadSequential();
 }
 
 async function refreshList() {
