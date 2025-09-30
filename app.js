@@ -18,6 +18,7 @@ const {
 } = require('@aws-sdk/lib-dynamodb');
 const { fetchAllEmails } = require('./fetchAllEmails');
 const uploaderRoutes = require('./uploaderRoutes');
+const repairEvidenceRoutes = require('./repairEvidenceRoutes');
 
 const TABLE = process.env.TABLE_NAME || 'kokyakukanri_TBL';
 
@@ -204,6 +205,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 app.use('/uploader/api', uploaderRoutes);
+app.use('/api', repairEvidenceRoutes);
 
 // Serve index.html with categories embedded
 app.get(['/', '/index.html'], async (req, res, next) => {
