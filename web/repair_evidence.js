@@ -3,6 +3,7 @@
 
   const MAX_PARALLEL_UPLOAD = 5;
   const MULTIPART_THRESHOLD = 10 * 1024 * 1024; // 10MB
+  const GROUP_PAGE_SIZE = 20;
   const SUPPORTED_MIME = new Set([
     'image/jpeg',
     'image/png',
@@ -20,7 +21,8 @@
     cursor: null,
     loadingHistory: false,
     hasMoreHistory: false,
-    selectedPhoto: null
+    selectedPhoto: null,
+    visibleCounts: new Map()
   };
 
   const els = {
@@ -29,7 +31,6 @@
     libraryLaunch: document.getElementById('library-launch'),
     cameraInput: document.getElementById('camera-input'),
     fileInput: document.getElementById('file-input'),
-    dropZone: document.getElementById('drop-zone'),
     queueCounter: document.getElementById('queue-counter'),
     queueList: document.getElementById('queue-list'),
     emptyQueue: document.getElementById('empty-queue'),
@@ -47,7 +48,8 @@
     photoModalDimensions: document.getElementById('photo-modal-dimensions'),
     photoModalSize: document.getElementById('photo-modal-size'),
     shotDateInput: document.getElementById('shot-date-input'),
-    shotDateSave: document.getElementById('shot-date-save')
+    shotDateSave: document.getElementById('shot-date-save'),
+    photoDelete: document.getElementById('photo-delete')
   };
 
   const formatters = {
@@ -235,8 +237,14 @@
     const section = els.historyGroupTemplate.content.firstElementChild.cloneNode(true);
     const labelDate = dateKey.slice(0, 4) + '/' + dateKey.slice(4, 6) + '/' + dateKey.slice(6, 8);
     section.querySelector('.history-group-title').textContent = `${labelDate}`;
-    section.querySelector('.history-group-count').textContent = '0枚';
+    const counter = section.querySelector('.history-group-count');
+    counter.textContent = '0枚';
+    counter.dataset.count = '0';
     section.dataset.dateKey = dateKey;
+    const moreBtn = section.querySelector('.history-group-more');
+    if (moreBtn) {
+      moreBtn.addEventListener('click', () => showMoreInGroup(dateKey));
+    }
 
     let inserted = false;
     const groups = Array.from(els.historyGroups.querySelectorAll('.history-group'));
@@ -253,87 +261,109 @@
     return section;
   }
 
-  function renderHistoryItem(groupEl, photo) {
-    const itemNode = els.historyItemTemplate.content.firstElementChild.cloneNode(true);
-    itemNode.dataset.photoId = photo.id;
-    const button = itemNode.querySelector('.history-item');
-    const img = itemNode.querySelector('img');
-    img.src = photo.thumbUrl || photo.url;
-    img.dataset.fullUrl = photo.url;
-    img.alt = `${photo.displayDate} のエビデンス`;
-    button.dataset.photoId = photo.id;
-    button.addEventListener('click', () => openPhotoModal(photo));
-    const grid = groupEl.querySelector('.history-grid');
-    grid.prepend(itemNode);
-    const counter = groupEl.querySelector('.history-group-count');
-    const current = parseInt(counter.dataset.count || '0', 10) || 0;
-    const nextCount = current + 1;
-    counter.dataset.count = String(nextCount);
-    counter.textContent = `${nextCount}枚`;
-  }
-
   function upsertHistory(photo) {
     const { ymd } = photo;
     if (!state.history.has(ymd)) {
       state.history.set(ymd, []);
       state.historyOrder.push(ymd);
       state.historyOrder.sort((a, b) => (a === b ? 0 : a > b ? -1 : 1));
+      state.visibleCounts.set(ymd, Math.min(GROUP_PAGE_SIZE, 0));
     }
     const group = state.history.get(ymd);
     const existingIndex = group.findIndex(item => item.id === photo.id);
     if (existingIndex >= 0) {
       group[existingIndex] = photo;
     } else {
-      group.unshift(photo);
-    }
-    let groupEl = els.historyGroups.querySelector(`.history-group[data-date-key="${ymd}"]`);
-    if (!groupEl) {
-      groupEl = addHistoryGroup(ymd);
-    }
-    const existingNode = groupEl.querySelector(`[data-photo-id="${photo.id}"]`);
-    if (existingNode) {
-      const counter = groupEl.querySelector('.history-group-count');
-      if (counter) {
-        const current = parseInt(counter.dataset.count || '0', 10) || 0;
-        const next = Math.max(0, current - 1);
-        counter.dataset.count = String(next);
-        counter.textContent = `${next}枚`;
+      const targetTime = photo.shotDate instanceof Date ? photo.shotDate.getTime() : 0;
+      let inserted = false;
+      for (let i = 0; i < group.length; i += 1) {
+        const current = group[i].shotDate instanceof Date ? group[i].shotDate.getTime() : 0;
+        if (targetTime >= current) {
+          group.splice(i, 0, photo);
+          inserted = true;
+          break;
+        }
       }
-      existingNode.remove();
+      if (!inserted) {
+        group.push(photo);
+      }
     }
-    renderHistoryItem(groupEl, photo);
+    const previousVisible = state.visibleCounts.get(ymd) ?? GROUP_PAGE_SIZE;
+    const desiredVisible = Math.min(
+      Math.max(previousVisible, Math.min(GROUP_PAGE_SIZE, group.length)),
+      group.length
+    );
+    state.visibleCounts.set(ymd, desiredVisible);
+    renderHistoryGroup(ymd);
   }
 
   function rebuildHistory(groups) {
     els.historyGroups.innerHTML = '';
     state.history.clear();
     state.historyOrder = [];
+    state.visibleCounts = new Map();
     for (const group of groups) {
       const rawDate =
         group.date || group.ymd || group.shotDate || group.shot_date || formatYmd(new Date());
       const dateKey = String(rawDate).replaceAll('-', '').slice(0, 8);
-      state.history.set(dateKey, []);
+      const normalizedItems = group.items.map(item => (item.raw ? item : normalizePhoto(item)));
+      state.history.set(dateKey, normalizedItems);
       state.historyOrder.push(dateKey);
-      const section = addHistoryGroup(dateKey);
-      const grid = section.querySelector('.history-grid');
-      let count = 0;
-      for (const photo of group.items) {
-        const normalized = photo.raw ? photo : normalizePhoto(photo);
-        state.history.get(dateKey).push(normalized);
-        const itemNode = els.historyItemTemplate.content.firstElementChild.cloneNode(true);
-        const button = itemNode.querySelector('.history-item');
-        const img = itemNode.querySelector('img');
-        img.src = normalized.thumbUrl || normalized.url;
-        img.dataset.fullUrl = normalized.url;
-        img.alt = `${normalized.displayDate} のエビデンス`;
-        button.dataset.photoId = normalized.id;
-        button.addEventListener('click', () => openPhotoModal(normalized));
-        grid.appendChild(itemNode);
-        count += 1;
-      }
-      section.querySelector('.history-group-count').textContent = `${count}枚`;
-      section.querySelector('.history-group-count').dataset.count = String(count);
+      state.visibleCounts.set(dateKey, Math.min(GROUP_PAGE_SIZE, normalizedItems.length));
+      renderHistoryGroup(dateKey);
     }
+  }
+
+  function renderHistoryGroup(dateKey) {
+    let section = els.historyGroups.querySelector(`.history-group[data-date-key="${dateKey}"]`);
+    if (!section) {
+      section = addHistoryGroup(dateKey);
+    }
+    const items = state.history.get(dateKey) || [];
+    const total = items.length;
+    let visible = state.visibleCounts.get(dateKey);
+    if (!Number.isFinite(visible)) {
+      visible = Math.min(GROUP_PAGE_SIZE, total);
+      state.visibleCounts.set(dateKey, visible);
+    }
+    visible = Math.min(visible, total);
+    state.visibleCounts.set(dateKey, visible);
+
+    const grid = section.querySelector('.history-grid');
+    grid.innerHTML = '';
+    for (const photo of items.slice(0, visible)) {
+      const node = els.historyItemTemplate.content.firstElementChild.cloneNode(true);
+      node.dataset.photoId = photo.id;
+      const button = node.querySelector('.history-item');
+      const img = node.querySelector('img');
+      img.src = photo.thumbUrl || photo.url;
+      img.dataset.fullUrl = photo.url;
+      img.alt = `${photo.displayDate} のエビデンス`;
+      button.dataset.photoId = photo.id;
+      button.addEventListener('click', () => openPhotoModal(photo));
+      grid.appendChild(node);
+    }
+
+    const counter = section.querySelector('.history-group-count');
+    if (counter) {
+      counter.dataset.count = String(total);
+      counter.textContent = `${total}枚`;
+    }
+    const moreBtn = section.querySelector('.history-group-more');
+    if (moreBtn) {
+      const hasMore = visible < total;
+      moreBtn.classList.toggle('d-none', !hasMore);
+      moreBtn.disabled = !hasMore;
+    }
+  }
+
+  function showMoreInGroup(dateKey) {
+    const items = state.history.get(dateKey) || [];
+    if (!items.length) return;
+    const current = state.visibleCounts.get(dateKey) ?? GROUP_PAGE_SIZE;
+    const next = Math.min(current + GROUP_PAGE_SIZE, items.length);
+    state.visibleCounts.set(dateKey, next);
+    renderHistoryGroup(dateKey);
   }
 
   function normalizePhoto(photo) {
@@ -377,6 +407,14 @@
         rebuildHistory(normalizedGroups);
       } else {
         for (const group of normalizedGroups) {
+          const fallbackDate = group.items[0]?.ymd || formatYmd(new Date());
+          const dateKey = String(group.date || fallbackDate).replaceAll('-', '').slice(0, 8);
+          if (!state.history.has(dateKey)) {
+            state.history.set(dateKey, []);
+            state.historyOrder.push(dateKey);
+            state.historyOrder.sort((a, b) => (a === b ? 0 : a > b ? -1 : 1));
+            state.visibleCounts.set(dateKey, Math.min(GROUP_PAGE_SIZE, 0));
+          }
           for (const photo of group.items) {
             upsertHistory(photo);
           }
@@ -596,29 +634,6 @@
     updateQueueItem(item);
   }
 
-  function setupDropZone() {
-    if (!els.dropZone) return;
-    const highlight = event => {
-      event.preventDefault();
-      els.dropZone.classList.add('dragover');
-    };
-    const unhighlight = event => {
-      event.preventDefault();
-      els.dropZone.classList.remove('dragover');
-    };
-    ['dragenter', 'dragover'].forEach(evt => {
-      els.dropZone.addEventListener(evt, highlight);
-    });
-    ['dragleave', 'drop'].forEach(evt => {
-      els.dropZone.addEventListener(evt, unhighlight);
-    });
-    els.dropZone.addEventListener('drop', event => {
-      event.preventDefault();
-      const items = event.dataTransfer?.files;
-      handleFiles(items);
-    });
-  }
-
   function setupInputs() {
     if (els.backBtn) {
       els.backBtn.addEventListener('click', () => {
@@ -725,11 +740,55 @@
     if (els.shotDateSave) {
       els.shotDateSave.addEventListener('click', saveShotDate);
     }
+    if (els.photoDelete) {
+      els.photoDelete.addEventListener('click', deleteSelectedPhoto);
+    }
+  }
+
+  async function deleteSelectedPhoto() {
+    if (!state.selectedPhoto) return;
+    const confirmed = window.confirm('選択した写真を削除しますか？');
+    if (!confirmed) return;
+    const target = state.selectedPhoto;
+    try {
+      const res = await fetch(`/api/photos/${encodeURIComponent(target.id)}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('削除に失敗しました');
+      removePhotoFromState(target.id);
+      announce('写真を削除しました');
+      closePhotoModal();
+    } catch (err) {
+      console.error(err);
+      announce('写真の削除に失敗しました');
+    }
+  }
+
+  function removePhotoFromState(id) {
+    for (const [dateKey, items] of state.history.entries()) {
+      const index = items.findIndex(item => item.id === id);
+      if (index === -1) continue;
+      items.splice(index, 1);
+      if (items.length === 0) {
+        state.history.delete(dateKey);
+        state.visibleCounts.delete(dateKey);
+        state.historyOrder = state.historyOrder.filter(key => key !== dateKey);
+        const section = els.historyGroups.querySelector(`.history-group[data-date-key="${dateKey}"]`);
+        if (section) {
+          section.remove();
+        }
+      } else {
+        const currentVisible = state.visibleCounts.get(dateKey) ?? GROUP_PAGE_SIZE;
+        const nextVisible = Math.min(currentVisible, items.length);
+        state.visibleCounts.set(dateKey, nextVisible);
+        renderHistoryGroup(dateKey);
+      }
+      break;
+    }
   }
 
   function init() {
     setupInputs();
-    setupDropZone();
     setupHistoryControls();
     setupModal();
     fetchHistory({ reset: true });
