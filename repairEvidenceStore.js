@@ -116,11 +116,21 @@ async function updatePhoto(id, updates) {
   return updated;
 }
 
+async function deletePhoto(id) {
+  const store = await readStore();
+  const index = store.photos.findIndex(item => item.id === id);
+  if (index === -1) return false;
+  store.photos.splice(index, 1);
+  await writeStore(store);
+  return true;
+}
+
 module.exports = {
   listPhotoGroups,
   savePhoto,
   getPhotoById,
   updatePhoto,
+  deletePhoto,
   toYmd
 };
 

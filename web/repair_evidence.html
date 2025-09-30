@@ -34,14 +34,6 @@
       </div>
     </section>
 
-    <section class="drop-section mb-4" aria-label="ファイルドロップ領域">
-      <div id="drop-zone" class="drop-zone text-center p-4 border border-2 border-dashed rounded-4 bg-white shadow-sm">
-        <p class="mb-1 fw-semibold">ドラッグ＆ドロップにも対応</p>
-        <p class="small mb-0 text-muted">HEIC/PNG/JPEG/WEBP 対応、20MB まで</p>
-        <p class="small text-muted">デスクトップではドラッグ、スマホではボタンをご利用ください</p>
-      </div>
-    </section>
-
     <section class="mb-4" aria-live="polite" aria-label="アップロード状況">
       <div class="d-flex align-items-center justify-content-between mb-2">
         <h2 class="h5 mb-0">アップロードキュー</h2>
@@ -94,6 +86,7 @@
         <span class="small text-muted history-group-count"></span>
       </header>
       <div class="row g-2 history-grid"></div>
+      <button type="button" class="btn btn-outline-secondary btn-sm w-100 history-group-more d-none">もっとみる</button>
     </section>
   </template>
 
@@ -129,6 +122,9 @@
               <button id="shot-date-save" class="btn btn-primary" type="button">保存</button>
             </div>
             <p class="small text-muted">EXIF が無い場合はアップロード日で補完できます。</p>
+          </div>
+          <div class="d-grid gap-2 mt-3">
+            <button id="photo-delete" class="btn btn-outline-danger" type="button">削除する</button>
           </div>
         </div>
       </div>

@@ -8,6 +8,7 @@ const {
   savePhoto,
   getPhotoById,
   updatePhoto,
+  deletePhoto,
   toYmd
 } = require('./repairEvidenceStore');
 
@@ -197,6 +198,14 @@ router.patch('/photos/:id', async (req, res) => {
     return res.status(404).json({ error: 'not_found' });
   }
   res.json({ photo: updated });
+});
+
+router.delete('/photos/:id', async (req, res) => {
+  const removed = await deletePhoto(req.params.id);
+  if (!removed) {
+    return res.status(404).json({ error: 'not_found' });
+  }
+  res.status(204).send();
 });
 
 module.exports = router;
