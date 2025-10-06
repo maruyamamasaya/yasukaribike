@@ -6,14 +6,6 @@ let sortDescending = true;
 let currentPage = 1;
 const PAGE_SIZE = 20;
 
-function isScheduled(c) {
-  if (!c.scheduledDate) return false;
-  const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
-  return c.scheduledDate > today;
-}
-
 function getKey(c) {
   if (c.order_id) return c.order_id.slice(0, 14);
   if (c.date) return c.date.replace(/\//g, '');
@@ -48,26 +40,50 @@ function getDateStr(item) {
   return `${key.slice(0, 4)}/${key.slice(4, 6)}/${key.slice(6, 8)}`;
 }
 
-async function loadCustomerToday(page = 1) {
+function formatDateColumn(customer) {
+  if (customer.order_id) return formatDateTime(customer.order_id);
+  const dateStr = getDateStr(customer);
+  if (!dateStr) return '';
+  return `<span class="date-part">${dateStr}</span>`;
+}
+
+function buildMemoContent(customer) {
+  const segments = [];
+  if (customer.details) segments.push(customer.details);
+  if (customer.history) {
+    const notes = Object.entries(customer.history)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([, note]) => note)
+      .filter(Boolean)
+      .reverse();
+    segments.push(...notes);
+  }
+  return segments.join('\n\n').trim();
+}
+
+function toMemoSnippet(text) {
+  if (!text) return '—';
+  let snippet = text;
+  const MAX_LENGTH = 280;
+  if (snippet.length > MAX_LENGTH) {
+    snippet = `${snippet.slice(0, MAX_LENGTH)}…`;
+  }
+  return snippet.replace(/\n/g, '<br>');
+}
+
+async function loadCustomerEntries(page = 1) {
   currentPage = page;
   const res = await fetch(API + '/customers');
   const data = await res.json();
   let customers = (data.Items || data)
     .filter(c => !c.draft)
-    .filter(c => !isScheduled(c));
-  const today = new Date(Date.now() + 9 * 60 * 60 * 1000)
-    .toISOString()
-    .split('T')[0]
-    .replace(/-/g, '/');
-  const todayKey = today.replace(/\//g, '');
-  customers = customers.filter(c => {
-    const isToday = c.date ? c.date === today : c.order_id && c.order_id.slice(0, 8) === todayKey;
-    return isToday && (c.type || c.category) === '顧客WEB入力';
-  });
+    .filter(c => (c.type || c.category) === '顧客WEB入力');
+
   const qEl = document.getElementById('quick-search');
   const tEl = document.getElementById('text-search');
   const keyword = qEl ? qEl.value.trim() : '';
   const textKey = tEl ? tEl.value.trim() : '';
+
   if (keyword) {
     customers = customers.filter(c =>
       (c.name || '').includes(keyword) ||
@@ -78,6 +94,7 @@ async function loadCustomerToday(page = 1) {
   if (textKey) {
     customers = customers.filter(c => hasText(c, textKey));
   }
+
   customers.sort((a, b) =>
     sortDescending ? getKey(b) - getKey(a) : getKey(a) - getKey(b)
   );
@@ -107,25 +124,36 @@ async function loadCustomerToday(page = 1) {
     }
 
     const tr = document.createElement('tr');
-    let note = '';
-    if (c.history) {
-      const keys = Object.keys(c.history).sort();
-      const last = keys[keys.length - 1];
-      if (last) note = c.history[last];
-    }
-    let snippet = note.slice(0, 50);
-    if (note.length > 50) snippet += '…';
-    snippet = snippet.replace(/\n/g, '<br>');
+    const memoContent = buildMemoContent(c);
+    const memoHtml = toMemoSnippet(memoContent);
+    const dateHtml = formatDateColumn(c);
+    const detailId = c.order_id || c.id;
+
+    tr.classList.add('link-row');
+    tr.tabIndex = 0;
+    tr.setAttribute('role', 'button');
     tr.innerHTML = `
-      <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
-      <td>${formatDateTime(c.order_id)}</td>
-      <td>
-        ${statusBadge(c.status || '未着手')}
-        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="toggleStatus('${c.order_id}', '${c.status || ''}')">
-          ${statusButtonLabel(c.status || '未着手')}
-        </button>
-      </td>
-      <td style="width:40%; white-space: pre-wrap; font-size:0.85rem;">${snippet}</td>`;
+      <td>${c.name || ''}</td>
+      <td>${dateHtml}</td>
+      <td style="white-space: pre-wrap; font-size:0.9rem;">${memoHtml}</td>`;
+
+    if (detailId) {
+      const targetUrl = `detail.html?id=${encodeURIComponent(detailId)}`;
+      tr.addEventListener('click', () => {
+        window.location.href = targetUrl;
+      });
+      tr.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          window.location.href = targetUrl;
+        }
+      });
+    } else {
+      tr.classList.remove('link-row');
+      tr.removeAttribute('role');
+      tr.removeAttribute('tabindex');
+    }
+
     tbody.appendChild(tr);
   });
 
@@ -138,21 +166,11 @@ async function loadCustomerToday(page = 1) {
 }
 
 function nextPage() {
-  loadCustomerToday(currentPage + 1);
+  loadCustomerEntries(currentPage + 1);
 }
 
 function prevPage() {
-  loadCustomerToday(currentPage - 1);
-}
-
-async function toggleStatus(id, current) {
-  const newStatus = nextStatus(current);
-  await fetch(API + '/customers/' + id, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: newStatus })
-  });
-  loadCustomerToday();
+  loadCustomerEntries(currentPage - 1);
 }
 
 window.addEventListener('DOMContentLoaded', () => {
@@ -160,12 +178,12 @@ window.addEventListener('DOMContentLoaded', () => {
   if (header) {
     header.addEventListener('click', () => {
       sortDescending = !sortDescending;
-        loadCustomerToday();
+      loadCustomerEntries();
     });
   }
   const qEl = document.getElementById('quick-search');
   const tEl = document.getElementById('text-search');
-  if (qEl) qEl.addEventListener('input', () => loadCustomerToday(1));
-  if (tEl) tEl.addEventListener('input', () => loadCustomerToday(1));
-  loadCustomerToday();
+  if (qEl) qEl.addEventListener('input', () => loadCustomerEntries(1));
+  if (tEl) tEl.addEventListener('input', () => loadCustomerEntries(1));
+  loadCustomerEntries();
 });
