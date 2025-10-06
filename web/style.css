@@ -177,8 +177,34 @@ th[data-key] {
 
 /* clickable table row */
 .link-row {
+  position: relative;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: transform 0.2s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+  overflow: hidden;
+}
+
+.link-row::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.35), rgba(13, 110, 253, 0.15) 45%, transparent 75%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  transform: scale(1);
+  transform-origin: center;
+}
+
+.link-row:hover,
+.link-row:focus-visible {
+  background-color: rgba(13, 110, 253, 0.05);
+  box-shadow: 0 0 0.65rem rgba(13, 110, 253, 0.25);
+  transform: translateY(-1px);
+}
+
+.link-row:hover::after {
+  opacity: 1;
+  animation: link-row-hover-glow 1.2s ease-in-out infinite alternate;
 }
 
 .link-row:focus-visible {
@@ -202,6 +228,17 @@ th[data-key] {
   100% {
     background-color: inherit;
     box-shadow: none;
+  }
+}
+
+@keyframes link-row-hover-glow {
+  0% {
+    opacity: 0.7;
+    transform: scale(0.95) translate(-8%, -8%);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.1) translate(4%, 4%);
   }
 }
 
