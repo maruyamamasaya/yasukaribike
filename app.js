@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const Imap = require('imap');
 const { simpleParser } = require('mailparser');
 const AWS = require('aws-sdk');
@@ -59,6 +60,20 @@ function respondError(res, status, label, err) {
     body.message = err.message || String(err);
   }
   res.status(status).json(body);
+}
+
+function stableStringify(value) {
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(item => stableStringify(item)).join(',')}]`;
+  }
+  const entries = Object.entries(value)
+    .filter(([, v]) => v !== undefined)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([key, v]) => `${JSON.stringify(key)}:${stableStringify(v)}`);
+  return `{${entries.join(',')}}`;
 }
 
 // DynamoDB から全件を取得するヘルパー
@@ -511,6 +526,50 @@ app.post('/customers', async (req, res) => {
 // Public endpoint for customer form submissions
 app.post('/form/submit', async (req, res) => {
   const name = (req.body.name || '').trim() || '名前を入力してください';
+  const submissionDetails =
+    req.body && typeof req.body.submissionDetails === 'object'
+      ? req.body.submissionDetails
+      : {};
+  const fallbackDetails = {
+    name,
+    kana: req.body.kana || '',
+    email: req.body.email || '',
+    phone: req.body.phoneNumber || req.body.phone || '',
+    category: req.body.category || req.body.type || ''
+  };
+  const normalizedDetails = stableStringify(
+    Object.keys(submissionDetails).length ? submissionDetails : fallbackDetails
+  );
+  const contentHash = crypto.createHash('sha256').update(normalizedDetails).digest('hex');
+
+  let duplicateFound = false;
+  let ExclusiveStartKey;
+  try {
+    do {
+      const scanParams = {
+        TableName: TABLE,
+        FilterExpression: '#hash = :hash',
+        ExpressionAttributeNames: { '#hash': 'contentHash' },
+        ExpressionAttributeValues: { ':hash': contentHash },
+        ProjectionExpression: 'order_id',
+        ExclusiveStartKey
+      };
+      const existing = await ddb.send(new ScanCommand(scanParams));
+      if (existing.Items && existing.Items.length) {
+        duplicateFound = true;
+        break;
+      }
+      ExclusiveStartKey = existing.LastEvaluatedKey;
+    } while (ExclusiveStartKey);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to verify duplication' });
+  }
+
+  if (duplicateFound) {
+    return res.status(409).json({ error: 'Duplicate submission' });
+  }
+
   const item = {
     order_id: genOrderId(),
     status: '未着手',
@@ -527,7 +586,9 @@ app.post('/form/submit', async (req, res) => {
     phone: req.body.phoneNumber || req.body.phone || '',
     history: req.body.history || {},
     draft: false,
-    scheduledDate: ''
+    scheduledDate: '',
+    submissionDetails,
+    contentHash
   };
   try {
     await ddb.send(new PutCommand({ TableName: TABLE, Item: item }));
