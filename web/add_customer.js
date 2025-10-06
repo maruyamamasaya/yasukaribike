@@ -73,6 +73,7 @@ async function saveCustomer(isDraft = false) {
   const loan = document.getElementById('q-loan').value;
   const use = document.getElementById('q-use').value;
   const useOther = document.getElementById('q-use-other').value.trim();
+  const visitPurpose = document.getElementById('q-visit-purpose').value;
   const request = document.getElementById('f-request').value.trim();
 
   const memoParts = [
@@ -82,6 +83,7 @@ async function saveCustomer(isDraft = false) {
     budget ? `購入予算: ${budget}` : '',
     `ローン希望確認: ${loan}`,
     `主な用途: ${use === 'その他' ? useOther : use}`,
+    `ご来店用件: ${visitPurpose}`,
     request ? `ご要望・ご質問: ${request}` : ''
   ].filter(Boolean);
   const note = memoParts.join('\n');
