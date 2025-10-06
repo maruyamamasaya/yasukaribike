@@ -12,6 +12,22 @@ function sanitizePhoneInput(e) {
   e.target.value = toHalfWidth(e.target.value).replace(/-/g, '');
 }
 
+async function createContentHash(details) {
+  const json = JSON.stringify(details);
+  if (window.crypto && window.crypto.subtle && window.TextEncoder) {
+    const data = new TextEncoder().encode(json);
+    const digest = await window.crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(digest))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+  let hash = 0;
+  for (let i = 0; i < json.length; i += 1) {
+    hash = (hash * 31 + json.charCodeAt(i)) >>> 0;
+  }
+  return hash.toString(16);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const qDate = document.getElementById('q-date');
   const today = new Date();
@@ -67,6 +83,11 @@ async function submitForm() {
   const useOther = document.getElementById('q-use-other').value.trim();
   const request = document.getElementById('f-request').value.trim();
 
+  if (visitPurpose.includes('その他') && !request) {
+    alert('ご来店用件で「その他」を選択した場合は、ご要望欄に内容をご記入ください。');
+    return;
+  }
+
   const memoParts = [
     `免許種別: ${license}`,
     `現在所有のバイク車種: ${bike === 'あり' ? (bikeModel || 'あり') : 'なし'}`,
@@ -78,6 +99,28 @@ async function submitForm() {
     request ? `ご要望・ご質問: ${request}` : ''
   ].filter(Boolean);
   const note = memoParts.join('\n');
+
+  const normalizedUseOther = use === 'その他' ? useOther : '';
+  const normalizedBikeModel = bike === 'あり' ? bikeModel : '';
+  const submissionDetails = {
+    name,
+    kana,
+    email,
+    phone,
+    license,
+    bike,
+    bikeModel: normalizedBikeModel,
+    purchaseDate,
+    budget,
+    loan,
+    visitPurpose,
+    use,
+    useOther: normalizedUseOther,
+    request,
+    note
+  };
+
+  const contentHash = await createContentHash(submissionDetails);
 
   const now = new Date(Date.now() + 9 * 60 * 60 * 1000)
     .toISOString()
@@ -97,17 +140,28 @@ async function submitForm() {
     status: '未着手',
     history,
     bikes: [],
-    draft: false
+    draft: false,
+    submissionDetails,
+    contentHash
   };
 
-  const res = await fetch(API + '/form/submit', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  if (res.ok) {
-    window.location.replace('https://rebikele.com/');
-  } else {
+  try {
+    const res = await fetch(API + '/form/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (res.ok) {
+      window.location.replace('https://rebikele.com/');
+      return;
+    }
+    if (res.status === 409) {
+      alert('すでに登録済みです');
+      return;
+    }
+    alert('送信に失敗しました');
+  } catch (err) {
+    console.error(err);
     alert('送信に失敗しました');
   }
 }
