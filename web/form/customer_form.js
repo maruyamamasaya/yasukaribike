@@ -62,6 +62,7 @@ async function submitForm() {
   const purchaseDate = document.getElementById('q-date').value;
   const budget = document.getElementById('q-budget').value.trim();
   const loan = document.getElementById('q-loan').value;
+  const visitPurpose = Array.from(document.querySelectorAll('input[name="q-purpose"]:checked')).map(el => el.value);
   const use = document.getElementById('q-use').value;
   const useOther = document.getElementById('q-use-other').value.trim();
   const request = document.getElementById('f-request').value.trim();
@@ -72,6 +73,7 @@ async function submitForm() {
     purchaseDate ? `購入時期予定: ${purchaseDate}` : '',
     budget ? `購入予算: ${budget}` : '',
     `ローン希望確認: ${loan}`,
+    `ご来店用件: ${visitPurpose.length ? visitPurpose.join('、') : '未選択'}`,
     `主な用途: ${use === 'その他' ? useOther : use}`,
     request ? `ご要望・ご質問: ${request}` : ''
   ].filter(Boolean);
