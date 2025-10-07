@@ -467,6 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const fullResults = document.getElementById('full-results');
   if (showDetails && fullResults) {
     showDetails.addEventListener('click', () => {
+      setSuggestionMinimized(true);
       document.body.classList.add('show-results');
       fullResults.classList.remove('collapsed');
       fullResults.setAttribute('aria-hidden', 'false');
