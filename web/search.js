@@ -7,13 +7,12 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
 let currentPage = 1;
 const PAGE_SIZE = 20;
 let searchResults = [];
-let mailPage = 1;
-const MAIL_PAGE_SIZE = 20;
-let mailResults = [];
-let totalEmailCount = 0; // 総メール件数
-let mailSortDescending = true;
 let searchTimeout;
 let globalKey = '';
+
+let customerCache = [];
+let customerCacheLoaded = false;
+let customerFetchPromise = null;
 
 function escapeHTML(str) {
   if (str == null) return '';
@@ -57,10 +56,6 @@ function renderGhostSuggestions(isPending = false) {
     if (c.name) suggestions.add(trimText(c.name, 24));
     if (c.details) suggestions.add(trimText(c.details, 24));
   });
-  mailResults.slice(0, 5).forEach(m => {
-    if (m.subject) suggestions.add(trimText(m.subject, 24));
-    if (m.from) suggestions.add(trimText(m.from, 24));
-  });
 
   const values = [...suggestions].filter(Boolean).slice(0, 3);
   if (values.length) {
@@ -78,37 +73,25 @@ function renderSuggestionPanel() {
   if (!panel) return;
 
   const customerCountEl = document.getElementById('suggest-customer-count');
-  const mailCountEl = document.getElementById('suggest-mail-count');
   const highlightList = document.getElementById('suggest-highlight-list');
   if (customerCountEl) customerCountEl.textContent = `${searchResults.length.toLocaleString('ja-JP')}件`;
-  if (mailCountEl) mailCountEl.textContent = `${mailResults.length.toLocaleString('ja-JP')}件`;
 
   if (highlightList) {
-    const highlights = [];
-    searchResults.slice(0, 3).forEach(item => {
+    const highlights = searchResults.slice(0, 5).map(item => {
       const metaParts = [];
       if (item.category || item.type) metaParts.push(item.category || item.type);
       if (item.details) metaParts.push(item.details);
       if (item.status) metaParts.push(`状態: ${item.status}`);
-      highlights.push({
-        type: '問い合わせ',
+      return {
         title: item.name || '（名称未設定）',
         meta: trimText(metaParts.join('・'), 52) || '詳細メモなし'
-      });
-    });
-    mailResults.slice(0, 2).forEach(item => {
-      const metaSource = item.from || item.body || '';
-      highlights.push({
-        type: 'メール',
-        title: item.subject || (item.from ? `${item.from} から` : '（件名なし）'),
-        meta: trimText(metaSource, 52) || '本文プレビューなし'
-      });
+      };
     });
 
     if (highlights.length) {
-      highlightList.innerHTML = highlights.slice(0, 5).map(h => `
+      highlightList.innerHTML = highlights.map(h => `
         <li class="highlight-item">
-          <span class="highlight-type">${escapeHTML(h.type)}</span>
+          <span class="highlight-type">問い合わせ</span>
           <div class="highlight-main">
             <p class="highlight-title">${escapeHTML(trimText(h.title, 36))}</p>
             <p class="highlight-meta">${escapeHTML(trimText(h.meta, 48))}</p>
@@ -121,7 +104,7 @@ function renderSuggestionPanel() {
 
   const hasKeyword = Boolean(globalKey);
   panel.classList.toggle('is-active', hasKeyword);
-  panel.classList.toggle('has-results', hasKeyword && (searchResults.length + mailResults.length) > 0);
+  panel.classList.toggle('has-results', hasKeyword && searchResults.length > 0);
 }
 
 function updateFilterState(id) {
@@ -181,74 +164,95 @@ function matchesGlobalCustomer(c, key) {
   return hasText(c, key);
 }
 
-function matchesGlobalEmail(e, key) {
-  if (!key) return true;
-  const props = [e.from, e.to, e.subject, e.body, e.folder, e.category];
-  for (const p of props) {
-    if (p && String(p).includes(key)) return true;
+async function loadCustomers(force = false) {
+  if (force) {
+    customerCacheLoaded = false;
+    customerCache = [];
+    customerFetchPromise = null;
   }
-  return false;
-}
-
-function formatYMD(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}/${m}/${day}`;
-}
-
-function getEmailTimeValue(item) {
-  const d = item.date || item.createdAt;
-  return d ? new Date(d).getTime() : 0;
+  if (customerCacheLoaded) {
+    return customerCache;
+  }
+  if (!customerFetchPromise) {
+    customerFetchPromise = (async () => {
+      try {
+        const res = await fetch(API + '/customers');
+        const data = await res.json();
+        const items = (data.Items || data || []).filter(c => !c.draft);
+        customerCache = items;
+        customerCacheLoaded = true;
+        return customerCache;
+      } catch (err) {
+        customerCacheLoaded = false;
+        customerCache = [];
+        throw err;
+      } finally {
+        customerFetchPromise = null;
+      }
+    })().catch(err => {
+      console.error('顧客データの取得に失敗しました', err);
+      throw err;
+    });
+  }
+  return customerFetchPromise;
 }
 
 
 function triggerSearch() {
   clearTimeout(searchTimeout);
   const spinnerC = document.getElementById('loading-customer');
-  const spinnerM = document.getElementById('loading-mail');
   if (spinnerC) spinnerC.style.display = 'block';
-  if (spinnerM) spinnerM.style.display = 'block';
   renderGhostSuggestions(true);
-  searchTimeout = setTimeout(() => {
-    searchCustomers(1);
-    searchEmails(1);
-    if (spinnerC) spinnerC.style.display = 'none';
-    if (spinnerM) spinnerM.style.display = 'none';
+  searchTimeout = setTimeout(async () => {
+    try {
+      await searchCustomers(1);
+    } finally {
+      if (spinnerC) spinnerC.style.display = 'none';
+    }
   }, 500);
 }
 
-async function searchCustomers(page = 1) {
-  if (page === 1) {
-    const dateInput = document.getElementById('s-date').value.trim();
-    const date = dateInput ? dateInput.replace(/-/g, '/') : '';
-    const name = document.getElementById('s-name').value.trim();
-    const phone = document.getElementById('s-phone').value.trim();
-    const email = document.getElementById('s-email').value.trim();
-    const status = document.getElementById('s-status').value.trim();
-    const category = document.getElementById('s-category').value.trim();
-    const details = document.getElementById('s-details').value.trim();
-    const text = document.getElementById('s-text').value.trim();
+async function searchCustomers(page = 1, options = {}) {
+  const { forceRefresh = false } = options;
+  if (page === 1 || forceRefresh) {
+    const dateInput = document.getElementById('s-date');
+    const nameInput = document.getElementById('s-name');
+    const phoneInput = document.getElementById('s-phone');
+    const emailInput = document.getElementById('s-email');
+    const statusInput = document.getElementById('s-status');
+    const categoryInput = document.getElementById('s-category');
+    const detailsInput = document.getElementById('s-details');
+    const textInput = document.getElementById('s-text');
 
-    const res = await fetch(API + '/customers');
-    const data = await res.json();
-    let customers = (data.Items || data).filter(c => !c.draft);
+    const dateRaw = dateInput ? dateInput.value.trim() : '';
+    const date = dateRaw ? dateRaw.replace(/-/g, '/') : '';
+    const name = nameInput ? nameInput.value.trim() : '';
+    const phone = phoneInput ? phoneInput.value.trim() : '';
+    const email = emailInput ? emailInput.value.trim() : '';
+    const status = statusInput ? statusInput.value.trim() : '';
+    const category = categoryInput ? categoryInput.value.trim() : '';
+    const details = detailsInput ? detailsInput.value.trim() : '';
+    const text = textInput ? textInput.value.trim() : '';
 
-    customers = customers.filter(c =>
-      (!date || (c.date || '').includes(date)) &&
-      (!name || (c.name || '').includes(name) || (c.kana || '').includes(name)) &&
-      (!phone || (c.phone || c.phoneNumber || '').includes(phone)) &&
-      (!email || (c.email || '').includes(email)) &&
-      (!status || (c.status || '') === status) &&
-      (!category || (c.category || c.type || '') === category) &&
-      (!details || (c.details || '').includes(details)) &&
-      (!text || hasText(c, text)) &&
-      matchesGlobalCustomer(c, globalKey)
-    );
+    try {
+      const allCustomers = await loadCustomers(forceRefresh);
+      const customers = allCustomers.filter(c =>
+        (!date || (c.date || '').includes(date)) &&
+        (!name || (c.name || '').includes(name) || (c.kana || '').includes(name)) &&
+        (!phone || (c.phone || c.phoneNumber || '').includes(phone)) &&
+        (!email || (c.email || '').includes(email)) &&
+        (!status || (c.status || '') === status) &&
+        (!category || (c.category || c.type || '') === category) &&
+        (!details || (c.details || '').includes(details)) &&
+        (!text || hasText(c, text)) &&
+        matchesGlobalCustomer(c, globalKey)
+      );
 
-    searchResults = customers;
+      searchResults = customers;
+    } catch (error) {
+      console.error('検索結果の取得に失敗しました', error);
+      searchResults = [];
+    }
   }
 
   currentPage = page;
@@ -300,109 +304,6 @@ function prevPage() {
   searchCustomers(currentPage - 1);
 }
 
-async function searchEmails(page = 1, refresh = false) {
-  if (page === 1 || refresh) {
-    const dateInput = document.getElementById('m-date').value.trim();
-    const date = dateInput ? dateInput.replace(/-/g, '/') : '';
-    const key = document.getElementById('m-key').value.trim();
-
-    const res = await fetch(API + '/emails');
-    const data = await res.json();
-    let emails = Array.isArray(data.Items) ? data.Items : data;
-    totalEmailCount = emails.length;
-
-    emails = emails.filter(e =>
-      (!date || formatYMD(e.date || e.createdAt) === formatYMD(date)) &&
-      (!key ||
-        (e.from || '').includes(key) ||
-        (e.to || '').includes(key) ||
-        (e.subject || '').includes(key) ||
-        (e.body || '').includes(key)) &&
-      matchesGlobalEmail(e, globalKey)
-    );
-
-    emails.sort((a, b) =>
-      mailSortDescending
-        ? getEmailTimeValue(b) - getEmailTimeValue(a)
-        : getEmailTimeValue(a) - getEmailTimeValue(b)
-    );
-
-    mailResults = emails;
-  }
-
-  mailPage = page;
-  const total = Math.max(1, Math.ceil(mailResults.length / MAIL_PAGE_SIZE));
-  if (mailPage > total) mailPage = total;
-  if (mailPage < 1) mailPage = 1;
-
-  const tbody = document.querySelector('#mail-result-table tbody');
-  tbody.innerHTML = '';
-  const start = (mailPage - 1) * MAIL_PAGE_SIZE;
-  const slice = mailResults.slice(start, start + MAIL_PAGE_SIZE);
-  slice.forEach(item => {
-    const tr = document.createElement('tr');
-    let body = item.body || '';
-    if (body.length > 200) body = body.slice(0, 200) + '…';
-    const d = item.date
-      ? new Date(item.date).toLocaleString('ja-JP', {
-          timeZone: 'Asia/Tokyo',
-          hour12: false,
-        })
-      : '';
-    const link = `mail_detail.html?id=${encodeURIComponent(item.unique_id || '')}`;
-    const btnLabel = item.task_added ? '追加済み' : 'ボードに追加';
-    const btnClass = item.task_added ? 'btn btn-sm btn-success' : 'btn btn-sm btn-primary';
-    tr.innerHTML = `
-      <td>${d}</td>
-      <td>${item.from || ''}</td>
-      <td>${item.subject || ''}</td>
-      <td style="white-space: pre-wrap;">${body}</td>
-      <td class="no-link"><button class="${btnClass}" onclick="addTask('${item.unique_id}')" data-added="${item.task_added ? '1' : '0'}">${btnLabel}</button></td>`;
-    tr.classList.add('link-row');
-    tr.addEventListener('click', e => {
-      if (e.target.closest('.no-link')) return;
-      window.location.href = link;
-    });
-    tbody.appendChild(tr);
-  });
-
-  const info = document.getElementById('mail-page-info');
-  if (info) info.textContent = `${mailPage} / ${total}`;
-  const prev = document.getElementById('mail-prev-btn');
-  const next = document.getElementById('mail-next-btn');
-  if (prev) prev.disabled = mailPage === 1;
-  if (next) next.disabled = mailPage === total || mailResults.length === 0;
-  const mcount = document.getElementById('mail-count');
-  if (mcount) mcount.textContent = `【${mailResults.length}件／${totalEmailCount}件中】`;
-  renderSuggestionPanel();
-  renderGhostSuggestions();
-}
-
-function mailNextPage() {
-  searchEmails(mailPage + 1);
-}
-
-function mailPrevPage() {
-  searchEmails(mailPage - 1);
-}
-
-async function addTask(id) {
-  if (!id) return;
-  const item = mailResults.find(e => e.unique_id === id);
-  if (item && item.task_added) {
-    const ok = confirm('再度追加しますか？\n前回追加済みの場合は、タスクが重複する恐れがあります。');
-    if (!ok) return;
-  }
-  const res = await fetch(API + `/emails/${encodeURIComponent(id)}/add-task`, {
-    method: 'POST'
-  });
-  if (res.ok) {
-    searchEmails(mailPage, true);
-  } else {
-    alert('タスク追加に失敗しました');
-  }
-}
-
 function searchAll() {
   triggerSearch();
 }
@@ -414,31 +315,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (s) s.addEventListener('click', e => e.preventDefault());
     d.open = true;
   });
+
   const toggleBtn = document.getElementById('toggle-filters');
   const customerForm = document.getElementById('customer-form');
-  const mailForm = document.getElementById('mail-form');
-  if (toggleBtn && customerForm && mailForm) {
+  if (toggleBtn && customerForm) {
+    let filtersExpanded = false;
+    const applyToggleState = expanded => {
+      toggleBtn.innerHTML = `<span aria-hidden="true">${expanded ? '×' : '☰'}</span>`;
+      toggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+      toggleBtn.setAttribute('aria-label', expanded ? 'フィルターを閉じる' : 'フィルターを表示');
+      customerForm.classList.toggle('d-none', !expanded);
+    };
     toggleBtn.addEventListener('click', () => {
-      const hidden = customerForm.classList.contains('d-none') && mailForm.classList.contains('d-none');
-      if (hidden) {
-        customerForm.classList.remove('d-none');
-        mailForm.classList.remove('d-none');
-        toggleBtn.textContent = 'フィルターを閉じる';
-        toggleBtn.setAttribute('aria-expanded', 'true');
-      } else {
-        customerForm.classList.add('d-none');
-        mailForm.classList.add('d-none');
-        toggleBtn.textContent = 'フィルターを表示';
-        toggleBtn.setAttribute('aria-expanded', 'false');
-      }
+      filtersExpanded = !filtersExpanded;
+      applyToggleState(filtersExpanded);
     });
-    toggleBtn.textContent = 'フィルターを表示';
-    toggleBtn.setAttribute('aria-expanded', 'false');
+    applyToggleState(filtersExpanded);
   }
+
   [
-    's-date','s-name','s-phone','s-email','s-status','s-category','s-details','s-text',
-    'm-date','m-key'
+    's-date','s-name','s-phone','s-email','s-status','s-category','s-details','s-text'
   ].forEach(setupFilter);
+
   const g = document.getElementById('all-key');
   const clearBtn = document.getElementById('clear-global');
   if (g) {
@@ -487,14 +385,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const mailHeader = document.getElementById('mail-date-header');
-  if (mailHeader) mailHeader.addEventListener('click', () => {
-    mailSortDescending = !mailSortDescending;
-    searchEmails(mailPage, true);
-  });
-
   searchCustomers(1);
-  searchEmails(1);
   updateTypingState();
-  renderSuggestionPanel();
 });
