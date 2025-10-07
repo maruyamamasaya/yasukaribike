@@ -336,6 +336,7 @@ async function searchCustomers(page = 1, options = {}) {
   const slice = searchResults.slice(start, start + PAGE_SIZE);
   slice.forEach(c => {
     const tr = document.createElement('tr');
+    tr.classList.add('result-row');
     let noteSnippet = '';
     if (c.history) {
       const keys = Object.keys(c.history).sort();
@@ -345,9 +346,49 @@ async function searchCustomers(page = 1, options = {}) {
     if (noteSnippet.length > 1000) noteSnippet = noteSnippet.slice(0, 1000) + '…';
     noteSnippet = noteSnippet.replace(/\n/g, '<br>');
 
+    const detailUrl = c.order_id ? `detail.html?id=${encodeURIComponent(c.order_id)}` : '';
+    const rawName = c.name || '（名称未設定）';
+    const safeName = escapeHTML(rawName);
+    const metaChips = [];
+    if (c.category || c.type) metaChips.push(`<span class="result-chip">${escapeHTML(c.category || c.type)}</span>`);
+    if (c.status) metaChips.push(`<span class="result-chip result-chip-status">${escapeHTML(c.status)}</span>`);
+    if (c.date) metaChips.push(`<span class="result-chip result-chip-date">${escapeHTML(c.date)}</span>`);
+
     tr.innerHTML = `
-      <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
-      <td style="white-space: pre-wrap;">${noteSnippet}</td>`;
+      <td>
+        <div class="result-primary">
+          <div class="result-title-row">
+            <span class="result-name">${safeName}</span>
+            <span class="row-chevron" aria-hidden="true">⟶</span>
+          </div>
+          ${metaChips.length ? `<div class="result-meta">${metaChips.join('')}</div>` : ''}
+        </div>
+      </td>
+      <td class="result-note">${noteSnippet}</td>`;
+
+    if (detailUrl) {
+      const navigate = () => {
+        window.location.href = detailUrl;
+      };
+      tr.classList.add('link-row');
+      tr.dataset.href = detailUrl;
+      tr.setAttribute('tabindex', '0');
+      tr.setAttribute('role', 'link');
+      tr.setAttribute('aria-label', `${rawName}の詳細を開く`);
+      tr.addEventListener('click', navigate);
+      tr.addEventListener('keydown', event => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          navigate();
+        }
+      });
+    } else {
+      tr.classList.add('result-row-disabled');
+    }
+
+    requestAnimationFrame(() => {
+      tr.classList.add('is-visible');
+    });
     tbody.appendChild(tr);
   });
 
