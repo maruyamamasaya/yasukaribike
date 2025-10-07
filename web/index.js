@@ -10,7 +10,7 @@ const STATUS_FOLDERS = [
   { key: '契約書送付フェーズ', label: '契約書送付フェーズ' }
 ];
 
-function createFolderElement({ key, label }, count) {
+function createFolderElement({ key, label }, countLabel) {
   const wrapper = document.createElement('div');
   wrapper.className = 'folder-card folder-status-card';
   wrapper.dataset.statusKey = key;
@@ -18,7 +18,7 @@ function createFolderElement({ key, label }, count) {
   wrapper.innerHTML = `
     <span class="folder-icon" aria-hidden="true"></span>
     <span class="folder-title">${label}</span>
-    <span class="folder-count">${count}</span>
+    <span class="folder-count">${countLabel}</span>
   `;
 
   return wrapper;
@@ -38,41 +38,47 @@ function countByStatus(customers) {
   return counts;
 }
 
+function renderStatusFolders(container, counts) {
+  container.innerHTML = '';
+
+  STATUS_FOLDERS.forEach(status => {
+    const countValue = counts && counts.has(status.key) ? counts.get(status.key) : 0;
+    const countLabel = typeof countValue === 'number'
+      ? countValue.toLocaleString('ja-JP')
+      : String(countValue || 0);
+
+    container.appendChild(createFolderElement(status, countLabel));
+  });
+}
+
 async function loadCounts() {
-  const totalEl = document.getElementById('total-count');
   const statusContainer = document.getElementById('status-folders');
-  if (!totalEl || !statusContainer) return;
+  const errorMessage = document.getElementById('status-error');
+  if (!statusContainer) return;
+
+  renderStatusFolders(statusContainer);
+  if (errorMessage) {
+    errorMessage.classList.add('d-none');
+  }
 
   try {
     const res = await fetch(API + '/customers');
     const payload = await res.json();
     const customers = (payload.Items || payload).filter(c => !c.draft);
 
-    totalEl.textContent = customers.length.toLocaleString('ja-JP');
-
     const counts = countByStatus(customers);
-    statusContainer.innerHTML = '';
-    STATUS_FOLDERS.forEach(status => {
-      const count = counts.get(status.key) || 0;
-      statusContainer.appendChild(createFolderElement(status, count.toLocaleString('ja-JP')));
-    });
+    renderStatusFolders(statusContainer, counts);
   } catch (error) {
     console.error('Failed to load counts', error);
-    totalEl.textContent = '—';
-    statusContainer.innerHTML = '<p class="text-danger mb-0">件数を取得できませんでした。</p>';
+    if (errorMessage) {
+      errorMessage.classList.remove('d-none');
+    }
+
+    const fallbackCounts = new Map(STATUS_FOLDERS.map(status => [status.key, '—']));
+    renderStatusFolders(statusContainer, fallbackCounts);
   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const toggleButton = document.getElementById('total-folder');
-  const statusContainer = document.getElementById('status-folders');
-
-  if (toggleButton && statusContainer) {
-    toggleButton.addEventListener('click', () => {
-      const isHidden = statusContainer.classList.toggle('d-none');
-      toggleButton.setAttribute('aria-expanded', String(!isHidden));
-    });
-  }
-
   loadCounts();
 });
