@@ -9,13 +9,27 @@
   <link rel="icon" href="https://rebikele.s3.ap-northeast-1.amazonaws.com/kokyaku_kanri/rogo.jpg" />
 </head>
 <body class="d-flex flex-column min-vh-100 p-4">
-  <main class="container flex-grow-1 d-flex flex-column justify-content-center align-items-center text-center">
-    <h1 class="mb-3">顧客管理システム</h1>
-    <p class="text-muted mb-4">各種ページは上部メニューやブックマークからアクセスできます。詳細検索はこちらから。</p>
+  <main class="container flex-grow-1 d-flex flex-column justify-content-center align-items-center text-center gap-4">
+    <div class="d-flex flex-column align-items-center gap-2">
+      <h1 class="mb-0">顧客管理システム</h1>
+      <p class="text-muted mb-0">各種ページは上部メニューやブックマークからアクセスできます。詳細検索はこちらから。</p>
+    </div>
+
+    <section class="folder-dashboard">
+      <button id="total-folder" class="folder-card" type="button" aria-expanded="false" aria-controls="status-folders">
+        <span class="folder-icon" aria-hidden="true"></span>
+        <span class="folder-title">全案件</span>
+        <span id="total-count" class="folder-count">-</span>
+      </button>
+    </section>
+
+    <section id="status-folders" class="folder-status-grid d-none" aria-live="polite"></section>
+
     <a class="btn btn-outline-primary btn-lg" href="search.html">詳細検索ページへ</a>
   </main>
   <footer class="text-center mt-auto">
     <small style="color: var(--bs-link-color);">©2025 JIMUSURU All rights reserved.</small>
   </footer>
+  <script src="index.js"></script>
 </body>
 </html>
