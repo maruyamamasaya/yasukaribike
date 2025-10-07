@@ -14,6 +14,7 @@ const CUSTOMER_STATUS_OPTIONS = [
 ];
 
 let currentId = null;
+let currentItem = null;
 
 function formatDateTime(id) {
   if (!id || id.length < 12) return '';
@@ -46,6 +47,7 @@ async function loadDetail() {
     const res = await fetch(API + '/customers/' + id);
     const data = await res.json();
     const item = data.Item || data;
+    currentItem = item;
 
     const tbody = document.querySelector('#detail-table tbody');
     tbody.innerHTML = '';
@@ -125,53 +127,70 @@ async function loadDetail() {
     // Display note history
     const hist = document.getElementById('history');
     hist.innerHTML = '';
-    if (item.history) {
-      hist.innerHTML = '<h4>メモ</h4>';
-      const entries = Object.entries(item.history).sort(([a], [b]) =>
-        a.localeCompare(b)
-      );
-      if (entries.length) {
-        const [latestDate, latestNote] = entries[entries.length - 1];
-        const latestDiv = document.createElement('div');
-        latestDiv.className = 'mb-2';
-        latestDiv.innerHTML = `<div class="fw-bold">${latestDate}</div>`;
-        const p = document.createElement('p');
-        p.style.whiteSpace = 'pre-wrap';
-        p.textContent = latestNote;
-        latestDiv.appendChild(p);
-        hist.appendChild(latestDiv);
+    const historyHeader = document.createElement('div');
+    historyHeader.className = 'd-flex align-items-center justify-content-between mb-2';
+    const historyTitle = document.createElement('h4');
+    historyTitle.className = 'mb-0';
+    historyTitle.textContent = 'メモ';
+    historyHeader.appendChild(historyTitle);
+    const historyEditBtn = document.createElement('button');
+    historyEditBtn.type = 'button';
+    historyEditBtn.className = 'btn btn-sm btn-outline-primary';
+    historyEditBtn.textContent = '編集';
+    historyEditBtn.addEventListener('click', openMemoEditor);
+    historyHeader.appendChild(historyEditBtn);
+    hist.appendChild(historyHeader);
 
-        if (entries.length > 1) {
-          const histHeader = document.createElement('h5');
-          histHeader.textContent = '編集履歴';
-          hist.appendChild(histHeader);
-        }
+    const entries = item.history
+      ? Object.entries(item.history).sort(([a], [b]) => a.localeCompare(b))
+      : [];
 
-        for (let i = entries.length - 2; i >= 0; i--) {
-          const [d, note] = entries[i];
-          const div = document.createElement('div');
-          div.className = 'mb-2';
-          const label = document.createElement('span');
-          label.textContent = d;
-          const btn = document.createElement('button');
-          btn.className = 'btn btn-sm btn-outline-secondary ms-2';
-          btn.textContent = '表示';
-          const noteEl = document.createElement('p');
-          noteEl.style.whiteSpace = 'pre-wrap';
-          noteEl.style.display = 'none';
-          noteEl.className = 'mt-2';
-          noteEl.textContent = note;
-          btn.addEventListener('click', () => {
-            const hidden = noteEl.style.display === 'none';
-            noteEl.style.display = hidden ? 'block' : 'none';
-            btn.textContent = hidden ? '非表示' : '表示';
-          });
-          div.appendChild(label);
-          div.appendChild(btn);
-          div.appendChild(noteEl);
-          hist.appendChild(div);
-        }
+    if (entries.length) {
+      const [latestDate, latestNote] = entries[entries.length - 1];
+      const latestDiv = document.createElement('div');
+      latestDiv.className = 'mb-2';
+      latestDiv.innerHTML = `<div class="fw-bold">${latestDate}</div>`;
+      const p = document.createElement('p');
+      p.style.whiteSpace = 'pre-wrap';
+      p.textContent = latestNote;
+      latestDiv.appendChild(p);
+      hist.appendChild(latestDiv);
+
+      if (entries.length > 1) {
+        const histHeader = document.createElement('h5');
+        histHeader.textContent = '編集履歴';
+        hist.appendChild(histHeader);
       }
+
+      for (let i = entries.length - 2; i >= 0; i--) {
+        const [d, note] = entries[i];
+        const div = document.createElement('div');
+        div.className = 'mb-2';
+        const label = document.createElement('span');
+        label.textContent = d;
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-sm btn-outline-secondary ms-2';
+        btn.textContent = '表示';
+        const noteEl = document.createElement('p');
+        noteEl.style.whiteSpace = 'pre-wrap';
+        noteEl.style.display = 'none';
+        noteEl.className = 'mt-2';
+        noteEl.textContent = note;
+        btn.addEventListener('click', () => {
+          const hidden = noteEl.style.display === 'none';
+          noteEl.style.display = hidden ? 'block' : 'none';
+          btn.textContent = hidden ? '非表示' : '表示';
+        });
+        div.appendChild(label);
+        div.appendChild(btn);
+        div.appendChild(noteEl);
+        hist.appendChild(div);
+      }
+    } else {
+      const empty = document.createElement('p');
+      empty.className = 'text-muted';
+      empty.textContent = 'まだメモは登録されていません。';
+      hist.appendChild(empty);
     }
 
     // fetch past records
@@ -245,6 +264,93 @@ function showScheduleInput() {
   if (input) {
     input.style.display = 'block';
     if (input.showPicker) input.showPicker();
+  }
+}
+
+function getLatestNote(history) {
+  if (!history) return '';
+  const entries = Object.entries(history).sort(([a], [b]) => a.localeCompare(b));
+  if (!entries.length) return '';
+  return entries[entries.length - 1][1] || '';
+}
+
+function closeMemoEditor() {
+  const editor = document.getElementById('memo-editor');
+  if (editor && editor.parentNode) {
+    editor.parentNode.removeChild(editor);
+  }
+}
+
+function openMemoEditor() {
+  const hist = document.getElementById('history');
+  if (!hist) return;
+  let editor = document.getElementById('memo-editor');
+  if (editor) {
+    const textarea = editor.querySelector('textarea');
+    if (textarea) {
+      textarea.value = getLatestNote(currentItem?.history);
+      textarea.focus();
+    }
+    return;
+  }
+  editor = document.createElement('div');
+  editor.id = 'memo-editor';
+  editor.className = 'mt-3';
+  const textarea = document.createElement('textarea');
+  textarea.className = 'form-control';
+  textarea.rows = 6;
+  textarea.value = getLatestNote(currentItem?.history);
+  editor.appendChild(textarea);
+  const actions = document.createElement('div');
+  actions.className = 'd-flex gap-2 mt-2';
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'button';
+  saveBtn.className = 'btn btn-sm btn-primary';
+  saveBtn.textContent = '保存';
+  saveBtn.addEventListener('click', () => saveMemo(textarea, saveBtn));
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'btn btn-sm btn-outline-secondary';
+  cancelBtn.textContent = 'キャンセル';
+  cancelBtn.addEventListener('click', closeMemoEditor);
+  actions.appendChild(saveBtn);
+  actions.appendChild(cancelBtn);
+  editor.appendChild(actions);
+  hist.appendChild(editor);
+  textarea.focus();
+}
+
+async function saveMemo(textarea, saveBtn) {
+  if (!currentId) return;
+  const raw = textarea.value;
+  const note = raw.trim();
+  if (!note && !confirm('メモが空になります。このまま保存しますか？')) {
+    return;
+  }
+
+  const history = currentItem && currentItem.history ? { ...currentItem.history } : {};
+  const now = new Date(Date.now() + 9 * 60 * 60 * 1000)
+    .toISOString()
+    .replace('T', ' ')
+    .slice(0, 19);
+  history[now] = note;
+
+  saveBtn.disabled = true;
+  textarea.disabled = true;
+  try {
+    await fetch(API + '/customers/' + currentId, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ history })
+    });
+    closeMemoEditor();
+    await loadDetail();
+  } catch (err) {
+    console.error(err);
+    alert('メモの保存に失敗しました。時間をおいて再度お試しください。');
+  } finally {
+    saveBtn.disabled = false;
+    textarea.disabled = false;
   }
 }
 
