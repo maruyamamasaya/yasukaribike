@@ -61,6 +61,42 @@ function matchesValuesWithTerms(values, terms) {
   return terms.some(term => values.some(val => val && String(val).includes(term)));
 }
 
+function openRowUrl(url, options = {}) {
+  if (!url) return;
+  const { newTab = false } = options;
+  if (newTab) {
+    window.open(url, '_blank', 'noopener');
+  } else {
+    window.location.href = url;
+  }
+}
+
+function attachInteractiveRow(row, url) {
+  if (!row || !url) return;
+  row.dataset.href = url;
+  row.setAttribute('role', 'link');
+  row.setAttribute('tabindex', '0');
+  row.addEventListener('click', event => {
+    if (event.defaultPrevented) return;
+    if (typeof event.button === 'number' && event.button !== 0) return;
+    event.preventDefault();
+    const shouldOpenNewTab = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+    openRowUrl(url, { newTab: shouldOpenNewTab });
+  });
+  row.addEventListener('auxclick', event => {
+    if (event.button === 1) {
+      event.preventDefault();
+      openRowUrl(url, { newTab: true });
+    }
+  });
+  row.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      openRowUrl(url, { newTab: event.ctrlKey || event.metaKey });
+    }
+  });
+}
+
 function ensureSuggestionRefs() {
   if (!suggestionPanelRef) suggestionPanelRef = document.getElementById('suggestion-panel');
   if (!suggestionRestoreRef) suggestionRestoreRef = document.getElementById('suggestion-restore');
@@ -334,8 +370,10 @@ async function searchCustomers(page = 1, options = {}) {
   tbody.innerHTML = '';
   const start = (currentPage - 1) * PAGE_SIZE;
   const slice = searchResults.slice(start, start + PAGE_SIZE);
-  slice.forEach(c => {
+  slice.forEach((c, index) => {
     const tr = document.createElement('tr');
+    tr.classList.add('result-row');
+
     let noteSnippet = '';
     if (c.history) {
       const keys = Object.keys(c.history).sort();
@@ -345,10 +383,49 @@ async function searchCustomers(page = 1, options = {}) {
     if (noteSnippet.length > 1000) noteSnippet = noteSnippet.slice(0, 1000) + '…';
     noteSnippet = noteSnippet.replace(/\n/g, '<br>');
 
+    const detailUrl = c.order_id ? `detail.html?id=${encodeURIComponent(c.order_id)}` : '';
+    const safeName = escapeHTML(c.name || '（名称未設定）');
+    const tags = [c.category || c.type, c.status, c.date]
+      .filter(Boolean)
+      .map(tag => `<span class="result-tag">${escapeHTML(tag)}</span>`)
+      .join('');
+    const tagList = tags ? `<div class="result-tag-list" aria-hidden="true">${tags}</div>` : '';
+    const guidance = detailUrl
+      ? 'クリックまたはEnterキーで詳細を開きます'
+      : '詳細画面が存在しません';
+    const noteHtml = noteSnippet || '<span class="text-muted">本文の記録はまだありません</span>';
+
     tr.innerHTML = `
-      <td><a href="detail.html?id=${c.order_id}">${c.name}</a></td>
-      <td style="white-space: pre-wrap;">${noteSnippet}</td>`;
+      <td class="result-name-cell">
+        <div class="result-row-head">
+          <span class="result-name-text">${safeName}</span>
+          <span class="result-chevron" aria-hidden="true"></span>
+        </div>
+        ${tagList}
+        <div class="result-row-meta">${guidance}</div>
+      </td>
+      <td class="result-note-cell">${noteHtml}</td>`;
+
+    if (detailUrl) {
+      attachInteractiveRow(tr, detailUrl);
+      const ariaParts = [c.name || '（名称未設定）'];
+      if (c.category || c.type) ariaParts.push(c.category || c.type);
+      if (c.status) ariaParts.push(`状態 ${c.status}`);
+      tr.setAttribute('aria-label', `${ariaParts.join(' / ')} の詳細を開く`);
+    } else {
+      tr.classList.add('is-disabled');
+      tr.setAttribute('aria-disabled', 'true');
+    }
+
     tbody.appendChild(tr);
+    requestAnimationFrame(() => {
+      tr.style.setProperty('--result-row-index', index);
+      tr.classList.add('is-appearing');
+      setTimeout(() => {
+        tr.classList.remove('is-appearing');
+        tr.style.removeProperty('--result-row-index');
+      }, 900 + index * 40);
+    });
   });
 
   const info = document.getElementById('page-info');
