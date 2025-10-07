@@ -1631,14 +1631,95 @@ body.suggestion-minimized .suggestion-restore {
 }
 
 /* Status page */
+.status-hero-inner {
+  display: grid;
+  gap: clamp(2rem, 5vw, 3.5rem);
+  width: 100%;
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .status-search .status-hero {
-  align-items: stretch;
+  align-items: center;
   text-align: left;
 }
 
 .status-search .status-hero .hero-text {
-  margin: 0 auto;
+  margin: 0;
   text-align: left;
+  max-width: 640px;
+}
+
+.status-search .status-hero .search-box-wrapper {
+  width: 100%;
+  max-width: 520px;
+  justify-self: end;
+}
+
+.status-search .status-hero .search-box-floating {
+  width: 100%;
+}
+
+.status-quick-links {
+  margin-top: clamp(1.5rem, 3vw, 2.2rem);
+}
+
+.status-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.status-chip-item {
+  margin: 0;
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.55rem 1.35rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  color: rgba(15, 23, 42, 0.72);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
+  text-decoration: none;
+  transition: transform 0.25s ease, box-shadow 0.35s ease, color 0.2s ease, background 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.status-chip:hover,
+.status-chip:focus-visible {
+  transform: translateY(-2px);
+  color: #1d4ed8;
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 20px 44px rgba(37, 99, 235, 0.18);
+}
+
+.status-chip:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.38);
+  outline-offset: 4px;
+}
+
+.status-chip.is-active {
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.16);
+  border-color: rgba(59, 130, 246, 0.38);
+  box-shadow: 0 22px 50px rgba(37, 99, 235, 0.2);
+}
+
+@media (min-width: 992px) {
+  .status-hero-inner {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  }
 }
 
 .status-back-link {
@@ -1756,6 +1837,19 @@ body.suggestion-minimized .suggestion-restore {
     align-items: center;
   }
 
+  .status-hero-inner {
+    gap: 2rem;
+  }
+
+  .status-search .status-hero .hero-text {
+    max-width: 100%;
+  }
+
+  .status-search .status-hero .search-box-wrapper {
+    justify-self: stretch;
+    max-width: none;
+  }
+
   .status-summary-inner {
     flex-direction: column;
     align-items: flex-start;
@@ -1767,6 +1861,11 @@ body.suggestion-minimized .suggestion-restore {
 
   .status-meta {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .status-chip {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 

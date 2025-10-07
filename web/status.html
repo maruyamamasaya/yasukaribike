@@ -17,54 +17,57 @@
 <body class="modern-search status-search">
   <main class="search-main" role="main">
     <section class="search-hero status-hero" aria-labelledby="status-title">
-      <div class="hero-text">
-        <a class="status-back-link" href="index.html">← ホームに戻る</a>
-        <h1 id="status-title">ステータス別一覧</h1>
-        <p id="status-subtitle" class="search-subtext"></p>
-      </div>
-      <div class="search-box-wrapper">
-        <div class="search-box-floating" role="search">
-          <span class="search-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M15.75 14.25L20.5 19"
-                stroke="currentColor"
-                stroke-width="1.6"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <circle
-                cx="11"
-                cy="11"
-                r="6"
-                stroke="currentColor"
-                stroke-width="1.6"
-              />
-            </svg>
-          </span>
-          <input
-            id="status-keyword"
-            class="search-input"
-            type="search"
-            placeholder="キーワードで絞り込み (名前、連絡先、メモなど)"
-            autocomplete="off"
-          />
-          <div class="search-actions">
-            <button id="status-clear" type="button" class="search-clear" aria-label="入力をクリア">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <div class="status-hero-inner container-xl">
+        <div class="hero-text">
+          <a class="status-back-link" href="index.html">← ホームに戻る</a>
+          <h1 id="status-title">ステータス別一覧</h1>
+          <p id="status-subtitle" class="search-subtext"></p>
+          <nav id="status-nav" class="status-quick-links" aria-label="ステータス切り替え"></nav>
+        </div>
+        <div class="search-box-wrapper">
+          <div class="search-box-floating" role="search">
+            <span class="search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
-                  d="M8 8L16 16M16 8L8 16"
+                  d="M15.75 14.25L20.5 19"
                   stroke="currentColor"
                   stroke-width="1.6"
                   stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <circle
+                  cx="11"
+                  cy="11"
+                  r="6"
+                  stroke="currentColor"
+                  stroke-width="1.6"
                 />
               </svg>
-            </button>
+            </span>
+            <input
+              id="status-keyword"
+              class="search-input"
+              type="search"
+              placeholder="キーワードで絞り込み (名前、連絡先、メモなど)"
+              autocomplete="off"
+            />
+            <div class="search-actions">
+              <button id="status-clear" type="button" class="search-clear" aria-label="入力をクリア">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M8 8L16 16M16 8L8 16"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
+          <p class="search-note text-muted">
+            選択中のステータスに属する顧客のみ表示します。キーワードはスペース区切りで複数指定できます。
+          </p>
         </div>
-        <p class="search-note text-muted">
-          選択中のステータスに属する顧客のみ表示します。キーワードはスペース区切りで複数指定できます。
-        </p>
       </div>
     </section>
 
