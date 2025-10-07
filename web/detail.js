@@ -4,6 +4,15 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   (typeof process !== 'undefined' && process.env && process.env.API_URL) ||
   window.location.origin;
 
+const CUSTOMER_STATUS_OPTIONS = [
+  '',
+  'お問い合わせ・来店',
+  '購入希望・見積り',
+  '保証プラン・規約提示',
+  '振込案内',
+  '契約書送付フェーズ'
+];
+
 let currentId = null;
 
 function formatDateTime(id) {
@@ -30,6 +39,8 @@ async function loadDetail() {
 
   const editLink = document.getElementById('edit-link');
   if (editLink) editLink.href = `edit.html?id=${encodeURIComponent(id)}`;
+  const pdfLink = document.getElementById('pdf-link');
+  if (pdfLink) pdfLink.href = `order_pdf.html?id=${encodeURIComponent(id)}`;
 
   try {
     const res = await fetch(API + '/customers/' + id);
@@ -63,6 +74,35 @@ async function loadDetail() {
         tbody.appendChild(tr);
       }
     });
+
+    const customerStatusTr = document.createElement('tr');
+    const customerStatusLabel = document.createElement('th');
+    customerStatusLabel.textContent = '顧客ステータス';
+    const customerStatusTd = document.createElement('td');
+    const customerStatusSelect = document.createElement('select');
+    customerStatusSelect.className = 'form-select';
+    CUSTOMER_STATUS_OPTIONS.forEach(status => {
+      const option = document.createElement('option');
+      option.value = status;
+      option.textContent = status || '未選択';
+      customerStatusSelect.appendChild(option);
+    });
+    const currentStatus = item.customerStatus && CUSTOMER_STATUS_OPTIONS.includes(item.customerStatus)
+      ? item.customerStatus
+      : '';
+    customerStatusSelect.value = currentStatus;
+    customerStatusSelect.addEventListener('change', async e => {
+      customerStatusSelect.disabled = true;
+      try {
+        await updateCustomerStatus(item.order_id, e.target.value);
+      } finally {
+        customerStatusSelect.disabled = false;
+      }
+    });
+    customerStatusTd.appendChild(customerStatusSelect);
+    customerStatusTr.appendChild(customerStatusLabel);
+    customerStatusTr.appendChild(customerStatusTd);
+    tbody.appendChild(customerStatusTr);
 
     const schedTr = document.createElement('tr');
     const schedVal = item.scheduledDate || '特になし';
@@ -187,6 +227,15 @@ async function toggleStatus(id, current) {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status: newStatus })
+  });
+  loadDetail();
+}
+
+async function updateCustomerStatus(id, customerStatus) {
+  await fetch(API + '/customers/' + id, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ customerStatus: customerStatus || '' })
   });
   loadDetail();
 }

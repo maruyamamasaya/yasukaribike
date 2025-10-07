@@ -43,8 +43,19 @@
         </select>
       </div>
 
-      <div class="mb-2">⑧ 担当: <input id="f-staff" class="form-control" /></div>
-      <div class="mb-2">⑨ メモ:
+      <div class="mb-2">⑧ 顧客ステータス:
+        <select id="f-customer-status" class="form-select">
+          <option value="">未選択</option>
+          <option value="お問い合わせ・来店">お問い合わせ・来店</option>
+          <option value="購入希望・見積り">購入希望・見積り</option>
+          <option value="保証プラン・規約提示">保証プラン・規約提示</option>
+          <option value="振込案内">振込案内</option>
+          <option value="契約書送付フェーズ">契約書送付フェーズ</option>
+        </select>
+      </div>
+
+      <div class="mb-2">⑨ 担当: <input id="f-staff" class="form-control" /></div>
+      <div class="mb-2">⑩ メモ:
         <textarea id="f-history-note" class="form-control" rows="12" placeholder="入力してください。&#10;&#10;例）&#10;【お客様のご用件】&#10;&#10;【担当者】&#10;担当者のメモをここに打つ"></textarea>
         <button type="button" class="btn btn-outline-secondary mt-2" onclick="insertTemplate()">テンプレートを挿入</button>
       </div>
