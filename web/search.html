@@ -4,166 +4,276 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>詳細検索</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/flatly/bootstrap.min.css" />
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="https://rebikele.s3.ap-northeast-1.amazonaws.com/kokyaku_kanri/rogo.jpg" />
 </head>
-<body class="p-4">
-  <div class="container">
-    <h1 class="mb-3">詳細検索</h1>
-    <div class="mb-3">
-      <input id="all-key" class="form-control form-control-lg global-search" placeholder="まとめて検索" />
-    </div>
-    <p class="text-muted small mb-3">
-      文字、文章やプルダウンを項目に入れると自動検索します。複数のフィルターでの検索は、AND検索になります。<br />
-      上の「まとめて検索」では全ての項目を横断的に検索します。<br />
-      プラスボタンで詳細を開けます。
-    </p>
-    <button id="toggle-filters" class="btn btn-outline-primary btn-lg toggle-btn mb-2">＋</button>
-    <div id="customer-form" class="card p-3 mb-3 filter-box d-none">
-      <details open class="static">
-        <summary class="btn btn-outline-secondary filter-summary">日付</summary>
-        <div class="d-flex align-items-center mt-2">
-          <input id="s-date" type="date" class="form-control flex-grow-1 filter-input" />
-          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-date" style="display:none;">×</button>
+<body class="modern-search">
+  <main class="search-main" role="main">
+    <section class="search-hero" id="search-hero" aria-labelledby="search-title">
+      <div class="hero-text">
+        <span class="hero-eyebrow">Smart Suggest</span>
+        <h1 id="search-title">詳細検索をもっと直感的に。</h1>
+        <p class="search-subtext">
+          まとめて検索で知りたい情報に一気にアクセス。入力を始めると、画面左上に候補と件数をライブ表示します。
+        </p>
+      </div>
+      <div class="search-box-wrapper">
+        <div id="ghost-suggestions" class="ghost-suggestions" aria-live="polite"></div>
+        <div class="search-box-floating" role="search">
+          <span class="search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M15.75 14.25L20.5 19"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle
+                cx="11"
+                cy="11"
+                r="6"
+                stroke="currentColor"
+                stroke-width="1.6"
+              />
+            </svg>
+          </span>
+          <input
+            id="all-key"
+            class="search-input"
+            type="search"
+            placeholder="キーワードでスマート検索"
+            autocomplete="off"
+          />
+          <button id="clear-global" type="button" class="search-clear" aria-label="入力をクリア">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M8 8L16 16M16 8L8 16"
+                stroke="currentColor"
+                stroke-width="1.6"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
         </div>
-      </details>
-      <details open class="static">
-        <summary class="btn btn-outline-secondary filter-summary">顧客名</summary>
-        <div class="d-flex align-items-center mt-2">
-          <input id="s-name" class="form-control flex-grow-1 filter-input" />
-          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-name" style="display:none;">×</button>
-        </div>
-      </details>
-      <details open class="static">
-        <summary class="btn btn-outline-secondary filter-summary">電話番号</summary>
-        <div class="d-flex align-items-center mt-2">
-          <input id="s-phone" class="form-control flex-grow-1 filter-input" />
-          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-phone" style="display:none;">×</button>
-        </div>
-      </details>
-      <details open class="static wide">
-        <summary class="btn btn-outline-secondary filter-summary">メールアドレス</summary>
-        <div class="d-flex align-items-center mt-2">
-          <input id="s-email" class="form-control flex-grow-1 filter-input" />
-          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-email" style="display:none;">×</button>
-        </div>
-      </details>
-      <details open class="static">
-        <summary class="btn btn-outline-secondary filter-summary">タスクの状態</summary>
-        <div class="d-flex align-items-center mt-2">
-          <select id="s-status" class="form-select flex-grow-1 filter-input">
-          <option value="">--</option>
-          <option value="未着手">未着手</option>
-          <option value="進行中">進行中</option>
-          <option value="完了">完了</option>
-          </select>
-          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-status" style="display:none;">×</button>
-        </div>
-      </details>
-      <details open class="static">
-        <summary class="btn btn-outline-secondary filter-summary">問い合わせ種別</summary>
-        <div class="d-flex align-items-center mt-2">
-          <select id="s-category" class="form-select flex-grow-1 filter-input">
-          <option value="">--</option>
-          <option value="電話">電話</option>
-          <option value="訪問対応">訪問対応</option>
-          <option value="メール問い合わせ">メール問い合わせ</option>
-          <option value="顧客WEB入力">顧客WEB入力</option>
-          <option value="その他">その他</option>
-          </select>
-          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-category" style="display:none;">×</button>
-        </div>
-      </details>
-      <details open class="static">
-        <summary class="btn btn-outline-secondary filter-summary">バイク機種名</summary>
-        <div class="d-flex align-items-center mt-2">
-          <input id="s-details" class="form-control flex-grow-1 filter-input" />
-          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-details" style="display:none;">×</button>
-        </div>
-      </details>
-      <details open class="static wide">
-        <summary class="btn btn-outline-secondary filter-summary">本文（メモ）検索</summary>
-        <div class="d-flex align-items-center mt-2">
-          <input id="s-text" class="form-control flex-grow-1 filter-input" style="min-width:280px;" />
-          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-text" style="display:none;">×</button>
-        </div>
-      </details>
+        <p class="search-note text-muted">
+          Enterで即検索。フィルターを使う場合は「詳細を開く」から一覧を確認できます。
+        </p>
+      </div>
+    </section>
 
-    </div>
-
-    <div id="mail-form" class="card p-3 mb-3 filter-box d-none">
-      <details open class="static">
-        <summary class="btn btn-outline-secondary filter-summary">メール受信日</summary>
-        <div class="d-flex align-items-center mt-2">
-          <input id="m-date" type="date" class="form-control flex-grow-1 filter-input" />
-          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="m-date" style="display:none;">×</button>
+    <aside id="suggestion-panel" class="suggestion-panel" aria-live="polite">
+      <div class="suggestion-header">
+        <span class="suggestion-badge">リアルタイム候補</span>
+        <p class="suggestion-lead">現在の入力に基づいたプレビューを表示します。</p>
+      </div>
+      <div class="suggestion-counts">
+        <div class="count-card">
+          <span class="count-label">問い合わせ</span>
+          <strong id="suggest-customer-count" class="count-value">0</strong>
         </div>
-      </details>
-      <details open class="static wide">
-        <summary class="btn btn-outline-secondary filter-summary">メール検索</summary>
-        <div class="d-flex align-items-center mt-2">
-          <input id="m-key" class="form-control flex-grow-1 filter-input" placeholder="送信元・タイトル・本文" style="min-width:300px;" />
-          <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="m-key" style="display:none;">×</button>
-        </div>
-      </details>
-      
-    </div>
-    <div id="breadcrumb" class="text-muted small mb-2"></div>
-    <div id="customer-results">
-      <div id="loading-customer" class="spinner mb-3"></div>
-      <h2 class="h5 mt-4">問い合わせ検索結果<span id="customer-count" class="ms-2"></span></h2>
-      <table id="result-table" class="table table-striped">
-        <thead>
-          <tr>
-            <th>顧客名</th>
-            <th>問い合わせ種別</th>
-            <th>バイク種別</th>
-            <th>タスクの状態</th>
-            <th>本文</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <div class="row mb-3">
-        <div class="col-12 d-flex justify-content-between align-items-center">
-          <button id="prev-btn" class="btn btn-outline-primary btn-sm" onclick="prevPage()">前へ</button>
-          <span id="page-info">1 / 1</span>
-          <button id="next-btn" class="btn btn-outline-primary btn-sm" onclick="nextPage()">次へ</button>
+        <div class="count-card">
+          <span class="count-label">メール</span>
+          <strong id="suggest-mail-count" class="count-value">0</strong>
         </div>
       </div>
-    </div>
-    <div id="mail-results">
-      <div id="loading-mail" class="spinner mb-3"></div>
-      <h2 class="h5 mt-4">メール検索結果<span id="mail-count" class="ms-2"></span></h2>
-      <table id="mail-result-table" class="table table-striped">
-        <thead>
-          <tr>
-            <th id="mail-date-header" style="cursor:pointer;">受信日時</th>
-            <th>送信メールアドレス</th>
-            <th>タイトル</th>
-            <th style="width:40%;">本文</th>
-            <th>ボード追加</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-      <div class="row mb-3" id="mail-pagination">
-        <div class="col-12 d-flex justify-content-between align-items-center">
-          <button id="mail-prev-btn" class="btn btn-outline-primary btn-sm" onclick="mailPrevPage()">前へ</button>
-          <span id="mail-page-info">1 / 1</span>
-          <button id="mail-next-btn" class="btn btn-outline-primary btn-sm" onclick="mailNextPage()">次へ</button>
+      <div class="suggestion-highlights">
+        <h2 class="highlights-title">ハイライト</h2>
+        <ul id="suggest-highlight-list" class="highlight-list">
+          <li class="highlight-empty">検索を開始すると候補が表示されます</li>
+        </ul>
+      </div>
+      <div class="suggestion-actions">
+        <button id="show-details" class="btn btn-light btn-lg w-100">詳細を見る</button>
+      </div>
+    </aside>
+
+    <section id="full-results" class="full-results collapsed" aria-hidden="true">
+      <div class="full-results-inner container-xl">
+        <div class="full-results-header">
+          <div>
+            <h2 class="full-results-title">検索結果と詳細フィルター</h2>
+            <p class="full-results-desc text-muted">
+              文字やプルダウンを入力すると自動で検索され、複数条件はAND検索になります。上部のまとめて検索では全項目を横断します。
+            </p>
+          </div>
+          <div class="header-actions">
+            <button id="collapse-results" class="btn btn-outline-light btn-sm">プレビューに戻る</button>
+          </div>
+        </div>
+
+        <div class="glass-panel mb-4">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <span class="text-muted small">プラスボタンで詳細を開けます。</span>
+            <button id="toggle-filters" class="btn btn-outline-light btn-pill toggle-btn" type="button">フィルターを表示</button>
+          </div>
+          <div class="filter-stack">
+            <div id="customer-form" class="filter-box glass-panel-inner d-none">
+              <details open class="static">
+                <summary class="btn btn-outline-secondary filter-summary">日付</summary>
+                <div class="d-flex align-items-center mt-2">
+                  <input id="s-date" type="date" class="form-control flex-grow-1 filter-input" />
+                  <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-date" style="display:none;">×</button>
+                </div>
+              </details>
+              <details open class="static">
+                <summary class="btn btn-outline-secondary filter-summary">顧客名</summary>
+                <div class="d-flex align-items-center mt-2">
+                  <input id="s-name" class="form-control flex-grow-1 filter-input" />
+                  <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-name" style="display:none;">×</button>
+                </div>
+              </details>
+              <details open class="static">
+                <summary class="btn btn-outline-secondary filter-summary">電話番号</summary>
+                <div class="d-flex align-items-center mt-2">
+                  <input id="s-phone" class="form-control flex-grow-1 filter-input" />
+                  <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-phone" style="display:none;">×</button>
+                </div>
+              </details>
+              <details open class="static wide">
+                <summary class="btn btn-outline-secondary filter-summary">メールアドレス</summary>
+                <div class="d-flex align-items-center mt-2">
+                  <input id="s-email" class="form-control flex-grow-1 filter-input" />
+                  <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-email" style="display:none;">×</button>
+                </div>
+              </details>
+              <details open class="static">
+                <summary class="btn btn-outline-secondary filter-summary">タスクの状態</summary>
+                <div class="d-flex align-items-center mt-2">
+                  <select id="s-status" class="form-select flex-grow-1 filter-input">
+                    <option value="">--</option>
+                    <option value="未着手">未着手</option>
+                    <option value="進行中">進行中</option>
+                    <option value="完了">完了</option>
+                  </select>
+                  <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-status" style="display:none;">×</button>
+                </div>
+              </details>
+              <details open class="static">
+                <summary class="btn btn-outline-secondary filter-summary">問い合わせ種別</summary>
+                <div class="d-flex align-items-center mt-2">
+                  <select id="s-category" class="form-select flex-grow-1 filter-input">
+                    <option value="">--</option>
+                    <option value="電話">電話</option>
+                    <option value="訪問対応">訪問対応</option>
+                    <option value="メール問い合わせ">メール問い合わせ</option>
+                    <option value="顧客WEB入力">顧客WEB入力</option>
+                    <option value="その他">その他</option>
+                  </select>
+                  <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-category" style="display:none;">×</button>
+                </div>
+              </details>
+              <details open class="static">
+                <summary class="btn btn-outline-secondary filter-summary">バイク機種名</summary>
+                <div class="d-flex align-items-center mt-2">
+                  <input id="s-details" class="form-control flex-grow-1 filter-input" />
+                  <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-details" style="display:none;">×</button>
+                </div>
+              </details>
+              <details open class="static wide">
+                <summary class="btn btn-outline-secondary filter-summary">本文（メモ）検索</summary>
+                <div class="d-flex align-items-center mt-2">
+                  <input id="s-text" class="form-control flex-grow-1 filter-input" style="min-width:280px;" />
+                  <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="s-text" style="display:none;">×</button>
+                </div>
+              </details>
+            </div>
+
+            <div id="mail-form" class="filter-box glass-panel-inner d-none">
+              <details open class="static">
+                <summary class="btn btn-outline-secondary filter-summary">メール受信日</summary>
+                <div class="d-flex align-items-center mt-2">
+                  <input id="m-date" type="date" class="form-control flex-grow-1 filter-input" />
+                  <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="m-date" style="display:none;">×</button>
+                </div>
+              </details>
+              <details open class="static wide">
+                <summary class="btn btn-outline-secondary filter-summary">メール検索</summary>
+                <div class="d-flex align-items-center mt-2">
+                  <input id="m-key" class="form-control flex-grow-1 filter-input" placeholder="送信元・タイトル・本文" style="min-width:300px;" />
+                  <button type="button" class="btn btn-sm btn-outline-secondary ms-2 clear-filter" data-target="m-key" style="display:none;">×</button>
+                </div>
+              </details>
+            </div>
+          </div>
+        </div>
+
+        <div class="results-grid">
+          <section id="customer-results" class="result-card glass-panel">
+            <div id="loading-customer" class="spinner mb-3"></div>
+            <div class="result-header">
+              <h3 class="result-title">問い合わせ検索結果<span id="customer-count" class="ms-2"></span></h3>
+              <div class="result-actions">
+                <button id="prev-btn" class="btn btn-outline-light btn-sm" onclick="prevPage()">前へ</button>
+                <span id="page-info" class="result-page">1 / 1</span>
+                <button id="next-btn" class="btn btn-outline-light btn-sm" onclick="nextPage()">次へ</button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table id="result-table" class="table table-modern align-middle">
+                <thead>
+                  <tr>
+                    <th>顧客名</th>
+                    <th>問い合わせ種別</th>
+                    <th>バイク種別</th>
+                    <th>タスクの状態</th>
+                    <th>本文</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="mail-results" class="result-card glass-panel">
+            <div id="loading-mail" class="spinner mb-3"></div>
+            <div class="result-header">
+              <h3 class="result-title">メール検索結果<span id="mail-count" class="ms-2"></span></h3>
+              <div class="result-actions">
+                <button id="mail-prev-btn" class="btn btn-outline-light btn-sm" onclick="mailPrevPage()">前へ</button>
+                <span id="mail-page-info" class="result-page">1 / 1</span>
+                <button id="mail-next-btn" class="btn btn-outline-light btn-sm" onclick="mailNextPage()">次へ</button>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table id="mail-result-table" class="table table-modern align-middle">
+                <thead>
+                  <tr>
+                    <th id="mail-date-header" style="cursor:pointer;">受信日時</th>
+                    <th>送信メールアドレス</th>
+                    <th>タイトル</th>
+                    <th style="width:40%;">本文</th>
+                    <th>ボード追加</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="result-footer text-end">
+              <small class="text-muted">受信日時をクリックすると並び替えできます。</small>
+            </div>
+          </section>
+        </div>
+
+        <div class="navigation-links">
+          <a href="#" class="btn btn-outline-light" onclick="goBack(event)">戻る</a>
+          <a href="index.html" class="btn btn-primary">ホーム</a>
         </div>
       </div>
-    </div>
-    <div class="d-flex align-items-center mb-3">
-      <a href="#" class="btn btn-secondary" onclick="goBack(event)">戻る</a>
-      <a href="index.html" class="btn btn-primary mx-auto">ホーム</a>
-    </div>
-    </div>
-  <footer class="text-center mt-4">
-    <small style="color: var(--bs-link-color);">©2025 JIMUSURU All rights reserved.</small>
+    </section>
+  </main>
+
+  <footer class="text-center mt-5">
+    <small>©2025 JIMUSURU All rights reserved.</small>
   </footer>
+
   <script src="search.js"></script>
   <script src="nav.js"></script>
 </body>
