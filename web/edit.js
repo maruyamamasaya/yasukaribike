@@ -6,6 +6,15 @@ let currentItem = null;
 
 const HISTORY_TEMPLATE = `【お客様のご用件】\n\n【担当者】`;
 
+const CUSTOMER_STATUS_OPTIONS = [
+  '',
+  'お問い合わせ・来店',
+  '購入希望・見積り',
+  '保証プラン・規約提示',
+  '振込案内',
+  '契約書送付フェーズ'
+];
+
 function insertTemplate() {
   const field = document.getElementById('f-history-note');
   if (!field) return;
@@ -35,6 +44,10 @@ async function loadCustomer() {
   document.getElementById('f-phone').value = item.phoneNumber || item.phone || '';
   document.getElementById('f-details').value = item.details || '';
   document.getElementById('f-status').value = item.status || '未着手';
+  const customerStatusField = document.getElementById('f-customer-status');
+  if (customerStatusField) {
+    customerStatusField.value = CUSTOMER_STATUS_OPTIONS.includes(item.customerStatus) ? item.customerStatus : '';
+  }
   document.getElementById('f-staff').value = item.staff || '';
   const noteField = document.getElementById('f-history-note');
   noteField.value = '';
@@ -74,6 +87,7 @@ async function saveCustomer() {
     details: document.getElementById('f-details').value,
     staff: document.getElementById('f-staff').value,
     status: document.getElementById('f-status').value || '未着手',
+    customerStatus: document.getElementById('f-customer-status')?.value || '',
     history,
     bikes: []
   };

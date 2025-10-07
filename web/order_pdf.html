@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>注文書印刷</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/flatly/bootstrap.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="https://rebikele.s3.ap-northeast-1.amazonaws.com/kokyaku_kanri/rogo.jpg" />
+  <style>
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        padding: 0 !important;
+      }
+      .container {
+        max-width: 100% !important;
+      }
+    }
+  </style>
+</head>
+<body class="p-4">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+      <h1 class="mb-0">注文書（仮）</h1>
+      <button id="print-button" class="btn btn-primary">印刷</button>
+    </div>
+    <div id="order-content" class="card p-4"></div>
+    <div class="mt-3 no-print">
+      <a href="detail.html" id="back-link" class="btn btn-secondary">顧客詳細へ戻る</a>
+    </div>
+  </div>
+  <script src="order_pdf.js"></script>
+</body>
+</html>

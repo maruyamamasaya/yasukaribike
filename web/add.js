@@ -6,6 +6,15 @@ function toHalfWidth(str) {
   return str.replace(/[Ａ-Ｚａ-ｚ０-９！-～]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
 }
 
+const CUSTOMER_STATUS_OPTIONS = [
+  '',
+  'お問い合わせ・来店',
+  '購入希望・見積り',
+  '保証プラン・規約提示',
+  '振込案内',
+  '契約書送付フェーズ'
+];
+
 function sanitizeEmailInput(e) {
   e.target.value = toHalfWidth(e.target.value);
 }
@@ -77,6 +86,7 @@ async function saveCustomer(isDraft = false) {
     details: document.getElementById('f-details').value,
     staff: document.getElementById('f-staff').value,
     status: currentItem ? currentItem.status || '未着手' : '未着手',
+    customerStatus: document.getElementById('f-customer-status').value || '',
     history,
     bikes: [],
     draft: isDraft
@@ -139,6 +149,10 @@ async function loadDraftIfNeeded() {
   document.getElementById('f-category').value = item.category || item.type || '電話';
   document.getElementById('f-phone').value = item.phoneNumber || item.phone || '';
   document.getElementById('f-details').value = item.details || '';
+  const customerStatusField = document.getElementById('f-customer-status');
+  if (customerStatusField) {
+    customerStatusField.value = CUSTOMER_STATUS_OPTIONS.includes(item.customerStatus) ? item.customerStatus : '';
+  }
   document.getElementById('f-staff').value = item.staff || '';
   const noteField = document.getElementById('f-history-note');
   noteField.value = '';
