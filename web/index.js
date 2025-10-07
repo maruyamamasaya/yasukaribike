@@ -10,16 +10,50 @@ const STATUS_FOLDERS = [
   { key: '契約書送付フェーズ', label: '契約書送付フェーズ' }
 ];
 
+function openStatusFolder(key, options = {}) {
+  if (!key) return;
+  const { newTab = false } = options;
+  const url = `status.html?status=${encodeURIComponent(key)}`;
+  if (newTab) {
+    window.open(url, '_blank', 'noopener');
+  } else {
+    window.location.href = url;
+  }
+}
+
 function createFolderElement({ key, label }, countLabel) {
   const wrapper = document.createElement('div');
   wrapper.className = 'folder-card folder-status-card';
   wrapper.dataset.statusKey = key;
+  wrapper.setAttribute('role', 'link');
+  wrapper.setAttribute('tabindex', '0');
+  wrapper.setAttribute('aria-label', `${label}の顧客一覧を開く`);
 
   wrapper.innerHTML = `
     <span class="folder-icon" aria-hidden="true"></span>
     <span class="folder-title">${label}</span>
     <span class="folder-count">${countLabel}</span>
   `;
+
+  wrapper.addEventListener('click', event => {
+    if (event.defaultPrevented) return;
+    const shouldOpenNewTab = event.metaKey || event.ctrlKey || event.shiftKey || event.altKey;
+    openStatusFolder(key, { newTab: shouldOpenNewTab });
+  });
+
+  wrapper.addEventListener('auxclick', event => {
+    if (event.button === 1) {
+      event.preventDefault();
+      openStatusFolder(key, { newTab: true });
+    }
+  });
+
+  wrapper.addEventListener('keydown', event => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      openStatusFolder(key, { newTab: event.ctrlKey || event.metaKey });
+    }
+  });
 
   return wrapper;
 }
