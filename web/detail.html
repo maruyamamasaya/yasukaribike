@@ -4,42 +4,76 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>顧客詳細</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+    rel="stylesheet"
+  />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.0/dist/flatly/bootstrap.min.css" />
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="https://rebikele.s3.ap-northeast-1.amazonaws.com/kokyaku_kanri/rogo.jpg" />
 </head>
-<body class="p-4">
-  <div class="container">
-    <h1 class="mb-3">顧客詳細</h1>
-    <table id="detail-table" class="table table-bordered">
-      <tbody></tbody>
-    </table>
-    <div class="d-flex mb-3">
-      <div id="history" class="me-3 flex-grow-1"></div>
-      <div class="d-flex flex-column gap-2 align-items-start">
-        <a id="edit-link" class="btn btn-primary" href="#">編集</a>
-        <a id="pdf-link" class="btn btn-danger btn-lg" href="#" target="_blank" rel="noopener">注文書印刷</a>
+<body class="detail-page">
+  <main class="detail-main">
+    <div class="detail-shell container">
+      <section class="detail-card glass-panel">
+        <header class="detail-header">
+          <div class="detail-heading">
+            <p class="detail-eyebrow">Customer Profile</p>
+            <h1 class="detail-title">顧客詳細</h1>
+            <p class="detail-subtitle">顧客情報・タスク状況・編集履歴をワンビューで確認できます。</p>
+          </div>
+          <div class="detail-actions">
+            <a id="edit-link" class="btn btn-light detail-action" href="#">編集</a>
+            <a id="pdf-link" class="btn btn-outline-danger detail-action" href="#" target="_blank" rel="noopener">注文書印刷</a>
+          </div>
+        </header>
+
+        <div class="detail-grid">
+          <section class="detail-info glass-subpanel">
+            <h2 class="detail-section-title">基本情報</h2>
+            <table id="detail-table" class="table detail-table mb-0">
+              <tbody></tbody>
+            </table>
+          </section>
+
+          <aside id="history" class="detail-history glass-subpanel" aria-live="polite"></aside>
+        </div>
+      </section>
+
+      <section id="past" class="detail-section glass-panel">
+        <div class="detail-section-header">
+          <h2 class="detail-section-title">過去の対応記録</h2>
+          <p class="detail-section-subtitle">
+            この顧客の方の対応記録が以下に表示されます。名前、電話番号、メールアドレスのいずれかが同一の場合にここに表示されております。過去の対応記録を編集される際は、該当の日付リンクをクリックしてください。
+          </p>
+        </div>
+        <div class="table-responsive">
+          <table id="past-table" class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th scope="col">日時</th>
+                <th scope="col">タスクステータス</th>
+                <th scope="col" style="width:50%;">メモ</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div id="breadcrumb" class="detail-breadcrumb text-muted small"></div>
+
+      <div class="detail-footer-actions">
+        <a href="#" class="btn btn-outline-primary" onclick="goBack(event)">戻る</a>
+        <a href="index.html" class="btn btn-primary">ホーム</a>
       </div>
     </div>
-    <div id="past" class="mb-3">
-      <h4>過去の対応記録</h4>
-      <p class="text-muted small">この顧客の方の対応記録が以下に表示されます。名前、電話番号、メールアドレスのいずれかが同一の場合にここに表示されております。過去の対応記録を編集される際は、該当の日付リンクをクリックしてください。</p>
-      <table id="past-table" class="table table-striped">
-        <thead>
-          <tr><th>日時</th><th>タスクステータス</th><th style="width:50%;">メモ</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-    <div id="breadcrumb" class="text-muted small mb-2"></div>
-    <div class="d-flex align-items-center mb-3">
-      <a href="#" class="btn btn-secondary" onclick="goBack(event)">戻る</a>
-      <a href="index.html" class="btn btn-primary mx-auto">ホーム</a>
-    </div>
-  </div>
+  </main>
 
-  <footer class="text-center mt-4">
-    <small style="color: var(--bs-link-color);">©2025 JIMUSURU All rights reserved.</small>
+  <footer class="detail-footer text-center mt-4">
+    <small>©2025 JIMUSURU All rights reserved.</small>
   </footer>
 
   <script src="detail.js"></script>
