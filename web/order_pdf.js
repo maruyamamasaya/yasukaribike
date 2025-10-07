@@ -30,6 +30,7 @@ function createEditableRow(label, value, multiline = false) {
     input.className = 'form-control editable-textarea';
   }
   input.value = value;
+  input.classList.add('d-none');
 
   const display = document.createElement('div');
   display.className = 'editable-display';
@@ -40,8 +41,40 @@ function createEditableRow(label, value, multiline = false) {
   input.addEventListener('input', updateDisplay);
   updateDisplay();
 
-  td.appendChild(input);
-  td.appendChild(display);
+  const contentWrapper = document.createElement('div');
+  contentWrapper.className = 'flex-grow-1 me-2';
+  contentWrapper.appendChild(display);
+  contentWrapper.appendChild(input);
+
+  const actionWrapper = document.createElement('div');
+  actionWrapper.className = 'd-flex align-items-start gap-2 w-100';
+  actionWrapper.appendChild(contentWrapper);
+
+  const toggleButton = document.createElement('button');
+  toggleButton.type = 'button';
+  toggleButton.className = 'btn btn-outline-primary btn-sm no-print';
+  toggleButton.textContent = '編集';
+
+  let editing = false;
+  toggleButton.addEventListener('click', () => {
+    editing = !editing;
+    if (editing) {
+      display.classList.add('d-none');
+      input.classList.remove('d-none');
+      toggleButton.textContent = '保存';
+      setTimeout(() => input.focus(), 0);
+    } else {
+      updateDisplay();
+      input.classList.add('d-none');
+      display.classList.remove('d-none');
+      toggleButton.textContent = '編集';
+    }
+  });
+
+  actionWrapper.appendChild(toggleButton);
+  actionWrapper.classList.add('justify-content-between');
+
+  td.appendChild(actionWrapper);
 
   tr.appendChild(th);
   tr.appendChild(td);
@@ -71,7 +104,7 @@ function createEditableHistory(item) {
   wrapper.appendChild(title);
 
   const textarea = document.createElement('textarea');
-  textarea.className = 'form-control editable-textarea';
+  textarea.className = 'form-control editable-textarea d-none';
   textarea.rows = 6;
   textarea.value = latestNote;
 
@@ -89,8 +122,39 @@ function createEditableHistory(item) {
     textarea.placeholder = 'メモを入力してください';
   }
 
-  wrapper.appendChild(textarea);
-  wrapper.appendChild(display);
+  const contentWrapper = document.createElement('div');
+  contentWrapper.className = 'flex-grow-1 me-2';
+  contentWrapper.appendChild(display);
+  contentWrapper.appendChild(textarea);
+
+  const actionWrapper = document.createElement('div');
+  actionWrapper.className = 'd-flex align-items-start gap-2 justify-content-between w-100';
+  actionWrapper.appendChild(contentWrapper);
+
+  const toggleButton = document.createElement('button');
+  toggleButton.type = 'button';
+  toggleButton.className = 'btn btn-outline-primary btn-sm no-print';
+  toggleButton.textContent = '編集';
+
+  let editing = false;
+  toggleButton.addEventListener('click', () => {
+    editing = !editing;
+    if (editing) {
+      display.classList.add('d-none');
+      textarea.classList.remove('d-none');
+      toggleButton.textContent = '保存';
+      setTimeout(() => textarea.focus(), 0);
+    } else {
+      updateDisplay();
+      textarea.classList.add('d-none');
+      display.classList.remove('d-none');
+      toggleButton.textContent = '編集';
+    }
+  });
+
+  actionWrapper.appendChild(toggleButton);
+
+  wrapper.appendChild(actionWrapper);
 
   return wrapper;
 }
