@@ -973,7 +973,7 @@ body.typing .search-note {
   position: fixed;
   top: clamp(1.5rem, 4vw, 3.5rem);
   left: clamp(1.2rem, 5vw, 3.8rem);
-  width: min(360px, 92vw);
+  width: min(420px, 94vw);
   padding: 1.8rem;
   border-radius: 1.8rem;
   background: rgba(15, 23, 42, 0.88);
@@ -1242,7 +1242,7 @@ body.suggestion-minimized .suggestion-restore {
 
 @media (min-width: 768px) {
   .suggestion-panel {
-    width: min(640px, 65vw);
+    width: min(720px, 68vw);
   }
 
   .highlight-link {
@@ -1254,7 +1254,7 @@ body.suggestion-minimized .suggestion-restore {
 
 @media (min-width: 1200px) {
   .suggestion-panel {
-    width: min(860px, 60vw);
+    width: min(940px, 58vw);
   }
 
   .highlight-list {
@@ -1262,9 +1262,16 @@ body.suggestion-minimized .suggestion-restore {
   }
 }
 
+.suggestion-actions {
+  display: flex;
+  justify-content: center;
+}
+
 .suggestion-actions .btn {
   border-radius: 999px;
   font-weight: 600;
+  width: 100%;
+  max-width: 320px;
 }
 
 .full-results {
