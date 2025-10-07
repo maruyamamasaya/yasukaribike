@@ -15,15 +15,9 @@
       <p class="text-muted mb-0">各種ページは上部メニューやブックマークからアクセスできます。詳細検索はこちらから。</p>
     </div>
 
-    <section class="folder-dashboard">
-      <button id="total-folder" class="folder-card" type="button" aria-expanded="false" aria-controls="status-folders">
-        <span class="folder-icon" aria-hidden="true"></span>
-        <span class="folder-title">全案件</span>
-        <span id="total-count" class="folder-count">-</span>
-      </button>
-    </section>
+    <section id="status-folders" class="folder-status-grid" aria-live="polite"></section>
 
-    <section id="status-folders" class="folder-status-grid d-none" aria-live="polite"></section>
+    <p id="status-error" class="text-danger mb-0 d-none" role="alert">件数を取得できませんでした。</p>
 
     <a class="btn btn-outline-primary btn-lg" href="search.html">詳細検索ページへ</a>
   </main>
