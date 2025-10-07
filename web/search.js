@@ -9,6 +9,10 @@ const PAGE_SIZE = 20;
 let searchResults = [];
 let searchTimeout;
 let globalKey = '';
+const OR_SPLIT_REGEX = /[\s\u3000]+/;
+let suggestionMinimized = false;
+let suggestionPanelRef = null;
+let suggestionRestoreRef = null;
 
 const FILTER_IDS = [
   's-date', 's-name', 's-phone', 's-email', 's-status', 's-category', 's-details', 's-text'
@@ -42,6 +46,37 @@ function trimText(str, limit = 40) {
   if (!str) return '';
   const text = String(str);
   return text.length > limit ? text.slice(0, limit) + '…' : text;
+}
+
+function parseOrTerms(value) {
+  if (!value) return [];
+  return value
+    .split(OR_SPLIT_REGEX)
+    .map(v => v.trim())
+    .filter(Boolean);
+}
+
+function matchesValuesWithTerms(values, terms) {
+  if (!terms || !terms.length) return true;
+  return terms.some(term => values.some(val => val && String(val).includes(term)));
+}
+
+function ensureSuggestionRefs() {
+  if (!suggestionPanelRef) suggestionPanelRef = document.getElementById('suggestion-panel');
+  if (!suggestionRestoreRef) suggestionRestoreRef = document.getElementById('suggestion-restore');
+}
+
+function setSuggestionMinimized(state) {
+  suggestionMinimized = Boolean(state);
+  ensureSuggestionRefs();
+  if (suggestionPanelRef) {
+    suggestionPanelRef.classList.toggle('is-minimized', suggestionMinimized);
+  }
+  document.body.classList.toggle('suggestion-minimized', suggestionMinimized);
+  if (suggestionRestoreRef) {
+    suggestionRestoreRef.hidden = !suggestionMinimized;
+    suggestionRestoreRef.setAttribute('aria-hidden', suggestionMinimized ? 'false' : 'true');
+  }
 }
 
 function updateTypingState() {
@@ -83,7 +118,8 @@ function renderGhostSuggestions(isPending = false) {
 }
 
 function renderSuggestionPanel() {
-  const panel = document.getElementById('suggestion-panel');
+  ensureSuggestionRefs();
+  const panel = suggestionPanelRef;
   if (!panel) return;
 
   const customerCountEl = document.getElementById('suggest-customer-count');
@@ -98,19 +134,26 @@ function renderSuggestionPanel() {
       if (item.status) metaParts.push(`状態: ${item.status}`);
       return {
         title: item.name || '（名称未設定）',
-        meta: trimText(metaParts.join('・'), 52) || '詳細メモなし'
+        meta: trimText(metaParts.join('・'), 52) || '詳細メモなし',
+        orderId: item.order_id
       };
     });
 
     if (highlights.length) {
-      highlightList.innerHTML = highlights.map(h => `
+      highlightList.innerHTML = highlights.map(h => {
+        const detailUrl = h.orderId ? `detail.html?id=${encodeURIComponent(h.orderId)}` : '#';
+        const linkAttrs = h.orderId ? `href="${detailUrl}"` : 'role="button" aria-disabled="true" tabindex="-1"';
+        return `
         <li class="highlight-item">
-          <span class="highlight-type">問い合わせ</span>
-          <div class="highlight-main">
-            <p class="highlight-title">${escapeHTML(trimText(h.title, 36))}</p>
-            <p class="highlight-meta">${escapeHTML(trimText(h.meta, 48))}</p>
-          </div>
-        </li>`).join('');
+          <a class="highlight-link" ${linkAttrs}>
+            <span class="highlight-type">問い合わせ</span>
+            <div class="highlight-main">
+              <p class="highlight-title">${escapeHTML(trimText(h.title, 36))}</p>
+              <p class="highlight-meta">${escapeHTML(trimText(h.meta, 48))}</p>
+            </div>
+          </a>
+        </li>`;
+      }).join('');
     } else {
       highlightList.innerHTML = '<li class="highlight-empty">該当する候補が見つかりません</li>';
     }
@@ -119,6 +162,9 @@ function renderSuggestionPanel() {
   const hasKeyword = Boolean(globalKey);
   panel.classList.toggle('is-active', hasKeyword);
   panel.classList.toggle('has-results', hasKeyword && searchResults.length > 0);
+  if (suggestionMinimized && hasKeyword) {
+    panel.classList.add('is-minimized');
+  }
 }
 
 function updateFilterState(id) {
@@ -173,12 +219,13 @@ function hasText(customer, keyword) {
 }
 
 function matchesGlobalCustomer(c, key) {
-  if (!key) return true;
+  const terms = parseOrTerms(key);
+  if (!terms.length) return true;
   const props = [c.order_id, c.status, c.email, c.name, c.kana, c.category || c.type, c.details, c.date, c.staff, c.phone, c.phoneNumber];
-  for (const p of props) {
-    if (p && String(p).includes(key)) return true;
-  }
-  return hasText(c, key);
+  return terms.some(term => {
+    if (hasText(c, term)) return true;
+    return props.some(p => p && String(p).includes(term));
+  });
 }
 
 async function loadCustomers(force = false) {
@@ -243,25 +290,31 @@ async function searchCustomers(page = 1, options = {}) {
 
     const dateRaw = dateInput ? dateInput.value.trim() : '';
     const date = dateRaw ? dateRaw.replace(/-/g, '/') : '';
-    const name = nameInput ? nameInput.value.trim() : '';
-    const phone = phoneInput ? phoneInput.value.trim() : '';
-    const email = emailInput ? emailInput.value.trim() : '';
+    const nameRaw = nameInput ? nameInput.value.trim() : '';
+    const phoneRaw = phoneInput ? phoneInput.value.trim() : '';
+    const emailRaw = emailInput ? emailInput.value.trim() : '';
     const status = statusInput ? statusInput.value.trim() : '';
     const category = categoryInput ? categoryInput.value.trim() : '';
-    const details = detailsInput ? detailsInput.value.trim() : '';
-    const text = textInput ? textInput.value.trim() : '';
+    const detailsRaw = detailsInput ? detailsInput.value.trim() : '';
+    const textRaw = textInput ? textInput.value.trim() : '';
+
+    const nameTerms = parseOrTerms(nameRaw);
+    const phoneTerms = parseOrTerms(phoneRaw);
+    const emailTerms = parseOrTerms(emailRaw);
+    const detailsTerms = parseOrTerms(detailsRaw);
+    const textTerms = parseOrTerms(textRaw);
 
     try {
       const allCustomers = await loadCustomers(forceRefresh);
       const customers = allCustomers.filter(c =>
         (!date || (c.date || '').includes(date)) &&
-        (!name || (c.name || '').includes(name) || (c.kana || '').includes(name)) &&
-        (!phone || (c.phone || c.phoneNumber || '').includes(phone)) &&
-        (!email || (c.email || '').includes(email)) &&
+        matchesValuesWithTerms([c.name, c.kana], nameTerms) &&
+        matchesValuesWithTerms([c.phone, c.phoneNumber], phoneTerms) &&
+        matchesValuesWithTerms([c.email], emailTerms) &&
         (!status || (c.status || '') === status) &&
         (!category || (c.category || c.type || '') === category) &&
-        (!details || (c.details || '').includes(details)) &&
-        (!text || hasText(c, text)) &&
+        matchesValuesWithTerms([c.details], detailsTerms) &&
+        (textTerms.length ? textTerms.some(term => hasText(c, term)) : true) &&
         matchesGlobalCustomer(c, globalKey)
       );
 
@@ -364,9 +417,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const g = document.getElementById('all-key');
   const clearBtn = document.getElementById('clear-global');
+  ensureSuggestionRefs();
+  const suggestionClose = document.getElementById('suggestion-close');
+  const suggestionRestore = suggestionRestoreRef;
   if (g) {
     g.addEventListener('input', () => {
       globalKey = g.value.trim();
+      if (suggestionMinimized && globalKey) {
+        setSuggestionMinimized(false);
+      }
       updateTypingState();
       renderGhostSuggestions(true);
       triggerSearch();
@@ -380,10 +439,30 @@ document.addEventListener('DOMContentLoaded', () => {
     clearBtn.addEventListener('click', () => {
       g.value = '';
       globalKey = '';
+      if (suggestionMinimized) {
+        setSuggestionMinimized(false);
+      }
       updateTypingState();
       renderGhostSuggestions();
       triggerSearch();
       g.focus();
+    });
+  }
+
+  if (suggestionClose) {
+    suggestionClose.addEventListener('click', () => {
+      setSuggestionMinimized(true);
+    });
+  }
+
+  if (suggestionRestore) {
+    suggestionRestore.hidden = true;
+    suggestionRestore.addEventListener('click', () => {
+      setSuggestionMinimized(false);
+      updateTypingState();
+      if (globalKey) {
+        renderSuggestionPanel();
+      }
     });
   }
 
@@ -412,4 +491,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
   searchCustomers(1);
   updateTypingState();
+  setSuggestionMinimized(false);
 });
