@@ -259,16 +259,6 @@ th[data-key] {
   padding-left: 1rem;
 }
 
-.toggle-btn {
-  width: 60px;
-  height: 60px;
-  font-size: 2rem;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* Dashboard tooltip */
 .dashboard-card {
   position: relative;
@@ -623,6 +613,58 @@ body.typing .search-clear {
   pointer-events: auto;
 }
 
+.search-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(148, 163, 184, 0.2);
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.25s ease;
+}
+
+.filter-toggle:hover {
+  background: rgba(148, 163, 184, 0.32);
+}
+
+body.typing .filter-toggle {
+  background: rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+}
+
+.filter-toggle.is-open {
+  background: rgba(37, 99, 235, 0.18);
+  color: #2563eb;
+}
+
+body.typing .filter-toggle.is-open {
+  background: rgba(37, 99, 235, 0.28);
+  color: #bfdbfe;
+}
+
+.filter-toggle.has-active:not(.is-open) {
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+}
+
+body.typing .filter-toggle.has-active:not(.is-open) {
+  color: #93c5fd;
+}
+
+.filter-toggle svg {
+  pointer-events: none;
+}
+
 .search-note {
   font-size: 0.95rem;
 }
@@ -881,6 +923,13 @@ body.typing .suggestion-panel.is-active {
   background: rgba(255, 255, 255, 0.8);
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
   backdrop-filter: blur(16px);
+}
+
+.filters-caption {
+  margin-top: 0.25rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .glass-panel::before {
