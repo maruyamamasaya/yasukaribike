@@ -16,9 +16,95 @@ const STATUS_FOLDERS = [
 const STATUS_MAP = new Map(STATUS_FOLDERS.map(item => [item.key, item.label]));
 const WHITESPACE_REGEX = /[\s\u3000、,]+/g;
 
+let customerDataset = [];
 let allCustomers = [];
 let filteredCustomers = [];
 let currentStatusKey = STATUS_FOLDERS[0]?.key || '';
+let hasInitialStatusParam = false;
+
+function renderStatusNavigation() {
+  const nav = document.getElementById('status-nav');
+  if (!nav) return;
+
+  const list = document.createElement('ul');
+  list.className = 'status-chip-list';
+
+  STATUS_FOLDERS.forEach(({ key, label }) => {
+    const item = document.createElement('li');
+    item.className = 'status-chip-item';
+
+    const link = document.createElement('a');
+    link.className = 'status-chip';
+    link.href = `status.html?status=${encodeURIComponent(key)}`;
+    link.textContent = label;
+    link.setAttribute('data-status-chip', key);
+    link.setAttribute('aria-label', `${label}の顧客を表示`);
+
+    item.appendChild(link);
+    list.appendChild(item);
+  });
+
+  nav.innerHTML = '';
+  nav.appendChild(list);
+}
+
+function highlightActiveStatus() {
+  const chips = document.querySelectorAll('[data-status-chip]');
+  chips.forEach(chip => {
+    const isActive = chip.getAttribute('data-status-chip') === currentStatusKey;
+    chip.classList.toggle('is-active', isActive);
+    if (isActive) {
+      chip.setAttribute('aria-current', 'page');
+    } else {
+      chip.removeAttribute('aria-current');
+    }
+  });
+}
+
+function synchronizeStatusInUrl(replace = false) {
+  const url = new URL(window.location.href);
+  const defaultKey = STATUS_FOLDERS[0]?.key || '';
+  const shouldIncludeParam =
+    currentStatusKey && (currentStatusKey !== defaultKey || hasInitialStatusParam);
+
+  if (shouldIncludeParam) {
+    url.searchParams.set('status', currentStatusKey);
+  } else {
+    url.searchParams.delete('status');
+  }
+
+  const state = { status: currentStatusKey };
+  const method = replace ? 'replaceState' : 'pushState';
+  window.history[method](state, '', url);
+}
+
+function resetKeywordInput() {
+  const keywordInput = document.getElementById('status-keyword');
+  if (keywordInput) {
+    keywordInput.value = '';
+  }
+}
+
+function applyStatusSelection(nextStatus, { updateHistory = true } = {}) {
+  if (!STATUS_MAP.has(nextStatus)) {
+    nextStatus = STATUS_FOLDERS[0]?.key || '';
+  }
+
+  if (!nextStatus || nextStatus === currentStatusKey) {
+    highlightActiveStatus();
+    return;
+  }
+
+  currentStatusKey = nextStatus;
+  resetKeywordInput();
+  updatePageHeading();
+  highlightActiveStatus();
+  loadCustomers();
+
+  if (updateHistory) {
+    synchronizeStatusInUrl();
+  }
+}
 
 function resolveCustomerStatus(rawStatus) {
   const normalized = typeof rawStatus === 'string' ? rawStatus.trim() : '';
@@ -255,22 +341,34 @@ function applyFilter() {
   updateCountLabel(filteredCustomers.length, allCustomers.length);
 }
 
-async function loadCustomers() {
+async function loadCustomers({ refresh = false } = {}) {
   const errorEl = document.getElementById('status-error');
   const loadingIndicator = document.getElementById('status-loading');
   if (errorEl) errorEl.classList.add('d-none');
-  if (loadingIndicator) loadingIndicator.classList.remove('d-none');
+
+  const shouldFetch = refresh || customerDataset.length === 0;
+  if (loadingIndicator) {
+    if (shouldFetch) {
+      loadingIndicator.classList.remove('d-none');
+    } else {
+      loadingIndicator.classList.add('d-none');
+    }
+  }
 
   try {
-    const response = await fetch(API + '/customers');
-    const payload = await response.json();
-    const records = Array.isArray(payload.Items) ? payload.Items : payload;
-    allCustomers = records
-      .filter(customer => !customer.draft)
-      .map(customer => ({
-        ...customer,
-        customerStatus: resolveCustomerStatus(customer.customerStatus)
-      }))
+    if (shouldFetch) {
+      const response = await fetch(API + '/customers');
+      const payload = await response.json();
+      const records = Array.isArray(payload.Items) ? payload.Items : payload;
+      customerDataset = records
+        .filter(customer => !customer.draft)
+        .map(customer => ({
+          ...customer,
+          customerStatus: resolveCustomerStatus(customer.customerStatus)
+        }));
+    }
+
+    allCustomers = customerDataset
       .filter(customer => customer.customerStatus === currentStatusKey)
       .sort((a, b) => {
         const keyA = getSortKey(a);
@@ -278,15 +376,20 @@ async function loadCustomers() {
         if (keyA === keyB) return 0;
         return keyA > keyB ? -1 : 1;
       });
+
     applyFilter();
   } catch (error) {
     console.error('Failed to load status customers', error);
     if (errorEl) errorEl.classList.remove('d-none');
+    customerDataset = [];
     allCustomers = [];
     filteredCustomers = [];
     renderResults(filteredCustomers);
     updateCountLabel(0, 0);
-    if (loadingIndicator) loadingIndicator.classList.add('d-none');
+  } finally {
+    if (loadingIndicator) {
+      loadingIndicator.classList.add('d-none');
+    }
   }
 }
 
@@ -327,11 +430,38 @@ function attachEventHandlers() {
   }
 }
 
+function bindStatusChips() {
+  const nav = document.getElementById('status-nav');
+  if (!nav) return;
+
+  nav.addEventListener('click', event => {
+    const target = event.target.closest('[data-status-chip]');
+    if (!target) return;
+
+    event.preventDefault();
+    const nextStatus = target.getAttribute('data-status-chip');
+    applyStatusSelection(nextStatus);
+  });
+}
+
+function handlePopState(event) {
+  const stateStatus = event.state?.status;
+  const statusFromUrl = getStatusFromQuery();
+  const nextStatus = STATUS_MAP.has(stateStatus) ? stateStatus : statusFromUrl;
+  applyStatusSelection(nextStatus, { updateHistory: false });
+}
+
 function init() {
+  renderStatusNavigation();
+  hasInitialStatusParam = new URL(window.location.href).searchParams.has('status');
   currentStatusKey = getStatusFromQuery();
   updatePageHeading();
+  highlightActiveStatus();
   attachEventHandlers();
+  bindStatusChips();
+  synchronizeStatusInUrl(true);
   loadCustomers();
+  window.addEventListener('popstate', handlePopState);
 }
 
 if (document.readyState === 'loading') {
