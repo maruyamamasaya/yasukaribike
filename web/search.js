@@ -385,11 +385,13 @@ async function searchCustomers(page = 1, options = {}) {
 
     const detailUrl = c.order_id ? `detail.html?id=${encodeURIComponent(c.order_id)}` : '';
     const safeName = escapeHTML(c.name || '（名称未設定）');
+    const safeKana = escapeHTML(c.kana || '');
     const tags = [c.category || c.type, c.status, c.date]
       .filter(Boolean)
       .map(tag => `<span class="result-tag">${escapeHTML(tag)}</span>`)
       .join('');
     const tagList = tags ? `<div class="result-tag-list" aria-hidden="true">${tags}</div>` : '';
+    const kanaHtml = safeKana ? `<span class="result-name-kana">${safeKana}</span>` : '';
     const guidance = detailUrl
       ? 'クリックまたはEnterキーで詳細を開きます'
       : '詳細画面が存在しません';
@@ -398,7 +400,10 @@ async function searchCustomers(page = 1, options = {}) {
     tr.innerHTML = `
       <td class="result-name-cell">
         <div class="result-row-head">
-          <span class="result-name-text">${safeName}</span>
+          <span class="result-name-text">
+            <span class="result-name-main">${safeName}</span>
+            ${kanaHtml}
+          </span>
           <span class="result-chevron" aria-hidden="true"></span>
         </div>
         ${tagList}
@@ -409,6 +414,7 @@ async function searchCustomers(page = 1, options = {}) {
     if (detailUrl) {
       attachInteractiveRow(tr, detailUrl);
       const ariaParts = [c.name || '（名称未設定）'];
+      if (c.kana) ariaParts.push(`カナ ${c.kana}`);
       if (c.category || c.type) ariaParts.push(c.category || c.type);
       if (c.status) ariaParts.push(`状態 ${c.status}`);
       tr.setAttribute('aria-label', `${ariaParts.join(' / ')} の詳細を開く`);

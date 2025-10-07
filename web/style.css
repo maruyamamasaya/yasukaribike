@@ -1509,6 +1509,17 @@ body.suggestion-minimized .suggestion-restore {
   gap: 0.5rem;
 }
 
+.result-name-main {
+  font-weight: 600;
+}
+
+.result-name-kana {
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: #475569;
+}
+
 .result-row-meta {
   margin-top: 0.35rem;
   font-size: 0.75rem;
