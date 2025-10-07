@@ -95,26 +95,34 @@
     </section>
 
     <aside id="suggestion-panel" class="suggestion-panel" aria-live="polite">
-      <div class="suggestion-header">
-        <span class="suggestion-badge">リアルタイム候補</span>
-        <p class="suggestion-lead">現在の入力に基づいたプレビューを表示します。</p>
-      </div>
-      <div class="suggestion-counts">
-        <div class="count-card">
-          <span class="count-label">候補数</span>
-          <strong id="suggest-customer-count" class="count-value">0</strong>
+      <button id="suggestion-close" class="suggestion-close" type="button" aria-label="候補を閉じる">
+        <span aria-hidden="true">×</span>
+      </button>
+      <div class="suggestion-body">
+        <div class="suggestion-header">
+          <span class="suggestion-badge">リアルタイム候補</span>
+          <p class="suggestion-lead">現在の入力に基づいたプレビューを表示します。</p>
+        </div>
+        <div class="suggestion-scroll">
+          <div class="suggestion-counts">
+            <div class="count-card">
+              <span class="count-label">候補数</span>
+              <strong id="suggest-customer-count" class="count-value">0</strong>
+            </div>
+          </div>
+          <div class="suggestion-highlights">
+            <h2 class="highlights-title">ハイライト</h2>
+            <ul id="suggest-highlight-list" class="highlight-list">
+              <li class="highlight-empty">検索を開始すると候補が表示されます</li>
+            </ul>
+          </div>
+        </div>
+        <div class="suggestion-actions">
+          <button id="show-details" class="btn btn-light btn-lg w-100">詳細を見る</button>
         </div>
       </div>
-      <div class="suggestion-highlights">
-        <h2 class="highlights-title">ハイライト</h2>
-        <ul id="suggest-highlight-list" class="highlight-list">
-          <li class="highlight-empty">検索を開始すると候補が表示されます</li>
-        </ul>
-      </div>
-      <div class="suggestion-actions">
-        <button id="show-details" class="btn btn-light btn-lg w-100">詳細を見る</button>
-      </div>
     </aside>
+    <button id="suggestion-restore" class="suggestion-restore" type="button" aria-label="候補を再表示">候補を表示</button>
 
     <section id="full-results" class="full-results collapsed" aria-hidden="true">
       <div class="full-results-inner container-xl">
