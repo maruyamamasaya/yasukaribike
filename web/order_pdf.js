@@ -2,48 +2,97 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   (typeof process !== 'undefined' && process.env && process.env.API_URL) ||
   window.location.origin;
 
-function sanitize(value) {
-  if (value === null || value === undefined) return '';
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+const ORDER_FIELDS = [
+  { label: '管理ID', getValue: item => item.order_id || '' },
+  { label: '顧客名', getValue: item => item.name || '' },
+  { label: 'カナ', getValue: item => item.kana || '' },
+  { label: '顧客ステータス', getValue: item => item.customerStatus || '未選択' },
+  { label: '担当者', getValue: item => item.staff || '' },
+  { label: '電話番号', getValue: item => item.phoneNumber || item.phone || '' },
+  { label: 'メールアドレス', getValue: item => item.email || '' },
+  { label: 'お問い合わせ種別', getValue: item => item.category || item.type || '' },
+  { label: 'バイク名など', getValue: item => item.details || '', multiline: true }
+];
+
+function createEditableRow(label, value, multiline = false) {
+  const tr = document.createElement('tr');
+  const th = document.createElement('th');
+  th.style.width = '25%';
+  th.textContent = label;
+
+  const td = document.createElement('td');
+  const input = multiline ? document.createElement('textarea') : document.createElement('input');
+  if (!multiline) {
+    input.type = 'text';
+    input.className = 'form-control editable-input';
+  } else {
+    input.rows = 3;
+    input.className = 'form-control editable-textarea';
+  }
+  input.value = value;
+
+  const display = document.createElement('div');
+  display.className = 'editable-display';
+
+  const updateDisplay = () => {
+    display.textContent = input.value || '';
+  };
+  input.addEventListener('input', updateDisplay);
+  updateDisplay();
+
+  td.appendChild(input);
+  td.appendChild(display);
+
+  tr.appendChild(th);
+  tr.appendChild(td);
+  return tr;
 }
 
-function buildTableRows(item) {
-  const rows = [
-    ['管理ID', sanitize(item.order_id)],
-    ['顧客名', sanitize(item.name)],
-    ['カナ', sanitize(item.kana)],
-    ['顧客ステータス', sanitize(item.customerStatus) || '未選択'],
-    ['担当者', sanitize(item.staff)],
-    ['電話番号', sanitize(item.phoneNumber || item.phone)],
-    ['メールアドレス', sanitize(item.email)],
-    ['お問い合わせ種別', sanitize(item.category || item.type)],
-    ['バイク名など', sanitize(item.details)]
-  ];
-  return rows
-    .map(([label, value]) => `<tr><th style="width:25%;">${label}</th><td>${value || '&nbsp;'}</td></tr>`)
-    .join('');
-}
+function createEditableHistory(item) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'mt-4';
 
-function buildHistory(item) {
-  if (!item.history) return '';
-  const entries = Object.entries(item.history).sort(([a], [b]) => a.localeCompare(b));
-  if (!entries.length) return '';
-  const latest = entries[entries.length - 1];
-  const sanitized = sanitize(latest[1] || '');
-  const formattedNote = sanitized ? sanitized.replace(/\n/g, '<br>') : '';
-  return `
-    <div class="mt-4">
-      <h5 class="mb-2">最新メモ (${latest[0]})</h5>
-      <div class="border rounded p-3" style="min-height:120px;">
-        ${formattedNote || '<span class="text-muted">メモはありません</span>'}
-      </div>
-    </div>
-  `;
+  const title = document.createElement('h5');
+  title.className = 'mb-2';
+
+  let latestDate = '';
+  let latestNote = '';
+
+  if (item.history) {
+    const entries = Object.entries(item.history).sort(([a], [b]) => a.localeCompare(b));
+    if (entries.length) {
+      const latest = entries[entries.length - 1];
+      latestDate = latest[0];
+      latestNote = latest[1] || '';
+    }
+  }
+
+  title.textContent = latestDate ? `最新メモ (${latestDate})` : '最新メモ';
+  wrapper.appendChild(title);
+
+  const textarea = document.createElement('textarea');
+  textarea.className = 'form-control editable-textarea';
+  textarea.rows = 6;
+  textarea.value = latestNote;
+
+  const display = document.createElement('div');
+  display.className = 'editable-display';
+
+  const updateDisplay = () => {
+    const text = textarea.value || '';
+    display.textContent = text;
+  };
+  textarea.addEventListener('input', updateDisplay);
+  updateDisplay();
+
+  if (!latestNote) {
+    textarea.placeholder = 'メモを入力してください';
+  }
+
+  wrapper.appendChild(textarea);
+  wrapper.appendChild(display);
+
+  return wrapper;
 }
 
 async function loadOrder() {
@@ -67,20 +116,38 @@ async function loadOrder() {
     const data = await res.json();
     const item = data.Item || data;
     if (!container) return;
-    const rowsHtml = buildTableRows(item);
-    const historyHtml = buildHistory(item);
-    container.innerHTML = `
-      <div class="mb-4">
-        <h2 class="text-center">注文書（仮）</h2>
-        <p class="text-center text-muted">※ このレイアウトは今後調整可能です。</p>
-      </div>
-      <table class="table table-bordered">
-        <tbody>
-          ${rowsHtml}
-        </tbody>
-      </table>
-      ${historyHtml}
-    `;
+    container.innerHTML = '';
+
+    const header = document.createElement('div');
+    header.className = 'mb-4';
+
+    const title = document.createElement('h2');
+    title.className = 'text-center';
+    title.textContent = '注文書（仮）';
+
+    const subtitle = document.createElement('p');
+    subtitle.className = 'text-center text-muted';
+    subtitle.textContent = '※ このレイアウトは今後調整可能です。';
+
+    header.appendChild(title);
+    header.appendChild(subtitle);
+    container.appendChild(header);
+
+    const table = document.createElement('table');
+    table.className = 'table table-bordered';
+    const tbody = document.createElement('tbody');
+
+    ORDER_FIELDS.forEach(field => {
+      const value = field.getValue(item);
+      const row = createEditableRow(field.label, value, Boolean(field.multiline));
+      tbody.appendChild(row);
+    });
+
+    table.appendChild(tbody);
+    container.appendChild(table);
+
+    const historyBlock = createEditableHistory(item);
+    container.appendChild(historyBlock);
   } catch (error) {
     if (container) {
       container.innerHTML = `<p class="text-danger">顧客情報を取得できませんでした: ${error.message}</p>`;
