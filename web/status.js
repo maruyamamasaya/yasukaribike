@@ -20,6 +20,31 @@ let allCustomers = [];
 let filteredCustomers = [];
 let currentStatusKey = STATUS_FOLDERS[0]?.key || '';
 
+function renderStatusNavigation(activeKey) {
+  const list = document.getElementById('status-nav-list');
+  if (!list) return;
+
+  list.innerHTML = '';
+
+  STATUS_FOLDERS.forEach(folder => {
+    const item = document.createElement('li');
+    item.className = 'status-nav-item';
+
+    const link = document.createElement('a');
+    link.className = 'status-nav-link';
+    link.href = `status.html?status=${encodeURIComponent(folder.key)}`;
+    link.textContent = folder.label;
+
+    if (folder.key === activeKey) {
+      link.classList.add('active');
+      link.setAttribute('aria-current', 'page');
+    }
+
+    item.appendChild(link);
+    list.appendChild(item);
+  });
+}
+
 function resolveCustomerStatus(rawStatus) {
   const normalized = typeof rawStatus === 'string' ? rawStatus.trim() : '';
   if (normalized && STATUS_MAP.has(normalized)) {
@@ -300,6 +325,7 @@ function updatePageHeading() {
   if (subtitle) subtitle.textContent = `${statusLabel} に分類されている顧客の一覧です。最新のメモや連絡先を確認できます。`;
   if (title) title.textContent = `${statusLabel} / ステータス別一覧`;
   document.title = `${statusLabel} | ステータス別一覧`;
+  renderStatusNavigation(currentStatusKey);
 }
 
 function attachEventHandlers() {

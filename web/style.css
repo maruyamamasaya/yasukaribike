@@ -1631,14 +1631,34 @@ body.suggestion-minimized .suggestion-restore {
 }
 
 /* Status page */
-.status-search .status-hero {
+.status-hero-inner {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.75rem, 4vw, 2.75rem);
   align-items: stretch;
+}
+
+.status-search .status-hero {
+  align-items: center;
   text-align: left;
 }
 
 .status-search .status-hero .hero-text {
-  margin: 0 auto;
+  width: 100%;
+  max-width: min(640px, 100%);
+  margin: 0 auto 0 0;
   text-align: left;
+}
+
+.status-search .search-box-wrapper {
+  align-items: stretch;
+  margin-left: 0;
+}
+
+.status-search .search-note {
+  align-self: flex-start;
+  text-align: left;
+  margin-bottom: 0;
 }
 
 .status-back-link {
@@ -1685,6 +1705,60 @@ body.suggestion-minimized .suggestion-restore {
 
 .status-results {
   margin-top: clamp(2rem, 6vw, 4rem);
+}
+
+.status-nav {
+  margin-top: clamp(0.5rem, 3vw, 1rem);
+}
+
+.status-nav-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  justify-content: flex-start;
+}
+
+.status-nav-item {
+  display: flex;
+}
+
+.status-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.35rem;
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  color: rgba(37, 99, 235, 0.88);
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.25s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.status-nav-link:hover,
+.status-nav-link:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 20px 42px rgba(15, 23, 42, 0.16);
+  background: rgba(59, 130, 246, 0.16);
+  color: #1d4ed8;
+}
+
+.status-nav-link.active {
+  color: #fff;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-color: transparent;
+  box-shadow: 0 24px 45px rgba(37, 99, 235, 0.35);
+}
+
+.status-nav-link.active:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 2px;
 }
 
 .status-loading {
@@ -1767,6 +1841,17 @@ body.suggestion-minimized .suggestion-restore {
 
   .status-meta {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .status-nav-list {
+    width: 100%;
+  }
+
+  .status-nav-link {
+    width: 100%;
+    justify-content: center;
   }
 }
 
