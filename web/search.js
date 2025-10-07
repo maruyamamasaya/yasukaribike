@@ -10,6 +10,20 @@ let searchResults = [];
 let searchTimeout;
 let globalKey = '';
 
+const FILTER_IDS = [
+  's-date', 's-name', 's-phone', 's-email', 's-status', 's-category', 's-details', 's-text'
+];
+let notifyFilterChange = () => {};
+let filtersExpanded = false;
+
+function hasActiveFilters() {
+  return FILTER_IDS.some(id => {
+    const el = document.getElementById(id);
+    if (!el) return false;
+    return Boolean(el.value && el.value.trim());
+  });
+}
+
 let customerCache = [];
 let customerCacheLoaded = false;
 let customerFetchPromise = null;
@@ -133,16 +147,19 @@ function setupFilter(id) {
   const clear = details.querySelector('.clear-filter');
   input.addEventListener('input', () => {
     updateFilterState(id);
+    notifyFilterChange();
     triggerSearch();
   });
   if (clear) {
     clear.addEventListener('click', () => {
       input.value = '';
       updateFilterState(id);
+      notifyFilterChange();
       triggerSearch();
     });
   }
   updateFilterState(id);
+  notifyFilterChange();
 }
 
 function hasText(customer, keyword) {
@@ -316,26 +333,34 @@ document.addEventListener('DOMContentLoaded', () => {
     d.open = true;
   });
 
-  const toggleBtn = document.getElementById('toggle-filters');
   const customerForm = document.getElementById('customer-form');
+  const toggleBtn = document.getElementById('toggle-filters');
   if (toggleBtn && customerForm) {
-    let filtersExpanded = false;
-    const applyToggleState = expanded => {
-      toggleBtn.innerHTML = `<span aria-hidden="true">${expanded ? '×' : '☰'}</span>`;
-      toggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-      toggleBtn.setAttribute('aria-label', expanded ? 'フィルターを閉じる' : 'フィルターを表示');
-      customerForm.classList.toggle('d-none', !expanded);
+    const applyToggleState = () => {
+      const hasFilters = hasActiveFilters();
+      toggleBtn.setAttribute('aria-expanded', filtersExpanded ? 'true' : 'false');
+      toggleBtn.setAttribute(
+        'aria-label',
+        filtersExpanded
+          ? 'フィルターを閉じる'
+          : hasFilters
+            ? 'フィルター（適用中）を表示'
+            : 'フィルターを表示'
+      );
+      toggleBtn.classList.toggle('is-open', filtersExpanded);
+      toggleBtn.classList.toggle('has-active', hasFilters);
+      customerForm.classList.toggle('d-none', !filtersExpanded);
+      customerForm.setAttribute('aria-hidden', filtersExpanded ? 'false' : 'true');
     };
     toggleBtn.addEventListener('click', () => {
       filtersExpanded = !filtersExpanded;
-      applyToggleState(filtersExpanded);
+      applyToggleState();
     });
-    applyToggleState(filtersExpanded);
+    notifyFilterChange = applyToggleState;
+    applyToggleState();
   }
 
-  [
-    's-date','s-name','s-phone','s-email','s-status','s-category','s-details','s-text'
-  ].forEach(setupFilter);
+  FILTER_IDS.forEach(setupFilter);
 
   const g = document.getElementById('all-key');
   const clearBtn = document.getElementById('clear-global');
