@@ -1546,3 +1546,113 @@ body.show-results .search-note {
   }
 }
 
+
+/* Folder dashboard on top page */
+.folder-dashboard {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.folder-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.folder-card {
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.folder-card:focus-visible {
+  outline: 3px solid rgba(13, 110, 253, 0.5);
+  outline-offset: 4px;
+}
+
+.folder-card:hover .folder-icon,
+.folder-card:focus-visible .folder-icon {
+  box-shadow: 0 12px 24px rgba(226, 170, 68, 0.35);
+  transform: translateY(-3px);
+}
+
+.folder-icon {
+  width: 120px;
+  height: 84px;
+  background: linear-gradient(180deg, #ffd68b 0%, #f5a623 100%);
+  border-radius: 12px 12px 10px 10px;
+  position: relative;
+  box-shadow: 0 8px 18px rgba(226, 170, 68, 0.25);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.folder-icon::before {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: 14px;
+  width: 52px;
+  height: 24px;
+  background: linear-gradient(180deg, #ffe1a7 0%, #f8b84a 100%);
+  border-radius: 10px 10px 2px 2px;
+  box-shadow: 0 4px 10px rgba(226, 170, 68, 0.25);
+}
+
+.folder-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.folder-count {
+  font-size: 2.3rem;
+  font-weight: 700;
+  color: #0d6efd;
+  line-height: 1;
+}
+
+.folder-status-card {
+  cursor: default;
+}
+
+.folder-status-card .folder-title {
+  min-height: 2.8rem;
+  text-align: center;
+}
+
+.folder-status-card .folder-count {
+  font-size: 1.8rem;
+}
+
+@media (max-width: 576px) {
+  .folder-icon {
+    width: 92px;
+    height: 64px;
+  }
+
+  .folder-icon::before {
+    top: -12px;
+    left: 12px;
+    width: 42px;
+    height: 18px;
+  }
+
+  .folder-count {
+    font-size: 1.9rem;
+  }
+
+  .folder-status-card .folder-count {
+    font-size: 1.6rem;
+  }
+}
