@@ -342,7 +342,7 @@ async function searchCustomers(page = 1, options = {}) {
       const last = keys[keys.length - 1];
       if (last) noteSnippet = c.history[last] || '';
     }
-    if (noteSnippet.length > 30) noteSnippet = noteSnippet.slice(0, 30) + '…';
+    if (noteSnippet.length > 1000) noteSnippet = noteSnippet.slice(0, 1000) + '…';
     noteSnippet = noteSnippet.replace(/\n/g, '<br>');
 
     tr.innerHTML = `
