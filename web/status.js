@@ -2,12 +2,15 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   (typeof process !== 'undefined' && process.env && process.env.API_URL) ||
   window.location.origin;
 
+const DEFAULT_STATUS_KEY = '未分類';
+
 const STATUS_FOLDERS = [
   { key: 'お問い合わせ・来店', label: 'お問い合わせ・来店' },
   { key: '購入希望・見積り', label: '購入希望・見積り' },
   { key: '保証プラン・規約提示', label: '保証プラン・規約提示' },
   { key: '振込案内', label: '振込案内' },
-  { key: '契約書送付フェーズ', label: '契約書送付フェーズ' }
+  { key: '契約書送付フェーズ', label: '契約書送付フェーズ' },
+  { key: DEFAULT_STATUS_KEY, label: DEFAULT_STATUS_KEY }
 ];
 
 const STATUS_MAP = new Map(STATUS_FOLDERS.map(item => [item.key, item.label]));
@@ -16,6 +19,14 @@ const WHITESPACE_REGEX = /[\s\u3000、,]+/g;
 let allCustomers = [];
 let filteredCustomers = [];
 let currentStatusKey = STATUS_FOLDERS[0]?.key || '';
+
+function resolveCustomerStatus(rawStatus) {
+  const normalized = typeof rawStatus === 'string' ? rawStatus.trim() : '';
+  if (normalized && STATUS_MAP.has(normalized)) {
+    return normalized;
+  }
+  return DEFAULT_STATUS_KEY;
+}
 
 function decodeStatusParam(value) {
   if (!value) return '';
@@ -103,6 +114,7 @@ function buildSearchPool(customer) {
     customer.phone,
     customer.email,
     customer.status,
+    customer.customerStatus,
     customer.category,
     customer.type,
     customer.details,
@@ -144,7 +156,7 @@ function createResultCard(customer) {
 
   const statusBadge = document.createElement('span');
   statusBadge.className = 'badge rounded-pill status-badge';
-  statusBadge.textContent = customer.status || '未着手';
+  statusBadge.textContent = resolveCustomerStatus(customer.customerStatus);
   actions.appendChild(statusBadge);
 
   if (customer.order_id) {
@@ -255,7 +267,11 @@ async function loadCustomers() {
     const records = Array.isArray(payload.Items) ? payload.Items : payload;
     allCustomers = records
       .filter(customer => !customer.draft)
-      .filter(customer => (customer.status || '') === currentStatusKey)
+      .map(customer => ({
+        ...customer,
+        customerStatus: resolveCustomerStatus(customer.customerStatus)
+      }))
+      .filter(customer => customer.customerStatus === currentStatusKey)
       .sort((a, b) => {
         const keyA = getSortKey(a);
         const keyB = getSortKey(b);

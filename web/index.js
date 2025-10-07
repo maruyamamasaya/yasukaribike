@@ -2,13 +2,26 @@ const API = (typeof window !== 'undefined' && window.API_URL) ||
   (typeof process !== 'undefined' && process.env && process.env.API_URL) ||
   window.location.origin;
 
+const DEFAULT_STATUS_KEY = '未分類';
+
 const STATUS_FOLDERS = [
   { key: 'お問い合わせ・来店', label: 'お問い合わせ・来店' },
   { key: '購入希望・見積り', label: '購入希望・見積り' },
   { key: '保証プラン・規約提示', label: '保証プラン・規約提示' },
   { key: '振込案内', label: '振込案内' },
-  { key: '契約書送付フェーズ', label: '契約書送付フェーズ' }
+  { key: '契約書送付フェーズ', label: '契約書送付フェーズ' },
+  { key: DEFAULT_STATUS_KEY, label: DEFAULT_STATUS_KEY }
 ];
+
+const STATUS_MAP = new Map(STATUS_FOLDERS.map(item => [item.key, item.label]));
+
+function resolveCustomerStatus(rawStatus) {
+  const normalized = typeof rawStatus === 'string' ? rawStatus.trim() : '';
+  if (normalized && STATUS_MAP.has(normalized)) {
+    return normalized;
+  }
+  return DEFAULT_STATUS_KEY;
+}
 
 function openStatusFolder(key, options = {}) {
   if (!key) return;
@@ -63,10 +76,8 @@ function countByStatus(customers) {
   STATUS_FOLDERS.forEach(({ key }) => counts.set(key, 0));
 
   customers.forEach(customer => {
-    const status = customer.status || '未着手';
-    if (counts.has(status)) {
-      counts.set(status, counts.get(status) + 1);
-    }
+    const statusKey = resolveCustomerStatus(customer.customerStatus);
+    counts.set(statusKey, (counts.get(statusKey) || 0) + 1);
   });
 
   return counts;
