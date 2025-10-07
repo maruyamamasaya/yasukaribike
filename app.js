@@ -618,6 +618,7 @@ app.get('/customers/:id', async (req, res) => {
 app.put('/customers/:id', async (req, res) => {
   const fields = {
     status: req.body.status,
+    customerStatus: req.body.customerStatus,
     email: req.body.email,
     name: req.body.name,
     kana: req.body.kana,

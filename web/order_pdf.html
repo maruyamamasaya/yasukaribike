@@ -8,7 +8,30 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="https://rebikele.s3.ap-northeast-1.amazonaws.com/kokyaku_kanri/rogo.jpg" />
   <style>
+    .editable-display {
+      display: none;
+    }
+
+    .editable-input,
+    .editable-textarea {
+      margin-bottom: 0.25rem;
+    }
+
     @media print {
+      .editable-input,
+      .editable-textarea {
+        display: none !important;
+      }
+
+      .editable-display {
+        display: block !important;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        min-height: 2.5rem;
+        padding: 0.375rem 0.75rem;
+        white-space: pre-wrap;
+      }
+
       .no-print {
         display: none !important;
       }
